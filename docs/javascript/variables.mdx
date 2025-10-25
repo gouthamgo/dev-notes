@@ -1,0 +1,235 @@
+---
+sidebar_position: 2
+---
+
+# Variables & Data Types
+
+The foundation of everything in JavaScript. Get this right, and you'll avoid 90% of common bugs.
+
+## The Golden Rule: const First, let When Necessary
+
+```javascript
+const name = "Sarah";        // Can't be reassigned 
+const age = 25;              // Can't be reassigned 
+let score = 0;               // Can be reassigned 
+score = 10;                  // This works
+
+const user = { name: "Tom" };
+user.name = "Jerry";         // This works! const prevents reassignment, not mutation
+```
+
+**In React:** You'll use `const` for almost everything. Components, props, most variables - all `const`.
+
+## var: Don't Use It
+
+```javascript
+var x = 10;  // L Avoid this
+```
+
+`var` has weird scoping rules that cause bugs. Pretend it doesn't exist. Modern JavaScript uses `const` and `let`.
+
+## Data Types You'll Actually Use
+
+### Strings
+
+```javascript
+const firstName = "John";
+const lastName = 'Doe';
+
+// Template literals - you'll use these constantly in React
+const greeting = `Hello, ${firstName} ${lastName}!`;
+const multiLine = `
+  This spans
+  multiple lines
+`;
+```
+
+### Numbers
+
+```javascript
+const age = 25;
+const price = 19.99;
+const total = age + price;  // 44.99
+```
+
+### Booleans
+
+```javascript
+const isLoggedIn = true;
+const hasAccess = false;
+
+// In React JSX:
+// {isLoggedIn && <Dashboard />}
+```
+
+### Arrays
+
+```javascript
+const colors = ["red", "blue", "green"];
+const numbers = [1, 2, 3, 4, 5];
+const mixed = [1, "two", true];  // Valid, but avoid mixing types
+```
+
+### Objects
+
+```javascript
+const user = {
+  name: "Alice",
+  age: 30,
+  isAdmin: true
+};
+
+// Accessing properties
+console.log(user.name);        // "Alice"
+console.log(user["age"]);      // 30
+```
+
+### null & undefined
+
+```javascript
+let data = null;           // Intentionally empty
+let notAssigned;           // undefined (not initialized)
+
+// In React, you'll often check for these:
+if (data === null) {
+  // Show loading state
+}
+```
+
+## Template Literals: Your New Best Friend
+
+Instead of this mess:
+
+```javascript
+const name = "Sarah";
+const age = 25;
+const message = "Hello, " + name + "! You are " + age + " years old.";
+```
+
+Write this:
+
+```javascript
+const name = "Sarah";
+const age = 25;
+const message = `Hello, ${name}! You are ${age} years old.`;
+```
+
+**React example:**
+
+```jsx
+function Greeting({ name, time }) {
+  return <h1>{`Good ${time}, ${name}!`}</h1>;
+}
+```
+
+## Common Mistakes
+
+### 1. Trying to reassign const
+
+```javascript
+const count = 0;
+count = 1;  // L Error: Assignment to constant variable
+```
+
+**Fix:** Use `let` if you need to reassign:
+
+```javascript
+let count = 0;
+count = 1;  //  Works
+```
+
+### 2. Confusing const with immutability
+
+```javascript
+const user = { name: "Tom" };
+user.name = "Jerry";  //  This works!
+user = { name: "Spike" };  // L This doesn't
+```
+
+`const` prevents **reassignment**, not **mutation**. You can change object properties.
+
+### 3. Forgetting quotes in strings
+
+```javascript
+const name = Alice;  // L Error: Alice is not defined
+const name = "Alice";  //  Correct
+```
+
+## Interview Questions
+
+<details>
+<summary>Q1: What's the difference between const, let, and var?</summary>
+
+**Answer:**
+- `const`: Cannot be reassigned, block-scoped. Use this by default.
+- `let`: Can be reassigned, block-scoped. Use when you need to change the value.
+- `var`: Can be reassigned, function-scoped (not block-scoped). Avoid in modern JavaScript.
+
+**Example:**
+```javascript
+{
+  const x = 1;
+  let y = 2;
+  var z = 3;
+}
+console.log(x);  // Error: x is not defined
+console.log(y);  // Error: y is not defined
+console.log(z);  // 3 (var leaks out of block scope!)
+```
+</details>
+
+<details>
+<summary>Q2: Can you change the properties of a const object?</summary>
+
+**Answer:** Yes! `const` prevents reassignment of the variable itself, but you can still modify the object's properties.
+
+```javascript
+const user = { name: "Tom" };
+user.name = "Jerry";      //  Allowed
+user.age = 25;            //  Allowed
+user = { name: "Spike" }; // L Error: Assignment to constant
+```
+
+To make an object truly immutable, use `Object.freeze()`:
+```javascript
+const user = Object.freeze({ name: "Tom" });
+user.name = "Jerry";  // Silently fails (throws error in strict mode)
+```
+</details>
+
+<details>
+<summary>Q3: What are template literals and why use them?</summary>
+
+**Answer:** Template literals use backticks (\`) and allow you to embed expressions with `${}`. They're cleaner than string concatenation.
+
+**Without template literals:**
+```javascript
+const name = "Alice";
+const age = 25;
+const msg = "Hello, " + name + "! You are " + age + " years old.";
+```
+
+**With template literals:**
+```javascript
+const msg = `Hello, ${name}! You are ${age} years old.`;
+```
+
+Benefits:
+- Easier to read
+- Support multi-line strings without `\n`
+- Can include expressions: `${age + 1}`
+</details>
+
+## Key Takeaways
+
+1. Always use `const` by default. Only use `let` when you need to reassign.
+2. Never use `var`.
+3. `const` prevents reassignment, not mutation of objects/arrays.
+4. Template literals (`backticks`) make string interpolation much cleaner.
+5. Know your types: string, number, boolean, array, object, null, undefined.
+
+## Next Up
+
+Now that you understand variables, let's learn about functions - the building blocks of React components.
+
+[Continue to Functions ’](./functions.mdx)

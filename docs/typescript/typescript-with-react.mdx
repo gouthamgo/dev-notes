@@ -1,0 +1,1124 @@
+---
+sidebar_position: 5
+---
+
+# TypeScript with React
+
+Now we connect everything. TypeScript + React = safer, faster development.
+
+You've learned the basics of TypeScript and how to describe data with interfaces. Now it's time to see how TypeScript makes React development better: catching bugs before they happen, providing autocomplete for everything, and making refactoring fearless.
+
+## Typing Props
+
+This is the foundation. Every React component should have typed props.
+
+### Basic Props
+
+```typescript
+// Before (JavaScript) - no idea what props are expected
+function Greeting(props) {
+  return <h1>Hello, {props.name}!</h1>;
+}
+
+// After (TypeScript) - crystal clear
+interface GreetingProps {
+  name: string;
+}
+
+function Greeting({ name }: GreetingProps) {
+  return <h1>Hello, {name}!</h1>;
+}
+
+// Now TypeScript catches mistakes
+<Greeting name="Alice" /> // OK
+<Greeting /> // L Error: Property 'name' is missing
+<Greeting name={123} /> // L Error: Type 'number' is not assignable to type 'string'
+```
+
+### Complex Props with Optional Fields
+
+```typescript
+interface UserCardProps {
+  name: string;
+  email: string;
+  avatarUrl?: string; // Optional
+  role: "admin" | "user" | "guest"; // Union type
+  onEdit?: () => void; // Optional callback
+}
+
+function UserCard({ name, email, avatarUrl, role, onEdit }: UserCardProps) {
+  return (
+    <div className="user-card">
+      {avatarUrl && <img src={avatarUrl} alt={name} />}
+      <h3>{name}</h3>
+      <p>{email}</p>
+      <span className={`badge badge-${role}`}>{role}</span>
+      {onEdit && <button onClick={onEdit}>Edit</button>}
+    </div>
+  );
+}
+
+// Usage
+<UserCard
+  name="Alice"
+  email="alice@example.com"
+  role="admin"
+/>
+
+<UserCard
+  name="Bob"
+  email="bob@example.com"
+  avatarUrl="/images/bob.jpg"
+  role="user"
+  onEdit={() => console.log("Edit Bob")}
+/>
+```
+
+### Props with Children
+
+```typescript
+interface CardProps {
+  title: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}
+
+function Card({ title, children, footer }: CardProps) {
+  return (
+    <div className="card">
+      <div className="card-header">
+        <h2>{title}</h2>
+      </div>
+      <div className="card-body">
+        {children}
+      </div>
+      {footer && (
+        <div className="card-footer">
+          {footer}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Usage
+<Card title="Welcome">
+  <p>This is the card content</p>
+  <button>Click me</button>
+</Card>
+
+<Card
+  title="User Profile"
+  footer={<button>Save Changes</button>}
+>
+  <UserForm />
+</Card>
+```
+
+`React.ReactNode` accepts anything React can render: JSX elements, strings, numbers, arrays, fragments, portals, null, undefined, booleans.
+
+## Typing State with useState
+
+TypeScript often infers the type from your initial value, but sometimes you need to be explicit.
+
+### Simple State (Type Inference Works)
+
+```typescript
+function Counter() {
+  // TypeScript infers count is a number
+  const [count, setCount] = useState(0);
+
+  setCount(5); // OK
+  setCount("5"); // L Error: Argument of type 'string' is not assignable to parameter of type 'number'
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+    </div>
+  );
+}
+```
+
+### String State
+
+```typescript
+function NameForm() {
+  const [name, setName] = useState(""); // Inferred as string
+
+  return (
+    <input
+      value={name}
+      onChange={(e) => setName(e.target.value)}
+    />
+  );
+}
+```
+
+### Arrays (Explicit Types)
+
+```typescript
+interface Todo {
+  id: number;
+  text: string;
+  completed: boolean;
+}
+
+function TodoList() {
+  // Explicit type because empty array could be anything
+  const [todos, setTodos] = useState<Todo[]>([]);
+
+  const addTodo = (text: string) => {
+    const newTodo: Todo = {
+      id: Date.now(),
+      text,
+      completed: false
+    };
+    setTodos([...todos, newTodo]);
+  };
+
+  const toggleTodo = (id: number) => {
+    setTodos(todos.map(todo =>
+      todo.id === id ? { ...todo, completed: !todo.completed } : todo
+    ));
+  };
+
+  return (
+    <ul>
+      {todos.map(todo => (
+        <li
+          key={todo.id}
+          onClick={() => toggleTodo(todo.id)}
+          style={{ textDecoration: todo.completed ? "line-through" : "none" }}
+        >
+          {todo.text}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### Objects (Nullable State)
+
+```typescript
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+function UserProfile() {
+  // Union type: User or null
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchUser().then(data => {
+      setUser(data);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) return <p>Loading...</p>;
+
+  // TypeScript knows user might be null
+  if (!user) return <p>No user found</p>;
+
+  // After the null check, TypeScript knows user is User
+  return (
+    <div>
+      <h1>{user.name}</h1>
+      <p>{user.email}</p>
+    </div>
+  );
+}
+```
+
+### Union Types for State
+
+```typescript
+type LoadingState = "idle" | "loading" | "success" | "error";
+
+function DataFetcher() {
+  const [status, setStatus] = useState<LoadingState>("idle");
+  const [data, setData] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    setStatus("loading");
+    try {
+      const response = await fetch("/api/data");
+      const json = await response.json();
+      setData(json);
+      setStatus("success");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+      setStatus("error");
+    }
+  };
+
+  return (
+    <div>
+      {status === "idle" && <button onClick={fetchData}>Load Data</button>}
+      {status === "loading" && <p>Loading...</p>}
+      {status === "error" && <p>Error: {error}</p>}
+      {status === "success" && (
+        <ul>
+          {data.map((item, index) => (
+            <li key={index}>{item}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+```
+
+## Typing Events
+
+React events are synthetic events, not native DOM events. TypeScript has specific types for them.
+
+### onClick - Mouse Events
+
+```typescript
+function Button() {
+  // Explicit type annotation
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    console.log("Button clicked");
+    console.log("Button text:", event.currentTarget.textContent);
+  };
+
+  // Or inline
+  return (
+    <button onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+      console.log("Clicked at", e.clientX, e.clientY);
+    }}>
+      Click me
+    </button>
+  );
+}
+```
+
+**Why `HTMLButtonElement`?** TypeScript needs to know what element the event is attached to. This gives you accurate autocomplete for properties specific to buttons.
+
+### onChange - Input Events
+
+```typescript
+function Form() {
+  const [name, setName] = useState("");
+
+  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setName(event.target.value);
+  };
+
+  return (
+    <input
+      type="text"
+      value={name}
+      onChange={handleNameChange}
+    />
+  );
+}
+```
+
+### onChange - Textarea and Select
+
+```typescript
+function MultiForm() {
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+
+  // Textarea
+  const handleDescriptionChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setDescription(event.target.value);
+  };
+
+  // Select
+  const handleCategoryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setCategory(event.target.value);
+  };
+
+  return (
+    <div>
+      <textarea value={description} onChange={handleDescriptionChange} />
+      <select value={category} onChange={handleCategoryChange}>
+        <option value="tech">Tech</option>
+        <option value="business">Business</option>
+      </select>
+    </div>
+  );
+}
+```
+
+### onSubmit - Form Events
+
+```typescript
+function LoginForm() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault(); // Prevent page reload
+
+    console.log("Submitting:", { email, password });
+    // Send to API...
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+```
+
+### Common Event Types Reference
+
+```typescript
+React.MouseEvent<HTMLButtonElement>    // onClick on buttons
+React.MouseEvent<HTMLDivElement>       // onClick on divs
+React.ChangeEvent<HTMLInputElement>    // onChange on inputs
+React.ChangeEvent<HTMLTextAreaElement> // onChange on textareas
+React.ChangeEvent<HTMLSelectElement>   // onChange on selects
+React.FormEvent<HTMLFormElement>       // onSubmit on forms
+React.KeyboardEvent<HTMLInputElement>  // onKeyDown, onKeyUp
+React.FocusEvent<HTMLInputElement>     // onFocus, onBlur
+```
+
+**Pro tip:** Most of the time, you don't need the type annotation if you're using an inline arrow function. TypeScript infers it:
+
+```typescript
+<button onClick={(e) => {
+  // TypeScript already knows e is React.MouseEvent<HTMLButtonElement>
+  console.log(e.currentTarget);
+}}>
+  Click
+</button>
+```
+
+## Typing Children
+
+`React.ReactNode` is the most flexible type for children.
+
+```typescript
+interface LayoutProps {
+  children: React.ReactNode;
+}
+
+function Layout({ children }: LayoutProps) {
+  return (
+    <div className="layout">
+      <header>My App</header>
+      <main>{children}</main>
+      <footer>© 2025</footer>
+    </div>
+  );
+}
+
+// Accepts anything
+<Layout>
+  <h1>Welcome</h1>
+  <p>Content here</p>
+</Layout>
+
+<Layout>
+  {isLoggedIn ? <Dashboard /> : <Login />}
+</Layout>
+
+<Layout>
+  {items.map(item => <Item key={item.id} {...item} />)}
+</Layout>
+```
+
+### When You Want Specific Children
+
+```typescript
+// Only accept a single React element
+interface WrapperProps {
+  children: React.ReactElement;
+}
+
+function Wrapper({ children }: WrapperProps) {
+  return <div className="wrapper">{children}</div>;
+}
+
+// Works
+<Wrapper><div>Hello</div></Wrapper>
+
+// Doesn't work
+<Wrapper>Plain text</Wrapper> // L Error
+<Wrapper><div>One</div><div>Two</div></Wrapper> // L Error (multiple children)
+```
+
+```typescript
+// Only accept an array of elements
+interface ListProps {
+  children: React.ReactElement[];
+}
+
+function List({ children }: ListProps) {
+  return (
+    <ul>
+      {children.map((child, index) => (
+        <li key={index}>{child}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+**For most cases, stick with `React.ReactNode`** - it's the most flexible and covers 99% of use cases.
+
+## Typing Refs with useRef
+
+`useRef` has two common use cases, and they're typed differently.
+
+### DOM Refs
+
+```typescript
+function TextInput() {
+  // Explicitly type the ref for DOM elements
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const focusInput = () => {
+    // TypeScript knows inputRef.current might be null
+    inputRef.current?.focus();
+  };
+
+  return (
+    <div>
+      <input ref={inputRef} type="text" />
+      <button onClick={focusInput}>Focus Input</button>
+    </div>
+  );
+}
+```
+
+**Why `null`?** The ref doesn't point to anything until the component mounts. TypeScript forces you to handle this with optional chaining (`?.`) or null checks.
+
+### Mutable Values (Non-DOM)
+
+```typescript
+function Timer() {
+  const [count, setCount] = useState(0);
+  // Store a value that persists across renders but doesn't cause re-renders
+  const intervalRef = useRef<number | null>(null);
+
+  const startTimer = () => {
+    intervalRef.current = window.setInterval(() => {
+      setCount(c => c + 1);
+    }, 1000);
+  };
+
+  const stopTimer = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={startTimer}>Start</button>
+      <button onClick={stopTimer}>Stop</button>
+    </div>
+  );
+}
+```
+
+### Different DOM Element Types
+
+```typescript
+const buttonRef = useRef<HTMLButtonElement>(null);
+const divRef = useRef<HTMLDivElement>(null);
+const videoRef = useRef<HTMLVideoElement>(null);
+const canvasRef = useRef<HTMLCanvasElement>(null);
+```
+
+TypeScript will autocomplete the correct properties for each element type.
+
+## Complete Real Example - Fully Typed TodoList
+
+Let's put it all together with a complete, production-ready example:
+
+```typescript
+import { useState, useRef, FormEvent, ChangeEvent } from 'react';
+
+// 1. Define data structures
+interface Todo {
+  id: number;
+  text: string;
+  completed: boolean;
+  createdAt: Date;
+}
+
+// 2. Component props interfaces
+interface TodoItemProps {
+  todo: Todo;
+  onToggle: (id: number) => void;
+  onDelete: (id: number) => void;
+}
+
+interface TodoStatsProps {
+  total: number;
+  completed: number;
+}
+
+// 3. Individual todo item component
+function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
+  return (
+    <li className={todo.completed ? "completed" : ""}>
+      <input
+        type="checkbox"
+        checked={todo.completed}
+        onChange={() => onToggle(todo.id)}
+      />
+      <span>{todo.text}</span>
+      <small>{todo.createdAt.toLocaleTimeString()}</small>
+      <button onClick={() => onDelete(todo.id)}>Delete</button>
+    </li>
+  );
+}
+
+// 4. Stats component
+function TodoStats({ total, completed }: TodoStatsProps) {
+  const remaining = total - completed;
+
+  return (
+    <div className="stats">
+      <p>Total: {total}</p>
+      <p>Completed: {completed}</p>
+      <p>Remaining: {remaining}</p>
+    </div>
+  );
+}
+
+// 5. Main component
+function TodoList() {
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Add new todo
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!inputValue.trim()) return;
+
+    const newTodo: Todo = {
+      id: Date.now(),
+      text: inputValue,
+      completed: false,
+      createdAt: new Date()
+    };
+
+    setTodos([...todos, newTodo]);
+    setInputValue("");
+    inputRef.current?.focus();
+  };
+
+  // Toggle completion
+  const toggleTodo = (id: number) => {
+    setTodos(todos.map(todo =>
+      todo.id === id ? { ...todo, completed: !todo.completed } : todo
+    ));
+  };
+
+  // Delete todo
+  const deleteTodo = (id: number) => {
+    setTodos(todos.filter(todo => todo.id !== id));
+  };
+
+  // Handle input change
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
+  // Calculate stats
+  const completedCount = todos.filter(todo => todo.completed).length;
+
+  return (
+    <div className="todo-app">
+      <h1>My Todos</h1>
+
+      <form onSubmit={handleSubmit}>
+        <input
+          ref={inputRef}
+          type="text"
+          value={inputValue}
+          onChange={handleInputChange}
+          placeholder="What needs to be done?"
+        />
+        <button type="submit">Add</button>
+      </form>
+
+      <TodoStats total={todos.length} completed={completedCount} />
+
+      <ul>
+        {todos.map(todo => (
+          <TodoItem
+            key={todo.id}
+            todo={todo}
+            onToggle={toggleTodo}
+            onDelete={deleteTodo}
+          />
+        ))}
+      </ul>
+
+      {todos.length === 0 && <p>No todos yet. Add one above!</p>}
+    </div>
+  );
+}
+
+export default TodoList;
+```
+
+**What TypeScript catches in this example:**
+- Wrong prop types passed to `TodoItem` or `TodoStats`
+- Typos in property names (`todo.txt` instead of `todo.text`)
+- Missing properties when creating a new todo
+- Wrong event types in handlers
+- Null ref access without checking
+- Wrong types in state updates
+
+**What you get:**
+- Full autocomplete for all props and state
+- Instant feedback on mistakes
+- Safe refactoring (rename `text` to `title` everywhere)
+- Self-documenting code (interfaces are better than comments)
+
+## Common Patterns Cheatsheet
+
+### Basic Component with Props
+
+```typescript
+interface Props {
+  name: string;
+  age?: number;
+}
+
+function Component({ name, age }: Props) {
+  return <div>{name}</div>;
+}
+```
+
+### Component with Children
+
+```typescript
+interface Props {
+  title: string;
+  children: React.ReactNode;
+}
+
+function Component({ title, children }: Props) {
+  return <div><h1>{title}</h1>{children}</div>;
+}
+```
+
+### State with Object
+
+```typescript
+interface User {
+  name: string;
+  email: string;
+}
+
+const [user, setUser] = useState<User | null>(null);
+```
+
+### State with Array
+
+```typescript
+interface Item {
+  id: number;
+  name: string;
+}
+
+const [items, setItems] = useState<Item[]>([]);
+```
+
+### Event Handlers
+
+```typescript
+// Button click
+const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => { };
+
+// Input change
+const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => { };
+
+// Form submit
+const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => { };
+```
+
+### DOM Ref
+
+```typescript
+const inputRef = useRef<HTMLInputElement>(null);
+inputRef.current?.focus();
+```
+
+### Callback Props
+
+```typescript
+interface Props {
+  onSave: (data: string) => void;
+  onDelete: (id: number) => Promise<void>;
+}
+```
+
+### Optional Callback
+
+```typescript
+interface Props {
+  onClick?: () => void;
+}
+
+function Component({ onClick }: Props) {
+  return <button onClick={onClick}>Click</button>;
+}
+```
+
+## When You're Stuck
+
+### "Type 'X' is not assignable to type 'Y'"
+
+This usually means you're trying to use the wrong type. Check:
+1. Did you spell the property name correctly?
+2. Is the data shape what you expect?
+3. Did you forget to make a property optional with `?`?
+
+### "Object is possibly 'null'"
+
+TypeScript is protecting you from null reference errors. Fix it:
+
+```typescript
+// Bad
+inputRef.current.focus(); // L Error
+
+// Good - optional chaining
+inputRef.current?.focus();
+
+// Good - null check
+if (inputRef.current) {
+  inputRef.current.focus();
+}
+```
+
+### "Property 'X' does not exist on type 'never'"
+
+This usually happens with empty arrays. TypeScript can't infer the type:
+
+```typescript
+// Bad
+const [items, setItems] = useState([]); // TypeScript infers never[]
+
+// Good
+const [items, setItems] = useState<Item[]>([]);
+```
+
+### Can't figure out the event type?
+
+Hover over the event in your editor, or use an inline function and let TypeScript infer it:
+
+```typescript
+<button onClick={(e) => {
+  // Hover over 'e' to see the type
+  console.log(e);
+}}>
+```
+
+Then copy the type for standalone functions.
+
+### "Type 'string' is not assignable to type 'never'"
+
+You probably have a union type that TypeScript narrowed down incorrectly. Add explicit type annotations:
+
+```typescript
+// Instead of
+const [status, setStatus] = useState("idle");
+
+// Use
+const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
+```
+
+## Interview Questions
+
+<details>
+<summary>How do you type a component that accepts optional children?</summary>
+
+Use `React.ReactNode` and make it optional with `?`:
+
+```typescript
+interface Props {
+  title: string;
+  children?: React.ReactNode;
+}
+
+function Card({ title, children }: Props) {
+  return (
+    <div>
+      <h2>{title}</h2>
+      {children && <div>{children}</div>}
+    </div>
+  );
+}
+```
+
+`React.ReactNode` covers everything React can render:
+- JSX elements
+- Strings and numbers
+- Arrays and fragments
+- `null`, `undefined`, and booleans (which render nothing)
+
+This is more flexible than `React.ReactElement`, which only accepts JSX elements (not strings or numbers).
+
+**When to use each:**
+- `React.ReactNode` - 99% of cases (most flexible)
+- `React.ReactElement` - When you specifically need a JSX element
+- `JSX.Element` - Similar to ReactElement (older convention)
+- Specific types like `string` - When you need precise control
+</details>
+
+<details>
+<summary>What's the difference between `useRef<HTMLInputElement>(null)` and `useRef<HTMLInputElement | null>(null)`?</summary>
+
+Great question! This confuses many developers.
+
+**`useRef<HTMLInputElement>(null)`** (Correct for DOM refs):
+```typescript
+const inputRef = useRef<HTMLInputElement>(null);
+// Type: RefObject<HTMLInputElement>
+// inputRef.current is readonly - React manages it
+inputRef.current?.focus(); //  OK
+```
+
+**`useRef<HTMLInputElement | null>(null)`** (For mutable values):
+```typescript
+const inputRef = useRef<HTMLInputElement | null>(null);
+// Type: MutableRefObject<HTMLInputElement | null>
+// You can reassign inputRef.current
+inputRef.current = someElement; //  OK
+inputRef.current?.focus(); //  OK
+```
+
+**Key differences:**
+
+1. **DOM refs are managed by React** - Use `useRef<ElementType>(null)`. The `current` property is readonly because React sets it.
+
+2. **Mutable values you manage** - Use `useRef<Type | null>(null)` or `useRef<Type>()`. You control the value, so `current` is writable.
+
+**Examples:**
+
+```typescript
+// DOM ref (React manages it)
+const buttonRef = useRef<HTMLButtonElement>(null);
+<button ref={buttonRef}>Click</button>
+
+// Mutable value (you manage it)
+const intervalRef = useRef<number | null>(null);
+intervalRef.current = setInterval(() => {}, 1000);
+
+// Previous value storage (you manage it)
+const prevValueRef = useRef<string>();
+prevValueRef.current = currentValue;
+```
+
+**Rule of thumb:** If you're using the `ref` prop, use `useRef<ElementType>(null)`. For everything else, include the type in the union.
+</details>
+
+<details>
+<summary>How do you type event handlers that are passed as props?</summary>
+
+There are several approaches, from most specific to most flexible:
+
+**1. Specific event type (most precise):**
+```typescript
+interface Props {
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+}
+
+function Button({ onClick }: Props) {
+  return <button onClick={onClick}>Click</button>;
+}
+```
+
+**2. Generic handler (no event parameter):**
+```typescript
+interface Props {
+  onClick: () => void;
+}
+
+function Button({ onClick }: Props) {
+  return <button onClick={onClick}>Click</button>;
+}
+```
+
+This is simpler and works fine when the parent doesn't need the event object.
+
+**3. Handler with custom parameters:**
+```typescript
+interface Props {
+  onSave: (data: FormData) => void;
+  onDelete: (id: number) => Promise<void>;
+}
+
+function Form({ onSave, onDelete }: Props) {
+  const handleSubmit = () => {
+    onSave({ name: "...", email: "..." });
+  };
+
+  return <form onSubmit={handleSubmit}>...</form>;
+}
+```
+
+**4. Optional handlers:**
+```typescript
+interface Props {
+  onClick?: () => void;
+  onHover?: (event: React.MouseEvent) => void;
+}
+
+function Button({ onClick, onHover }: Props) {
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={onHover}
+    >
+      Click
+    </button>
+  );
+}
+```
+
+TypeScript will let you omit optional handlers when using the component.
+
+**Best practice:** Keep it simple. If the parent doesn't need the event object, don't include it in the type:
+
+```typescript
+// Simple
+onClick: () => void
+
+// Only if parent needs the event
+onClick: (event: React.MouseEvent<HTMLButtonElement>) => void
+```
+</details>
+
+<details>
+<summary>How do you type useState when the initial value is null but will be an object later?</summary>
+
+Use a union type with `null`:
+
+```typescript
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+function UserProfile() {
+  // State starts as null, will be User after loading
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchUser().then((data: User) => {
+      setUser(data); //  TypeScript knows this is valid
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) return <p>Loading...</p>;
+
+  // Must check for null before using
+  if (!user) return <p>No user found</p>;
+
+  // After the check, TypeScript knows user is User (not null)
+  return (
+    <div>
+      <h1>{user.name}</h1>
+      <p>{user.email}</p>
+    </div>
+  );
+}
+```
+
+**Why not just `useState<User>()`?**
+
+Without an initial value, TypeScript will error. And if you try:
+```typescript
+const [user, setUser] = useState<User>({} as User); // L Bad practice
+```
+
+This creates a fake "empty" user that will cause runtime errors when you try to access `user.name`.
+
+**The union type forces you to handle the loading state properly:**
+
+```typescript
+const [user, setUser] = useState<User | null>(null);
+
+// TypeScript errors until you check for null
+user.name // L Error: Object is possibly 'null'
+
+// After checking, it's safe
+if (user) {
+  user.name //  OK, TypeScript knows user is User here
+}
+
+// Or with optional chaining
+user?.name //  OK, returns undefined if user is null
+```
+
+This pattern works for any nullable data:
+```typescript
+const [data, setData] = useState<DataType | null>(null);
+const [error, setError] = useState<Error | null>(null);
+const [selected, setSelected] = useState<Item | null>(null);
+```
+</details>
+
+## Key Takeaways
+
+1. **Always type your props** - Use interfaces for component props. Your future self will thank you.
+2. **useState infers types well** - But be explicit with arrays, objects, and union types.
+3. **React.ReactNode for children** - It's the most flexible type for anything React can render.
+4. **DOM refs start with null** - Use optional chaining (`?.`) or null checks before accessing `current`.
+5. **Event types are specific** - `React.MouseEvent`, `React.ChangeEvent`, `React.FormEvent`.
+6. **Union types prevent bugs** - `"pending" | "success" | "error"` is better than `string`.
+7. **TypeScript catches mistakes before runtime** - Typos, wrong types, missing props - all caught instantly.
+8. **Let TypeScript infer when it can** - Don't over-annotate simple cases.
+9. **Null checks are your friend** - Union with null/undefined forces you to handle edge cases.
+10. **TypeScript makes refactoring safe** - Rename a prop once, TypeScript updates all usages.
+
+## Congratulations!
+
+You've learned how to use TypeScript with React. You can now:
+
+- Type component props with interfaces
+- Use useState with all types of data
+- Handle events with proper types
+- Work with refs for DOM elements
+- Build fully-typed React applications
+
+**What's next?**
+
+- Practice by converting a JavaScript component to TypeScript
+- Add TypeScript to an existing React project gradually
+- Explore advanced patterns like generics and utility types
+- Learn how to type custom hooks
+- Check out the TypeScript documentation for deeper concepts
+
+TypeScript might feel like extra work at first, but once you experience the safety, autocomplete, and refactoring capabilities, you won't want to go back to plain JavaScript.
+
+Happy coding!

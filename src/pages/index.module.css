@@ -1,0 +1,277 @@
+/* Hero Section */
+.heroBanner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 4rem 0;
+  text-align: center;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.heroTitle {
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.heroSubtitle {
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.heroSmallText {
+  font-size: 1rem;
+  opacity: 0.85;
+  margin-top: 1rem;
+}
+
+/* Features Section */
+.features {
+  padding: 4rem 0;
+  background-color: var(--ifm-background-surface-color);
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.featureCard {
+  text-align: center;
+  padding: 2rem;
+  border-radius: 12px;
+  background-color: var(--ifm-card-background-color);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.featureCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.featureIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.featureCard h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--ifm-heading-color);
+}
+
+.featureCard p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ifm-color-emphasis-700);
+}
+
+/* Learning Path Section */
+.learningPath {
+  padding: 4rem 0;
+  background-color: var(--ifm-background-color);
+}
+
+.pathHeading {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+  color: var(--ifm-heading-color);
+}
+
+.pathSteps {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+}
+
+.pathCard {
+  background-color: white;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 200px;
+  min-width: 200px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-align: center;
+  border: 2px solid var(--ifm-color-emphasis-200);
+}
+
+.pathCard:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.stepNumber {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0 auto 1rem;
+}
+
+.stepTitle {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: var(--ifm-heading-color);
+}
+
+.stepDescription {
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.stepDuration {
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-600);
+  font-weight: 500;
+}
+
+.pathArrow {
+  font-size: 2rem;
+  color: var(--ifm-color-emphasis-400);
+  font-weight: bold;
+}
+
+.pathCTA {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+/* Dark Mode Support */
+html[data-theme='dark'] .pathCard {
+  background-color: var(--ifm-card-background-color);
+  border-color: var(--ifm-color-emphasis-300);
+}
+
+html[data-theme='dark'] .featureCard {
+  background-color: var(--ifm-card-background-color);
+  border-color: var(--ifm-color-emphasis-300);
+}
+
+/* Mobile Responsive */
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    padding: 3rem 1rem;
+  }
+
+  .heroTitle {
+    font-size: 2.5rem;
+  }
+
+  .heroSubtitle {
+    font-size: 1.2rem;
+  }
+
+  .featureGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .pathSteps {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .pathArrow {
+    transform: rotate(90deg);
+    display: none; /* Hide arrows on mobile */
+  }
+
+  .pathCard {
+    max-width: 100%;
+    min-width: auto;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .heroTitle {
+    font-size: 2rem;
+  }
+
+  .heroSubtitle {
+    font-size: 1rem;
+  }
+
+  .pathHeading {
+    font-size: 2rem;
+  }
+
+  .stepNumber {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.featureCard,
+.pathCard {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.featureCard:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.featureCard:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.featureCard:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.pathCard:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.pathCard:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.pathCard:nth-child(5) {
+  animation-delay: 0.3s;
+}
+
+.pathCard:nth-child(7) {
+  animation-delay: 0.4s;
+}

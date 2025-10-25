@@ -1,0 +1,642 @@
+---
+sidebar_position: 6
+---
+
+# TypeScript Interview Essentials
+
+What interviewers actually ask about TypeScript + React
+
+You've learned TypeScript basics. Now let's focus on what gets asked in real interviews and why these concepts matter.
+
+## Top 5 TypeScript Questions in React Interviews
+
+### Question 1: Explain the difference between `interface` and `type`
+
+**THE ANSWER:**
+
+Both define object shapes. For React props, they're mostly the same. Key differences:
+
+```typescript
+// Interface - can extend
+interface User {
+  name: string;
+}
+interface Admin extends User {
+  role: string;
+}
+
+// Type - can use unions
+type Status = "pending" | "approved" | "rejected";
+type User = {
+  name: string;
+};
+```
+
+**When to use what:**
+- **Interface**: React component props (convention), when you might extend later
+- **Type**: Union types, primitives, intersections, when you need `|` or `&`
+
+**Follow-up they might ask:** "Can interfaces be merged?"
+
+**Answer:** Yes! If you declare the same interface twice, TypeScript merges them automatically. Types can't do this.
+
+```typescript
+interface User {
+  name: string;
+}
+interface User {
+  age: number;
+}
+// Result: User has both name and age
+```
+
+---
+
+### Question 2: How do you type a useState hook with an object?
+
+**THE ANSWER:**
+
+Define the shape first, then pass it as a generic to useState.
+
+**Wrong way:**
+```typescript
+const [user, setUser] = useState(null); // TypeScript thinks it's always null!
+```
+
+**Right way:**
+```typescript
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+const [user, setUser] = useState<User | null>(null);
+// Now TypeScript knows: either User object OR null
+```
+
+**Why `| null`?** "Data that loads later starts as null, then becomes the object."
+
+**Common patterns:**
+
+```typescript
+// Starts with default value
+const [user, setUser] = useState<User>({ id: 0, name: "", email: "" });
+
+// Starts empty, loads later
+const [user, setUser] = useState<User | null>(null);
+
+// Array that starts empty
+const [users, setUsers] = useState<User[]>([]);
+
+// Union type for status
+const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+```
+
+---
+
+### Question 3: How do you type event handlers in React?
+
+**THE ANSWER:**
+
+Use React's event types: `MouseEvent`, `ChangeEvent`, `FormEvent`.
+
+**Button click:**
+```typescript
+function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
+  console.log(event.currentTarget); // The button element
+}
+
+<button onClick={handleClick}>Click</button>
+```
+
+**Input change:**
+```typescript
+function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
+  console.log(event.target.value); // The input's value
+}
+
+<input onChange={handleChange} />
+```
+
+**Form submit:**
+```typescript
+function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+  // Process form
+}
+
+<form onSubmit={handleSubmit}>...</form>
+```
+
+**Pro tip:** If you're stuck, hover over the prop in VS Code. It shows the expected type.
+
+---
+
+### Question 4: What's the difference between `any` and `unknown`?
+
+**THE ANSWER:**
+
+**`any`:** Turns off TypeScript. Anything goes. Avoid this.
+```typescript
+let data: any = "hello";
+data.foo.bar.baz(); // No error! But crashes at runtime
+```
+
+**`unknown`:** Type-safe any. Must check type before using.
+```typescript
+let data: unknown = "hello";
+data.toUpperCase(); // L Error: must check type first
+
+if (typeof data === "string") {
+  data.toUpperCase(); //  Now it works
+}
+```
+
+**When to use:**
+- `any`: Legacy code, temporary fixes only (last resort)
+- `unknown`: API responses you need to validate, third-party data
+
+---
+
+### Question 5: How do you make a prop optional?
+
+**THE ANSWER:**
+
+Use `?` after the property name.
+
+```typescript
+interface ButtonProps {
+  text: string;       // Required
+  onClick: () => void; // Required
+  disabled?: boolean;  // Optional (the ?)
+  className?: string;  // Optional
+}
+
+function Button({ text, onClick, disabled = false, className }: ButtonProps) {
+  // Notice: disabled has default value in destructuring
+  return (
+    <button onClick={onClick} disabled={disabled} className={className}>
+      {text}
+    </button>
+  );
+}
+
+// Valid usage:
+<Button text="Click" onClick={() => {}} />
+<Button text="Click" onClick={() => {}} disabled />
+<Button text="Click" onClick={() => {}} disabled className="primary" />
+```
+
+**Key insight:** Optional props can be omitted entirely. Use default values in destructuring when needed.
+
+---
+
+## Advanced Concepts (Senior-Level Interviews)
+
+### Concept 1: Generics in React
+
+**What they are:** Reusable types that work with different data types.
+
+**Real example - Reusable List component:**
+
+```typescript
+interface ListProps<T> {
+  items: T[];
+  renderItem: (item: T) => React.ReactNode;
+}
+
+function List<T>({ items, renderItem }: ListProps<T>) {
+  return (
+    <ul>
+      {items.map((item, index) => (
+        <li key={index}>{renderItem(item)}</li>
+      ))}
+    </ul>
+  );
+}
+
+// Usage with different types:
+interface User {
+  name: string;
+}
+
+interface Product {
+  title: string;
+  price: number;
+}
+
+<List items={users} renderItem={(user) => user.name} />
+<List items={products} renderItem={(product) => `${product.title}: $${product.price}`} />
+```
+
+**The `<T>` means:** "This works with any type. TypeScript figures it out from usage."
+
+---
+
+### Concept 2: Utility Types
+
+Common utility types you'll use in React:
+
+**`Partial<T>`** - Makes all properties optional
+```typescript
+interface User {
+  name: string;
+  email: string;
+  age: number;
+}
+
+type PartialUser = Partial<User>;
+// Same as: { name?: string; email?: string; age?: number; }
+
+function updateUser(id: number, updates: Partial<User>) {
+  // Can update just name, or just email, or any combination
+}
+```
+
+**`Pick<T, K>`** - Select specific properties
+```typescript
+type UserPreview = Pick<User, 'name' | 'email'>;
+// Same as: { name: string; email: string; }
+```
+
+**`Omit<T, K>`** - Exclude specific properties
+```typescript
+type UserWithoutAge = Omit<User, 'age'>;
+// Same as: { name: string; email: string; }
+```
+
+**When you'll use these:** Large apps where you reuse types in different contexts.
+
+---
+
+### Concept 3: Type Guards
+
+**What they are:** Functions that narrow down types.
+
+```typescript
+interface User {
+  name: string;
+  email: string;
+}
+
+function isUser(obj: any): obj is User {
+  return typeof obj === 'object' && 'name' in obj && 'email' in obj;
+}
+
+// Usage:
+const data: unknown = fetchUserData();
+
+if (isUser(data)) {
+  console.log(data.name); // TypeScript knows it's User now
+}
+```
+
+**Real React example:**
+```typescript
+type ApiResponse<T> =
+  | { success: true; data: T }
+  | { success: false; error: string };
+
+function UserProfile() {
+  const [response, setResponse] = useState<ApiResponse<User> | null>(null);
+
+  if (!response) return <div>Loading...</div>;
+
+  if (response.success) {
+    return <div>Welcome {response.data.name}</div>;
+  } else {
+    return <div>Error: {response.error}</div>;
+  }
+}
+```
+
+---
+
+## Common Interview Code Challenges
+
+### Challenge 1: Type a form component with validation
+
+Complete typed form with error handling:
+
+```typescript
+interface LoginForm {
+  email: string;
+  password: string;
+}
+
+interface FormErrors {
+  email?: string;
+  password?: string;
+}
+
+function LoginForm() {
+  const [formData, setFormData] = useState<LoginForm>({
+    email: "",
+    password: ""
+  });
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const { name, value } = event.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }
+
+  function validate(): boolean {
+    const newErrors: FormErrors = {};
+
+    if (!formData.email.includes("@")) {
+      newErrors.email = "Invalid email";
+    }
+    if (formData.password.length < 6) {
+      newErrors.password = "Password too short";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
+
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (validate()) {
+      // Submit form
+      console.log("Form valid", formData);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div>
+        <input
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          placeholder="Email"
+        />
+        {errors.email && <span style={{ color: "red" }}>{errors.email}</span>}
+      </div>
+
+      <div>
+        <input
+          name="password"
+          type="password"
+          value={formData.password}
+          onChange={handleChange}
+          placeholder="Password"
+        />
+        {errors.password && <span style={{ color: "red" }}>{errors.password}</span>}
+      </div>
+
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+```
+
+**What this demonstrates:**
+-  Form state typing
+-  Error state typing (optional properties)
+-  Event typing (ChangeEvent, FormEvent)
+-  Validation logic with type safety
+
+---
+
+### Challenge 2: Type an async data-fetching hook
+
+Custom hook with full type safety:
+
+```typescript
+interface UseApiResult<T> {
+  data: T | null;
+  loading: boolean;
+  error: string | null;
+}
+
+function useApi<T>(url: string): UseApiResult<T> {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const json = await response.json();
+        setData(json);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+        setData(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [url]);
+
+  return { data, loading, error };
+}
+
+// Usage:
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+function UserList() {
+  const { data, loading, error } = useApi<User[]>("/api/users");
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!data) return <div>No data</div>;
+
+  return (
+    <ul>
+      {data.map(user => (
+        <li key={user.id}>
+          {user.name} - {user.email}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+**What this demonstrates:**
+-  Generic custom hooks
+-  Async/await typing
+-  Error handling with proper types
+-  State with union types (T | null)
+-  Real-world API fetching pattern
+
+---
+
+## Red Flags (What NOT to Do)
+
+### Mistake 1: Using `any` everywhere
+
+```typescript
+// L Bad - defeats TypeScript's purpose
+function processData(data: any) {
+  return data.foo.bar;
+}
+
+//  Good - define the shape
+interface Data {
+  foo: { bar: string };
+}
+
+function processData(data: Data) {
+  return data.foo.bar;
+}
+```
+
+**Why it matters:** `any` removes all type safety. You lose autocomplete, error checking, and refactoring safety.
+
+---
+
+### Mistake 2: Not typing event handlers
+
+```typescript
+// L Bad - implicit any
+function handleClick(event) {
+  console.log(event.currentTarget);
+}
+
+//  Good - explicit type
+function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
+  console.log(event.currentTarget);
+}
+```
+
+---
+
+### Mistake 3: Forgetting null checks
+
+```typescript
+// L Bad - will crash if user is null
+const [user, setUser] = useState<User | null>(null);
+console.log(user.name); // Runtime error!
+
+//  Good - optional chaining
+console.log(user?.name);
+
+//  Also good - explicit check
+if (user) {
+  console.log(user.name);
+}
+```
+
+---
+
+## Quick Reference Cheatsheet
+
+**Props:**
+```typescript
+interface ComponentProps {
+  required: string;
+  optional?: number;
+  children: React.ReactNode;
+  onClick: () => void;
+}
+```
+
+**State:**
+```typescript
+useState<Type>(initial)
+useState<Type | null>(null)
+useState<Type[]>([])
+useState<"idle" | "loading" | "success">("idle")
+```
+
+**Events:**
+```typescript
+React.MouseEvent<HTMLButtonElement>
+React.ChangeEvent<HTMLInputElement>
+React.ChangeEvent<HTMLTextAreaElement>
+React.ChangeEvent<HTMLSelectElement>
+React.FormEvent<HTMLFormElement>
+React.KeyboardEvent<HTMLInputElement>
+```
+
+**Common Patterns:**
+```typescript
+string | number              // Union type
+Type1 & Type2               // Intersection type
+keyof User                  // Keys of User type
+typeof user                 // Type from value
+Partial<User>               // All properties optional
+Required<User>              // All properties required
+Pick<User, 'name' | 'email'> // Select properties
+Omit<User, 'password'>      // Exclude properties
+```
+
+---
+
+## Interview Preparation Tips
+
+### 1. Practice These Scenarios
+
+- Type a login form with validation
+- Create a custom data-fetching hook
+- Build a generic reusable component
+- Handle API responses with type guards
+- Type a complex state object
+
+### 2. Know Your "Why"
+
+For every type decision, know WHY:
+- Why use interface vs type?
+- Why use unknown vs any?
+- Why optional properties vs null?
+
+Interviewers want to hear your reasoning.
+
+### 3. Common Follow-ups
+
+Be ready to explain:
+- How TypeScript helps in large codebases
+- Trade-offs of strict typing
+- When you'd use type assertions
+- How to handle third-party libraries without types
+
+### 4. Red Flags to Avoid
+
+Don't say:
+- "I use `any` when types get complicated"
+- "TypeScript slows me down"
+- "I ignore type errors"
+
+Instead say:
+- "I use `unknown` and narrow with type guards"
+- "TypeScript catches bugs early, saving debugging time"
+- "I investigate type errors - they usually reveal real issues"
+
+---
+
+## Key Takeaways
+
+1. **Interfaces vs Types**: Both work for props; types better for unions
+2. **useState typing**: Always specify the type when it's not obvious
+3. **Event handlers**: Use React.MouseEvent, ChangeEvent, FormEvent
+4. **Avoid `any`**: Use `unknown` and type guards instead
+5. **Optional props**: Use `?` and provide defaults when needed
+6. **Generics**: For reusable components with different data types
+7. **Utility types**: Partial, Pick, Omit for type transformations
+8. **Type guards**: Narrow unknown types safely
+
+## You're Ready!
+
+You now know the TypeScript patterns that appear in 80% of React interviews. Practice building components with full type safety, and you'll stand out from candidates who skip types or use `any` everywhere.
+
+Remember: TypeScript isn't about perfect types on day one. It's about progressively adding safety as your codebase grows. Interviewers want to see that you understand the value, not that you've memorized every utility type.
+
+Good luck! =€

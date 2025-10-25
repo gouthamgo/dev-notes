@@ -1,0 +1,449 @@
+---
+sidebar_position: 3
+---
+
+# Basic Types
+
+TypeScript adds types to JavaScript. Let's see each one side-by-side.
+
+Think of types as guardrails. JavaScript lets you do anything, which means you can accidentally drive off a cliff. TypeScript adds warning signs before you make mistakes.
+
+## String Type
+
+### The Problem (JavaScript)
+
+```javascript
+function greetUser(name) {
+  return "Hello, " + name.toUpperCase();
+}
+
+greetUser("Alice"); // Works fine
+greetUser(123); // Runtime error: name.toUpperCase is not a function
+```
+
+You won't know there's a problem until the code runs. If this is in a rarely-used feature, the bug might hide for months.
+
+### The Solution (TypeScript)
+
+```typescript
+function greetUser(name: string) {
+  return "Hello, " + name.toUpperCase();
+}
+
+greetUser("Alice"); // Works fine
+greetUser(123); // L Error: Argument of type 'number' is not assignable to parameter of type 'string'
+```
+
+TypeScript catches the error **before** you run the code. Your editor shows the red squiggly line immediately.
+
+## Number Type
+
+### The Problem (JavaScript)
+
+```javascript
+function calculateTax(price) {
+  return price * 0.15;
+}
+
+const total = calculateTax("100"); // Returns "1001001001001001..." (string concatenation!)
+```
+
+JavaScript converts the string "100" to a weird repeated pattern instead of doing math. This is a silent bug.
+
+### The Solution (TypeScript)
+
+```typescript
+function calculateTax(price: number): number {
+  return price * 0.15;
+}
+
+const total = calculateTax(100); // 15
+const broken = calculateTax("100"); // L Error: Argument of type 'string' is not assignable to parameter of type 'number'
+```
+
+The `: number` after the function parameters tells TypeScript the return type. Now you're protected on both sides.
+
+## Boolean Type
+
+### The Problem (JavaScript)
+
+```javascript
+function toggleFeature(enabled) {
+  if (enabled) {
+    return "Feature is ON";
+  } else {
+    return "Feature is OFF";
+  }
+}
+
+toggleFeature(true); // "Feature is ON"
+toggleFeature("yes"); // "Feature is ON" (probably not what you meant!)
+toggleFeature(1); // "Feature is ON" (truthy value)
+```
+
+JavaScript's truthy/falsy behavior can lead to unexpected results.
+
+### The Solution (TypeScript)
+
+```typescript
+function toggleFeature(enabled: boolean): string {
+  if (enabled) {
+    return "Feature is ON";
+  } else {
+    return "Feature is OFF";
+  }
+}
+
+toggleFeature(true); // "Feature is ON"
+toggleFeature("yes"); // L Error: Argument of type 'string' is not assignable to parameter of type 'boolean'
+toggleFeature(1); // L Error: Argument of type 'number' is not assignable to parameter of type 'boolean'
+```
+
+Now only true `true` or `false` works. No surprises.
+
+## Arrays
+
+### Basic Array Types
+
+```typescript
+// Array of numbers
+const scores: number[] = [95, 87, 92];
+scores.push(88); // OK
+scores.push("100"); // L Error: Argument of type 'string' is not assignable to parameter of type 'number'
+
+// Array of strings
+const names: string[] = ["Alice", "Bob", "Carol"];
+names.push("David"); // OK
+names.push(42); // L Error
+
+// Alternative syntax (same thing)
+const prices: Array<number> = [19.99, 29.99, 39.99];
+```
+
+### The Mixed Array Problem
+
+```javascript
+// JavaScript - this works but is dangerous
+const mixed = [1, "two", 3, "four"];
+const first = mixed[0];
+first.toUpperCase(); // Runtime error if first is a number
+```
+
+```typescript
+// TypeScript - you must be explicit
+const mixed: (number | string)[] = [1, "two", 3, "four"];
+
+// Now TypeScript knows it could be either type
+const first = mixed[0];
+if (typeof first === "string") {
+  first.toUpperCase(); // OK, TypeScript knows it's a string here
+}
+```
+
+The `(number | string)[]` means "an array of items that are either numbers or strings." More on union types later.
+
+## Objects
+
+### Inline Type Annotations
+
+```typescript
+// JavaScript
+const user = {
+  name: "Alice",
+  age: 30,
+  email: "alice@example.com"
+};
+
+// TypeScript - describe the shape
+const user: { name: string; age: number; email: string } = {
+  name: "Alice",
+  age: 30,
+  email: "alice@example.com"
+};
+
+// Now this is caught:
+user.age = "thirty"; // L Error: Type 'string' is not assignable to type 'number'
+```
+
+### Function Parameters with Objects
+
+```typescript
+function printUser(user: { name: string; age: number }) {
+  console.log(`${user.name} is ${user.age} years old`);
+}
+
+printUser({ name: "Bob", age: 25 }); // OK
+printUser({ name: "Carol" }); // L Error: Property 'age' is missing
+printUser({ name: "David", age: "30" }); // L Error: Type 'string' is not assignable to type 'number'
+```
+
+This gets verbose quickly. That's why we have interfaces (next chapter).
+
+## Type Inference
+
+Here's the magic: **TypeScript figures it out.**
+
+```typescript
+// You don't always need to write the type
+let message = "Hello"; // TypeScript knows this is a string
+message = "Goodbye"; // OK
+message = 42; // L Error: Type 'number' is not assignable to type 'string'
+
+// Works with more complex types too
+let user = {
+  name: "Alice",
+  age: 30
+};
+
+user.age = 31; // OK
+user.age = "31"; // L Error: TypeScript inferred the type from the initial value
+```
+
+**When to write types explicitly:**
+- Function parameters (TypeScript can't guess what you want)
+- Function return types (optional but recommended for clarity)
+- When you want to be extra clear about intent
+
+**When type inference is enough:**
+- Variable declarations with initial values
+- Most simple assignments
+
+## Any Type - The Escape Hatch
+
+```typescript
+let mystery: any = 4;
+mystery = "now I'm a string";
+mystery = false;
+mystery.forEach(x => console.log(x)); // No error, but will crash at runtime if mystery isn't an array
+
+// This defeats the purpose of TypeScript
+function doSomething(data: any) {
+  return data.whatever.you.want; // TypeScript won't help you
+}
+```
+
+**When to use `any`:**
+- Working with third-party libraries that don't have types
+- Migrating JavaScript code to TypeScript gradually
+- Prototyping quickly
+
+**Warning:** Using `any` everywhere is like wearing a seatbelt but keeping it unbuckled. You're not getting the safety benefits.
+
+**Better alternative:** Use `unknown` when you don't know the type yet:
+
+```typescript
+function processData(data: unknown) {
+  // You must check the type before using it
+  if (typeof data === "string") {
+    return data.toUpperCase(); // OK, TypeScript knows it's a string now
+  }
+  return "Invalid data";
+}
+```
+
+## Connecting to React
+
+Here's where it gets practical. TypeScript works beautifully with React hooks.
+
+### useState with Types
+
+```typescript
+import { useState } from 'react';
+
+function Counter() {
+  // TypeScript infers the type as number
+  const [count, setCount] = useState(0);
+
+  setCount(5); // OK
+  setCount("5"); // L Error
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+    </div>
+  );
+}
+```
+
+```typescript
+// When the initial value is null, you need to specify the type
+function UserProfile() {
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+
+  // Later, after fetching data
+  setUser({ name: "Alice", email: "alice@example.com" });
+
+  return (
+    <div>
+      {user ? <p>{user.name}</p> : <p>Loading...</p>}
+    </div>
+  );
+}
+```
+
+```typescript
+// With arrays
+function TodoList() {
+  const [todos, setTodos] = useState<string[]>([]);
+
+  const addTodo = (text: string) => {
+    setTodos([...todos, text]);
+  };
+
+  return (
+    <ul>
+      {todos.map((todo, index) => (
+        <li key={index}>{todo}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+## Common Mistakes
+
+### 1. Over-specifying with `any`
+
+```typescript
+// Bad
+const [data, setData] = useState<any>(null);
+
+// Good
+const [data, setData] = useState<UserData | null>(null);
+```
+
+### 2. Forgetting arrays need brackets
+
+```typescript
+// Wrong
+const names: string = ["Alice", "Bob"]; // L Type 'string[]' is not assignable to type 'string'
+
+// Right
+const names: string[] = ["Alice", "Bob"];
+```
+
+### 3. Not using type inference
+
+```typescript
+// Unnecessary
+const count: number = 5;
+
+// Better (TypeScript already knows)
+const count = 5;
+```
+
+### 4. Expecting TypeScript to work at runtime
+
+```typescript
+function process(x: number) {
+  // This type annotation disappears after compilation
+  console.log(typeof x); // Could still be anything if called from JavaScript
+}
+```
+
+TypeScript types are **compile-time only**. They help you write correct code, but they're removed when converted to JavaScript.
+
+## Interview Questions
+
+<details>
+<summary>What's the difference between `any` and `unknown`?</summary>
+
+`any` disables all type checking. You can do anything with an `any` type, which defeats the purpose of TypeScript:
+
+```typescript
+let x: any = 5;
+x.toUpperCase(); // No error, but crashes at runtime
+```
+
+`unknown` is safer. It means "I don't know what this is yet, so you must check before using it":
+
+```typescript
+let x: unknown = 5;
+x.toUpperCase(); // L Error: Object is of type 'unknown'
+
+if (typeof x === "string") {
+  x.toUpperCase(); // OK, you checked first
+}
+```
+
+Use `unknown` when you genuinely don't know the type. It forces you to handle it safely.
+</details>
+
+<details>
+<summary>Why do we need type annotations if TypeScript has type inference?</summary>
+
+Type inference works great for simple cases:
+
+```typescript
+let x = 5; // TypeScript knows it's a number
+```
+
+But you **must** use type annotations for:
+
+1. **Function parameters** - TypeScript can't guess what you want:
+```typescript
+function greet(name: string) { // Must annotate
+  return "Hello, " + name;
+}
+```
+
+2. **When the initial value doesn't match the full type**:
+```typescript
+const [user, setUser] = useState<User | null>(null); // Initial is null, but will be User later
+```
+
+3. **For clarity and documentation**:
+```typescript
+function calculatePrice(base: number, tax: number): number {
+  return base + (base * tax);
+}
+```
+
+The return type annotation (`: number`) isn't required here, but it makes the function's contract clear.
+</details>
+
+<details>
+<summary>What happens to TypeScript types at runtime?</summary>
+
+**They disappear completely.** TypeScript is a compile-time tool. The types are checked when you write code and when you build, but the output is regular JavaScript with no types.
+
+This TypeScript:
+```typescript
+function greet(name: string): string {
+  return "Hello, " + name;
+}
+```
+
+Becomes this JavaScript:
+```javascript
+function greet(name) {
+  return "Hello, " + name;
+}
+```
+
+This means:
+- Types don't protect you if someone calls your function from JavaScript
+- Types don't add any runtime overhead (no performance cost)
+- You can't check types at runtime (use `typeof`, `instanceof`, etc. instead)
+
+This is why TypeScript is called a "superset" of JavaScript - it adds features during development but compiles down to plain JavaScript.
+</details>
+
+## Key Takeaways
+
+1. **Types are guardrails** - They catch mistakes before you run the code
+2. **Basic types mirror JavaScript** - string, number, boolean, arrays, objects
+3. **Type inference is powerful** - Let TypeScript figure it out when it's obvious
+4. **Avoid `any`** - It defeats the purpose. Use `unknown` if you don't know the type
+5. **Types disappear at runtime** - They're development tools, not runtime checks
+6. **React hooks work seamlessly** - TypeScript infers useState types from initial values
+7. **When in doubt, annotate** - Explicit types make code clearer and catch more bugs
+
+## Next Steps
+
+You've learned the basic types. But React apps are full of objects with complex shapes. How do you describe a User object? A Product? Props for a component?
+
+That's where **[interfaces and type aliases](/docs/typescript/interfaces)** come in. They let you name and reuse type definitions, making your code cleaner and more maintainable.
+
+[Continue to Interfaces & Types ’](/docs/typescript/interfaces)

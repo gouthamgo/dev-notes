@@ -1,0 +1,295 @@
+---
+sidebar_position: 3
+---
+
+# Functions
+
+React components are just functions. Event handlers are functions. Everything is functions. Master this, and React becomes much simpler.
+
+## Arrow Functions: The React Standard
+
+```javascript
+// Traditional function
+function greet(name) {
+  return `Hello, ${name}!`;
+}
+
+// Arrow function - this is what you'll write in React
+const greet = (name) => {
+  return `Hello, ${name}!`;
+};
+
+// One-liner (implicit return)
+const greet = (name) => `Hello, ${name}!`;
+```
+
+**React component using arrow function:**
+
+```jsx
+const Welcome = (props) => {
+  return <h1>Hello, {props.name}!</h1>;
+};
+
+// Or even simpler:
+const Welcome = ({ name }) => <h1>Hello, {name}!</h1>;
+```
+
+## Parameters and Return Values
+
+```javascript
+// No parameters
+const sayHello = () => {
+  return "Hello!";
+};
+
+// One parameter (parentheses optional)
+const double = num => num * 2;
+
+// Multiple parameters
+const add = (a, b) => a + b;
+
+// Returning an object (need parentheses)
+const createUser = (name, age) => ({ name, age });
+```
+
+## Callbacks: Functions as Arguments
+
+This is crucial for React event handlers and array methods.
+
+```javascript
+// Basic callback
+const greet = (name, callback) => {
+  const message = `Hello, ${name}!`;
+  callback(message);
+};
+
+greet("Alice", (msg) => console.log(msg));  // "Hello, Alice!"
+```
+
+**React example:**
+
+```jsx
+function Button() {
+  const handleClick = () => {
+    console.log("Button clicked!");
+  };
+
+  return <button onClick={handleClick}>Click me</button>;
+}
+```
+
+## Higher-Order Functions: map, filter, reduce
+
+These are the array methods you'll use constantly in React.
+
+### map - Transform Each Item
+
+```javascript
+const numbers = [1, 2, 3, 4, 5];
+const doubled = numbers.map(num => num * 2);
+// [2, 4, 6, 8, 10]
+
+const users = [
+  { name: "Alice", age: 25 },
+  { name: "Bob", age: 30 }
+];
+const names = users.map(user => user.name);
+// ["Alice", "Bob"]
+```
+
+**React list rendering:**
+
+```jsx
+function UserList({ users }) {
+  return (
+    <ul>
+      {users.map(user => (
+        <li key={user.id}>{user.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### filter - Keep Items That Match
+
+```javascript
+const numbers = [1, 2, 3, 4, 5];
+const evenNumbers = numbers.filter(num => num % 2 === 0);
+// [2, 4]
+
+const users = [
+  { name: "Alice", age: 25 },
+  { name: "Bob", age: 17 },
+  { name: "Charlie", age: 30 }
+];
+const adults = users.filter(user => user.age >= 18);
+// [{ name: "Alice", age: 25 }, { name: "Charlie", age: 30 }]
+```
+
+**React example:**
+
+```jsx
+function ActiveUsers({ users }) {
+  const activeUsers = users.filter(user => user.isActive);
+
+  return (
+    <ul>
+      {activeUsers.map(user => (
+        <li key={user.id}>{user.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### reduce - Accumulate to a Single Value
+
+```javascript
+const numbers = [1, 2, 3, 4, 5];
+const sum = numbers.reduce((total, num) => total + num, 0);
+// 15
+
+const items = [
+  { name: "Book", price: 10 },
+  { name: "Pen", price: 2 },
+  { name: "Notebook", price: 5 }
+];
+const totalPrice = items.reduce((total, item) => total + item.price, 0);
+// 17
+```
+
+**React example:**
+
+```jsx
+function ShoppingCart({ items }) {
+  const total = items.reduce((sum, item) => sum + item.price, 0);
+
+  return <div>Total: ${total}</div>;
+}
+```
+
+### Chaining Array Methods
+
+The real power comes from combining these:
+
+```javascript
+const users = [
+  { name: "Alice", age: 25, active: true },
+  { name: "Bob", age: 17, active: false },
+  { name: "Charlie", age: 30, active: true }
+];
+
+// Get names of active adult users
+const activeAdultNames = users
+  .filter(user => user.active)
+  .filter(user => user.age >= 18)
+  .map(user => user.name);
+// ["Alice", "Charlie"]
+```
+
+## Common Mistakes
+
+### 1. Forgetting to return in arrow functions
+
+```javascript
+// L Wrong - missing return
+const double = (num) => {
+  num * 2;
+};
+
+//  Correct
+const double = (num) => {
+  return num * 2;
+};
+
+//  Or use implicit return
+const double = (num) => num * 2;
+```
+
+### 2. Calling function instead of passing it
+
+```jsx
+// L Wrong - calls function immediately
+<button onClick={handleClick()}>Click</button>
+
+//  Correct - passes function reference
+<button onClick={handleClick}>Click</button>
+
+//  Correct - passes arrow function
+<button onClick={() => handleClick()}>Click</button>
+```
+
+### 3. Mutating original array with map/filter
+
+```javascript
+// L Wrong - mutating inside map
+const users = [{ name: "Alice", age: 25 }];
+users.map(user => {
+  user.age += 1;  // Mutates original!
+  return user;
+});
+
+//  Correct - create new objects
+const updatedUsers = users.map(user => ({
+  ...user,
+  age: user.age + 1
+}));
+```
+
+## Interview Questions
+
+<details>
+<summary>Q1: What's the difference between regular functions and arrow functions?</summary>
+
+**Answer:**
+
+Main differences:
+
+1. **Syntax:** Arrow functions are more concise
+2. **`this` binding:** Arrow functions don't have their own `this` (they inherit from parent scope)
+3. **Cannot be constructors:** Can't use `new` with arrow functions
+
+```javascript
+// Regular function
+function regular() {
+  console.log(this);  // 'this' depends on how it's called
+}
+
+// Arrow function
+const arrow = () => {
+  console.log(this);  // 'this' is inherited from parent scope
+};
+```
+
+**In React:** Arrow functions are preferred because:
+- Cleaner syntax
+- No `this` confusion (React uses hooks, not `this`)
+- Better for callbacks (maintain correct context)
+</details>
+
+<details>
+<summary>Q2: What does map() return?</summary>
+
+**Answer:** `map()` always returns a **new array** with the same length as the original, where each element is the result of the callback function.
+
+```javascript
+const numbers = [1, 2, 3];
+const doubled = numbers.map(num => num * 2);
+// doubled: [2, 4, 6]
+// numbers: [1, 2, 3] (unchanged)
+```
+
+Key points:
+- Same length as original
+- Doesn't modify original array
+- Returns undefined if you don't return anything from callback
+</details>
+
+<details>
+<summary>Q3: When would you use reduce() instead of map() or filter()?</summary>
+
+**Answer:** Use `reduce()` when you need to accumulate values into a single result (not an array of the same length).
+
+**Use map/filter:**
+```javascript

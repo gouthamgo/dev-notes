@@ -1,0 +1,390 @@
+---
+sidebar_position: 4
+---
+
+# Arrays & Objects
+
+Destructuring and the spread operator are everywhere in React. Master these patterns and your React code will be cleaner and more professional.
+
+## Array Destructuring
+
+Extract values from arrays into variables:
+
+```javascript
+// Without destructuring
+const colors = ["red", "green", "blue"];
+const first = colors[0];
+const second = colors[1];
+
+// With destructuring
+const [first, second] = colors;
+console.log(first);   // "red"
+console.log(second);  // "green"
+
+// Skip items
+const [, , third] = colors;
+console.log(third);   // "blue"
+```
+
+**React useState hook:**
+
+```jsx
+// This is how useState works!
+const [count, setCount] = useState(0);
+//     [value, setter] = returns array
+```
+
+## Object Destructuring
+
+Extract properties from objects:
+
+```javascript
+// Without destructuring
+const user = { name: "Alice", age: 25, city: "NYC" };
+const name = user.name;
+const age = user.age;
+
+// With destructuring
+const { name, age } = user;
+console.log(name);  // "Alice"
+console.log(age);   // 25
+
+// Rename variables
+const { name: userName, age: userAge } = user;
+console.log(userName);  // "Alice"
+
+// Default values
+const { country = "USA" } = user;
+console.log(country);  // "USA" (not in original object)
+```
+
+**React component props:**
+
+```jsx
+// Instead of this:
+function UserCard(props) {
+  return <div>{props.name} - {props.age}</div>;
+}
+
+// Write this:
+function UserCard({ name, age }) {
+  return <div>{name} - {age}</div>;
+}
+```
+
+## Spread Operator: Arrays
+
+Copy and combine arrays:
+
+```javascript
+const arr1 = [1, 2, 3];
+const arr2 = [4, 5, 6];
+
+// Copy array
+const copy = [...arr1];  // [1, 2, 3]
+
+// Combine arrays
+const combined = [...arr1, ...arr2];  // [1, 2, 3, 4, 5, 6]
+
+// Add items
+const withNew = [...arr1, 4, 5];  // [1, 2, 3, 4, 5]
+const withPrepend = [0, ...arr1];  // [0, 1, 2, 3]
+```
+
+**React state updates:**
+
+```jsx
+function TodoList() {
+  const [todos, setTodos] = useState(["Task 1", "Task 2"]);
+
+  const addTodo = (newTodo) => {
+    setTodos([...todos, newTodo]);  // Create new array with new todo
+  };
+
+  return (/* ... */);
+}
+```
+
+## Spread Operator: Objects
+
+Copy and merge objects:
+
+```javascript
+const user = { name: "Alice", age: 25 };
+
+// Copy object
+const copy = { ...user };
+
+// Add properties
+const withEmail = { ...user, email: "alice@example.com" };
+// { name: "Alice", age: 25, email: "alice@example.com" }
+
+// Override properties
+const olderUser = { ...user, age: 26 };
+// { name: "Alice", age: 26 }
+
+// Merge objects
+const address = { city: "NYC", country: "USA" };
+const fullUser = { ...user, ...address };
+// { name: "Alice", age: 25, city: "NYC", country: "USA" }
+```
+
+**React state updates:**
+
+```jsx
+function UserProfile() {
+  const [user, setUser] = useState({ name: "Alice", age: 25 });
+
+  const updateAge = () => {
+    setUser({ ...user, age: user.age + 1 });  // Keep other properties, update age
+  };
+
+  return (/* ... */);
+}
+```
+
+## Object Shorthand
+
+When property name matches variable name:
+
+```javascript
+const name = "Alice";
+const age = 25;
+
+// Without shorthand
+const user = { name: name, age: age };
+
+// With shorthand
+const user = { name, age };
+```
+
+**React example:**
+
+```jsx
+function createUser(name, age, email) {
+  return {
+    name,     // same as name: name
+    age,      // same as age: age
+    email,    // same as email: email
+    id: Date.now()
+  };
+}
+```
+
+## Essential Array Methods
+
+### find - Get First Match
+
+```javascript
+const users = [
+  { id: 1, name: "Alice" },
+  { id: 2, name: "Bob" },
+  { id: 3, name: "Charlie" }
+];
+
+const user = users.find(u => u.id === 2);
+// { id: 2, name: "Bob" }
+
+const missing = users.find(u => u.id === 999);
+// undefined
+```
+
+### forEach - Loop Without Return
+
+```javascript
+const numbers = [1, 2, 3];
+
+numbers.forEach(num => {
+  console.log(num * 2);
+});
+// Logs: 2, 4, 6
+// Returns: undefined
+```
+
+**Note:** Use `map` when you need to transform and return a new array. Use `forEach` when you just need to perform side effects.
+
+### includes - Check if Item Exists
+
+```javascript
+const colors = ["red", "green", "blue"];
+
+colors.includes("red");    // true
+colors.includes("yellow"); // false
+```
+
+**React example:**
+
+```jsx
+function Tag({ name, selected }) {
+  const className = selected.includes(name) ? "active" : "";
+  return <span className={className}>{name}</span>;
+}
+```
+
+## Common Mistakes
+
+### 1. Mutating state directly
+
+```jsx
+// L Wrong - mutates original array
+const [todos, setTodos] = useState(["Task 1"]);
+todos.push("Task 2");  // Don't do this!
+
+//  Correct - create new array
+setTodos([...todos, "Task 2"]);
+```
+
+### 2. Shallow copy trap
+
+```javascript
+const user = { name: "Alice", address: { city: "NYC" } };
+const copy = { ...user };
+
+copy.address.city = "LA";
+console.log(user.address.city);  // "LA" - oops!
+
+// Spread only copies first level (shallow copy)
+// Nested objects are still referenced
+```
+
+### 3. Forgetting array methods return new arrays
+
+```javascript
+const numbers = [1, 2, 3];
+numbers.map(n => n * 2);  // L Result is lost
+
+const doubled = numbers.map(n => n * 2);  //  Store the result
+```
+
+## React List Rendering Pattern
+
+Combining everything you've learned:
+
+```jsx
+function UserList({ users }) {
+  const activeUsers = users.filter(user => user.active);
+
+  return (
+    <ul>
+      {activeUsers.map(({ id, name, age }) => (
+        <li key={id}>
+          {name} - {age} years old
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+Breaking it down:
+- `filter()` - Select active users
+- `map()` - Transform to JSX
+- `({ id, name, age })` - Destructure in parameter
+- `key={id}` - React needs keys for list items
+
+## Interview Questions
+
+<details>
+<summary>Q1: What's the difference between spread operator and rest parameter?</summary>
+
+**Answer:**
+
+Both use `...` but they're opposite operations:
+
+**Spread:** Expands an array/object
+```javascript
+const arr = [1, 2, 3];
+console.log(...arr);  // 1 2 3 (expands into individual values)
+
+const obj = { a: 1, b: 2 };
+const copy = { ...obj };  // { a: 1, b: 2 }
+```
+
+**Rest:** Collects multiple values into array
+```javascript
+function sum(...numbers) {  // Collects all arguments into array
+  return numbers.reduce((a, b) => a + b, 0);
+}
+
+sum(1, 2, 3, 4);  // 10
+
+const [first, ...rest] = [1, 2, 3, 4];
+// first: 1
+// rest: [2, 3, 4]
+```
+</details>
+
+<details>
+<summary>Q2: Is object spread a deep copy or shallow copy?</summary>
+
+**Answer:** **Shallow copy** - only the first level is copied. Nested objects/arrays are still referenced.
+
+```javascript
+const original = {
+  name: "Alice",
+  address: { city: "NYC" }
+};
+
+const copy = { ...original };
+
+copy.name = "Bob";           // OK - primitives are copied
+copy.address.city = "LA";    // Oops - nested object is referenced
+
+console.log(original.address.city);  // "LA" - changed!
+```
+
+**For deep copy:**
+```javascript
+// Option 1: Manual spread at each level
+const copy = {
+  ...original,
+  address: { ...original.address }
+};
+
+// Option 2: JSON (loses functions, dates, etc)
+const copy = JSON.parse(JSON.stringify(original));
+
+// Option 3: Use a library like lodash
+const copy = _.cloneDeep(original);
+```
+</details>
+
+<details>
+<summary>Q3: Why do React lists need keys?</summary>
+
+**Answer:** Keys help React identify which items have changed, been added, or removed. Without keys, React re-renders inefficiently.
+
+```jsx
+// L Bad - using index as key
+{items.map((item, index) => (
+  <div key={index}>{item}</div>
+))}
+
+//  Good - using unique ID
+{items.map(item => (
+  <div key={item.id}>{item.name}</div>
+))}
+```
+
+**Why index is bad:**
+If you delete the first item, all indices shift. React thinks you changed every item instead of removing one.
+
+**Good keys:**
+- Unique IDs from database
+- Stable identifiers that don't change
+- Should be unique among siblings (not globally)
+</details>
+
+## Key Takeaways
+
+1. Destructure function parameters, especially props in React
+2. Use spread operator to copy arrays/objects (but remember it's shallow)
+3. Never mutate state directly in React - always create new arrays/objects
+4. `map()` for transforming arrays, `filter()` for selecting items, `find()` for getting one item
+5. Object shorthand: `{ name }` instead of `{ name: name }`
+6. Always use unique keys when rendering lists
+
+## Next Up
+
+You now understand data structures. Let's learn about asynchronous JavaScript - crucial for fetching data in React.
+

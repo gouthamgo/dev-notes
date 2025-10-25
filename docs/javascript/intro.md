@@ -1,0 +1,56 @@
+---
+sidebar_position: 1
+---
+
+# JavaScript Essentials
+
+Before diving into React, you need to master the JavaScript concepts that React heavily relies on. This isn't your typical "learn everything about JavaScript" tutorial. We're focusing specifically on what you'll actually use when building React apps.
+
+## Why JavaScript Matters for React
+
+React is just JavaScript. Components are functions. Props are parameters. State updates are just variable changes with extra steps. If you struggle with JavaScript fundamentals, React will feel like magic (the bad kind). Once you understand these core concepts, React clicks into place.
+
+## What We'll Cover
+
+1. **[Variables & Data Types](./variables.mdx)** - const, let, template literals, and data structures
+2. **[Functions](./functions.mdx)** - Arrow functions, callbacks, and higher-order functions (map, filter, reduce)
+3. **[Arrays & Objects](./arrays-objects.mdx)** - Destructuring, spread operator, and array methods you'll use daily
+4. **[Async JavaScript](./async-javascript.mdx)** - Promises, async/await, and fetching data
+5. **[ES6+ Features](./es6-features.mdx)** - Modern syntax that makes React code cleaner
+
+## How This Connects to React
+
+Here's a quick preview of how these concepts appear in React:
+
+```jsx
+// This is React, but it's really just JavaScript
+function UserProfile({ name, age }) {  // Destructuring (Topic 3)
+  const [isOnline, setIsOnline] = useState(false);  // const & arrow functions (Topics 1 & 2)
+
+  useEffect(() => {  // Arrow function & async (Topics 2 & 4)
+    fetch(`/api/users/${name}`)  // Template literal (Topic 1)
+      .then(res => res.json())  // Arrow function (Topic 2)
+      .catch(err => console.error(err));
+  }, [name]);  // Array (Topic 3)
+
+  return (
+    <div>
+      {isOnline ? 'Online' : 'Offline'}  {/* Ternary operator (Topic 5) */}
+    </div>
+  );
+}
+```
+
+Every line uses JavaScript fundamentals. Master these, and React becomes much simpler.
+
+## Time Estimate
+
+If you're new to JavaScript: **2-3 days** of focused study
+
+If you know some JavaScript but need a refresher: **1 day**
+
+Don't rush. Take the time to code along with every example.
+
+## Ready?
+
+[Start with Variables & Data Types ’](./variables.mdx)

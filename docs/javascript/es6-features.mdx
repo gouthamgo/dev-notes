@@ -1,0 +1,427 @@
+---
+sidebar_position: 6
+---
+
+# ES6+ Features
+
+Modern JavaScript syntax that makes React code cleaner. These features aren't just nice-to-haves - they're everywhere in professional React code.
+
+## Template Literals (Covered Earlier, But Worth Repeating)
+
+```javascript
+const name = "Alice";
+const age = 25;
+
+// Old way
+const message = "Hello, " + name + "! You are " + age + " years old.";
+
+// Modern way
+const message = `Hello, ${name}! You are ${age} years old.`;
+```
+
+**In React:**
+```jsx
+function UserGreeting({ name, isOnline }) {
+  return <div>{`${name} is ${isOnline ? 'online' : 'offline'}`}</div>;
+}
+```
+
+## Optional Chaining (?.)
+
+Access nested properties safely without checking each level:
+
+```javascript
+const user = {
+  name: "Alice",
+  address: {
+    city: "NYC"
+  }
+};
+
+// Without optional chaining
+const city = user && user.address && user.address.city;
+
+// With optional chaining
+const city = user?.address?.city;  // "NYC"
+
+// If property doesn't exist
+const zip = user?.address?.zip;  // undefined (no error!)
+```
+
+**React example:**
+```jsx
+function UserProfile({ user }) {
+  return (
+    <div>
+      <h1>{user?.name ?? "Anonymous"}</h1>
+      <p>{user?.address?.city ?? "Unknown location"}</p>
+    </div>
+  );
+}
+```
+
+### Optional Chaining with Arrays and Functions
+
+```javascript
+const users = [{ name: "Alice" }];
+
+// Array access
+const firstUser = users?.[0]?.name;  // "Alice"
+const secondUser = users?.[1]?.name;  // undefined
+
+// Function calls
+const result = user.getData?.();  // Calls only if getData exists
+```
+
+## Nullish Coalescing (??)
+
+Provide default values for `null` or `undefined` (but not other falsy values):
+
+```javascript
+// Falsy values: false, 0, "", null, undefined, NaN
+
+// OR operator || (returns first truthy value)
+const count = 0;
+const result1 = count || 10;  // 10 (0 is falsy!)
+
+// Nullish coalescing ?? (returns right side only if left is null/undefined)
+const result2 = count ?? 10;  // 0 (0 is not null/undefined!)
+
+// More examples
+const name1 = "" || "Anonymous";  // "Anonymous" (empty string is falsy)
+const name2 = "" ?? "Anonymous";  // "" (empty string is not null/undefined)
+```
+
+**When to use each:**
+- Use `??` when 0, false, or "" are valid values
+- Use `||` when you want to fallback on any falsy value
+
+**React example:**
+```jsx
+function Counter({ count, maxCount }) {
+  // If count is 0, we want to display 0, not the default
+  return (
+    <div>
+      Count: {count ?? "Loading..."}
+      Max: {maxCount ?? 100}
+    </div>
+  );
+}
+```
+
+## Default Parameters
+
+Provide default values in function parameters:
+
+```javascript
+// Without default
+function greet(name) {
+  name = name || "Guest";
+  return `Hello, ${name}!`;
+}
+
+// With default
+function greet(name = "Guest") {
+  return `Hello, ${name}!`;
+}
+
+greet();          // "Hello, Guest!"
+greet("Alice");   // "Hello, Alice!"
+```
+
+**React component:**
+```jsx
+function Button({ text = "Click me", onClick = () => {} }) {
+  return <button onClick={onClick}>{text}</button>;
+}
+
+// Usage
+<Button />  // Uses defaults
+<Button text="Submit" onClick={handleSubmit} />
+```
+
+## Ternary Operator
+
+Shorthand for if/else - used constantly in React:
+
+```javascript
+const age = 20;
+const status = age >= 18 ? "adult" : "minor";
+
+// Equivalent to:
+let status;
+if (age >= 18) {
+  status = "adult";
+} else {
+  status = "minor";
+}
+```
+
+**React conditional rendering:**
+```jsx
+function StatusBadge({ isActive }) {
+  return (
+    <span className={isActive ? "badge-green" : "badge-gray"}>
+      {isActive ? "Active" : "Inactive"}
+    </span>
+  );
+}
+```
+
+### Nested Ternaries (Use Sparingly)
+
+```jsx
+function UserStatus({ user }) {
+  return (
+    <div>
+      {user === null
+        ? "Loading..."
+        : user.isActive
+        ? "Online"
+        : "Offline"
+      }
+    </div>
+  );
+}
+```
+
+Better readability with early returns:
+```jsx
+function UserStatus({ user }) {
+  if (user === null) return <div>Loading...</div>;
+  if (user.isActive) return <div>Online</div>;
+  return <div>Offline</div>;
+}
+```
+
+## Short-Circuit Evaluation
+
+Use `&&` for conditional rendering:
+
+```javascript
+const isLoggedIn = true;
+
+// With if statement
+if (isLoggedIn) {
+  console.log("Welcome!");
+}
+
+// With short-circuit
+isLoggedIn && console.log("Welcome!");
+```
+
+**React pattern (extremely common):**
+```jsx
+function Dashboard({ user }) {
+  return (
+    <div>
+      <h1>Dashboard</h1>
+      {user.isAdmin && <AdminPanel />}
+      {user.notifications.length > 0 && (
+        <NotificationBadge count={user.notifications.length} />
+      )}
+    </div>
+  );
+}
+```
+
+**How it works:**
+- If left side is falsy, returns left side (React renders nothing for `false`, `null`, `undefined`)
+- If left side is truthy, returns right side (renders the component)
+
+### Watch Out for 0
+
+```jsx
+const count = 0;
+
+// ❌ This renders "0" on screen
+{count && <div>Count: {count}</div>}
+
+//  Better - explicitly check
+{count > 0 && <div>Count: {count}</div>}
+
+//  Or use ternary
+{count ? <div>Count: {count}</div> : null}
+```
+
+## Combining These Features
+
+Real-world React example using multiple patterns:
+
+```jsx
+function UserCard({ user, onEdit }) {
+  const displayName = user?.name ?? "Anonymous";
+  const location = user?.address?.city ?? "Unknown";
+  const age = user?.age ?? 0;
+
+  return (
+    <div className={user?.isPremium ? "card-premium" : "card-basic"}>
+      <h2>{displayName}</h2>
+      <p>{`${age} years old, from ${location}`}</p>
+
+      {user?.isPremium && <PremiumBadge />}
+      {user?.notifications?.length > 0 && (
+        <span>{user.notifications.length} new notifications</span>
+      )}
+
+      <button onClick={onEdit ?? (() => console.log("No edit handler"))}>
+        Edit Profile
+      </button>
+    </div>
+  );
+}
+```
+
+Breaking it down:
+- `?.` for safe property access
+- `??` for default values (including 0)
+- Template literals for strings
+- Ternary for className
+- `&&` for conditional rendering
+- Default parameter for onClick
+
+## Common Mistakes
+
+### 1. Confusing || and ??
+
+```javascript
+const count = 0;
+
+console.log(count || 5);   // 5 (0 is falsy)
+console.log(count ?? 5);   // 0 (0 is not null/undefined)
+
+// In React:
+<div>{count || "No items"}</div>  // Shows "No items" when count is 0
+<div>{count ?? "No items"}</div>  // Shows "0" when count is 0
+```
+
+### 2. Rendering 0 with &&
+
+```jsx
+const items = [];
+
+// L Renders "0" on screen
+{items.length && <List items={items} />}
+
+//  Correct
+{items.length > 0 && <List items={items} />}
+```
+
+### 3. Too many nested ternaries
+
+```jsx
+// L Hard to read
+{status === "loading" ? <Spinner /> : status === "error" ? <Error /> : status === "success" ? <Data /> : null}
+
+//  Use if statements or early returns
+function Content({ status }) {
+  if (status === "loading") return <Spinner />;
+  if (status === "error") return <Error />;
+  if (status === "success") return <Data />;
+  return null;
+}
+```
+
+## Interview Questions
+
+<details>
+<summary>Q1: What's the difference between || and ??</summary>
+
+**Answer:**
+
+- `||` returns the right side if left side is **any falsy value** (false, 0, "", null, undefined, NaN)
+- `??` returns the right side **only if** left side is `null` or `undefined`
+
+```javascript
+const value1 = 0;
+const value2 = null;
+
+console.log(value1 || 10);   // 10 (0 is falsy)
+console.log(value1 ?? 10);   // 0 (0 is not null/undefined)
+
+console.log(value2 || 10);   // 10 (null is falsy)
+console.log(value2 ?? 10);   // 10 (null triggers ??)
+```
+
+**Use cases:**
+- Use `??` when 0, false, or "" are valid values you want to keep
+- Use `||` when you want to fallback on any falsy value
+</details>
+
+<details>
+<summary>Q2: What is optional chaining and when should you use it?</summary>
+
+**Answer:** Optional chaining (`?.`) safely accesses nested object properties. If any part of the chain is `null` or `undefined`, it returns `undefined` instead of throwing an error.
+
+**Without optional chaining:**
+```javascript
+// Verbose and error-prone
+const city = user && user.address && user.address.city;
+```
+
+**With optional chaining:**
+```javascript
+const city = user?.address?.city;
+```
+
+**When to use:**
+- Accessing properties from API responses that might be incomplete
+- Props that might be undefined
+- Deeply nested data structures
+
+**Warning:** Don't overuse it to hide data structure problems. If `user.address` should always exist, maybe fix the data issue instead of using `?.` everywhere.
+</details>
+
+<details>
+<summary>Q3: Why does &#123;count && &lt;Component /&gt;&#125; show "0" on screen?</summary>
+
+**Answer:** In React, `&&` returns the left side if it's falsy. The number `0` is falsy in JavaScript, but React renders it as text.
+
+```jsx
+const count = 0;
+
+// ❌ This renders "0" on screen
+{count && <div>Items: {count}</div>}
+
+// Why? It evaluates to:
+{0}  // React renders the number 0
+```
+
+**Solutions:**
+```jsx
+//  Convert to boolean first
+{!!count && <div>Items: {count}</div>}
+
+//  Explicit comparison
+{count > 0 && <div>Items: {count}</div>}
+
+//  Use ternary
+{count ? <div>Items: {count}</div> : null}
+```
+
+**React rendering rules:**
+- `false`, `null`, `undefined` � render nothing
+- `true` � render nothing (but true is truthy)
+- `0`, `-0`, `NaN` � render as text
+- Strings, numbers � render as text
+</details>
+
+## Key Takeaways
+
+1. **Optional chaining (`?.`)** - Safe property access, returns undefined if missing
+2. **Nullish coalescing (`??`)** - Default values, but keeps 0, false, and ""
+3. **Template literals** - Clean string interpolation with backticks
+4. **Ternary operator** - Inline if/else, great for conditional rendering
+5. **Short-circuit (`&&`)** - Conditional rendering, but watch out for 0
+6. **Default parameters** - Set defaults in function signature
+
+## Congratulations!
+
+You've completed JavaScript Essentials. You now have the foundation needed to understand React code. Every React pattern you'll learn builds on these concepts.
+
+**What's next:**
+- TypeScript basics (coming soon)
+- React fundamentals (coming soon)
+- Job-ready skills (coming soon)
+
+Keep practicing these patterns - they'll become second nature with use!

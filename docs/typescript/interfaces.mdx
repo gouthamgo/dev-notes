@@ -1,0 +1,692 @@
+---
+sidebar_position: 4
+---
+
+# Interfaces & Types
+
+Objects are everywhere in React. TypeScript lets you describe their exact shape.
+
+In the last chapter, we wrote inline type annotations like this:
+
+```typescript
+const user: { name: string; age: number; email: string } = { /* ... */ };
+```
+
+That gets messy fast. Interfaces and type aliases let you name these shapes and reuse them throughout your code.
+
+## The Problem
+
+Here's a function that processes product data:
+
+```javascript
+// JavaScript - no idea what's in this object
+function displayProduct(product) {
+  return `${product.name} - $${product.price}`;
+}
+
+displayProduct({ name: "Laptop", price: 999 });
+displayProduct({ title: "Phone", cost: 599 }); // Oops, wrong property names!
+displayProduct({ name: "Tablet" }); // Oops, missing price!
+```
+
+These bugs won't show up until runtime. If you're lucky, you'll catch them in testing. If not, your users will find them.
+
+With TypeScript, you can describe exactly what a product should look like:
+
+```typescript
+// TypeScript - crystal clear
+interface Product {
+  name: string;
+  price: number;
+}
+
+function displayProduct(product: Product) {
+  return `${product.name} - $${product.price}`;
+}
+
+displayProduct({ name: "Laptop", price: 999 }); // OK
+displayProduct({ title: "Phone", cost: 599 }); // L Error: Object doesn't match Product interface
+displayProduct({ name: "Tablet" }); // L Error: Property 'price' is missing
+```
+
+Now TypeScript catches all three mistakes **before you run the code**.
+
+## Interfaces
+
+An interface is a contract that describes the shape of an object.
+
+### Basic Interface
+
+```typescript
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+// Using the interface
+const alice: User = {
+  id: 1,
+  name: "Alice",
+  email: "alice@example.com"
+};
+
+// Must have all properties
+const bob: User = {
+  id: 2,
+  name: "Bob"
+  // L Error: Property 'email' is missing
+};
+
+// Can't add extra properties
+const carol: User = {
+  id: 3,
+  name: "Carol",
+  email: "carol@example.com",
+  age: 30 // L Error: Object literal may only specify known properties
+};
+```
+
+### Function Parameters with Interfaces
+
+```typescript
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  inStock: boolean;
+}
+
+function formatProduct(product: Product): string {
+  const availability = product.inStock ? "In Stock" : "Out of Stock";
+  return `${product.name} - $${product.price} (${availability})`;
+}
+
+// Now this function is self-documenting
+// Your editor will autocomplete product.name, product.price, etc.
+```
+
+### Nesting Interfaces
+
+```typescript
+interface Address {
+  street: string;
+  city: string;
+  zipCode: string;
+}
+
+interface Customer {
+  id: number;
+  name: string;
+  email: string;
+  address: Address; // Nested interface
+}
+
+const customer: Customer = {
+  id: 1,
+  name: "Alice",
+  email: "alice@example.com",
+  address: {
+    street: "123 Main St",
+    city: "Boston",
+    zipCode: "02101"
+  }
+};
+```
+
+## Optional Properties
+
+Not every property is required. Use `?` for optional fields.
+
+```typescript
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  description?: string; // Optional
+  imageUrl?: string; // Optional
+}
+
+// Valid without optional properties
+const laptop: Product = {
+  id: "prod-1",
+  name: "Laptop",
+  price: 999
+};
+
+// Valid with optional properties
+const phone: Product = {
+  id: "prod-2",
+  name: "Phone",
+  price: 699,
+  description: "Latest smartphone",
+  imageUrl: "/images/phone.jpg"
+};
+```
+
+### Working with Optional Properties
+
+```typescript
+function displayProduct(product: Product) {
+  // Must check if optional properties exist
+  const desc = product.description ?? "No description available";
+
+  return (
+    <div>
+      <h2>{product.name}</h2>
+      <p>${product.price}</p>
+      <p>{desc}</p>
+      {product.imageUrl && <img src={product.imageUrl} alt={product.name} />}
+    </div>
+  );
+}
+```
+
+TypeScript forces you to handle the case where optional properties might be `undefined`. This prevents runtime errors.
+
+## Type Aliases
+
+Type aliases do the same thing as interfaces, but with different syntax:
+
+```typescript
+// Interface
+interface User {
+  id: number;
+  name: string;
+}
+
+// Type alias (same thing)
+type User = {
+  id: number;
+  name: string;
+};
+```
+
+### When to Use Which?
+
+**Use interfaces when:**
+- Defining object shapes (most common case)
+- You might extend them later
+- You're defining React component props (convention)
+
+**Use type aliases when:**
+- Creating union types (next section)
+- Creating utility types
+- Working with primitives or tuples
+
+The truth is, for basic object shapes, they're interchangeable. Pick one style and stick with it.
+
+### Extending Interfaces
+
+```typescript
+interface Animal {
+  name: string;
+  age: number;
+}
+
+interface Dog extends Animal {
+  breed: string;
+  bark: () => void;
+}
+
+const myDog: Dog = {
+  name: "Max",
+  age: 3,
+  breed: "Golden Retriever",
+  bark: () => console.log("Woof!")
+};
+```
+
+## Union Types
+
+This is where type aliases shine. A union type means "one of these options":
+
+```typescript
+type Status = "pending" | "approved" | "rejected";
+
+function updateOrderStatus(status: Status) {
+  // status can only be one of these three strings
+  console.log(`Order status: ${status}`);
+}
+
+updateOrderStatus("pending"); // OK
+updateOrderStatus("shipped"); // L Error: Argument of type '"shipped"' is not assignable to parameter of type 'Status'
+```
+
+### Why This Matters
+
+```javascript
+// JavaScript - any typo becomes a bug
+function setStatus(status) {
+  if (status === "approved") {
+    // ...
+  } else if (status === "aprroved") { // Typo!
+    // This code never runs
+  }
+}
+```
+
+```typescript
+// TypeScript - typos are impossible
+type Status = "pending" | "approved" | "rejected";
+
+function setStatus(status: Status) {
+  if (status === "approved") {
+    // ...
+  } else if (status === "aprroved") { // L Error: This condition will never be true
+    // ...
+  }
+}
+```
+
+### Union Types with Objects
+
+```typescript
+type PaymentMethod =
+  | { type: "credit_card"; cardNumber: string; cvv: string }
+  | { type: "paypal"; email: string }
+  | { type: "cash" };
+
+function processPayment(method: PaymentMethod) {
+  switch (method.type) {
+    case "credit_card":
+      // TypeScript knows method.cardNumber exists here
+      return `Processing card ending in ${method.cardNumber.slice(-4)}`;
+    case "paypal":
+      // TypeScript knows method.email exists here
+      return `Processing PayPal payment to ${method.email}`;
+    case "cash":
+      return "Cash payment received";
+  }
+}
+```
+
+This is called a **discriminated union**. The `type` property tells TypeScript which shape you have.
+
+## React Props with Interfaces
+
+This is where everything clicks for React developers.
+
+### Without TypeScript
+
+```javascript
+// JavaScript - no idea what props this component expects
+function Button(props) {
+  return (
+    <button onClick={props.onClick} disabled={props.disabled}>
+      {props.label}
+    </button>
+  );
+}
+
+// Easy to make mistakes
+<Button label="Click me" onClick={handleClick} />
+<Button text="Click me" onClick={handleClick} /> // Oops, used 'text' instead of 'label'
+<Button label="Click me" /> // Oops, forgot onClick
+```
+
+### With TypeScript
+
+```typescript
+interface ButtonProps {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  variant?: "primary" | "secondary" | "danger";
+}
+
+function Button({ label, onClick, disabled = false, variant = "primary" }: ButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`btn btn-${variant}`}
+    >
+      {label}
+    </button>
+  );
+}
+
+// Usage
+<Button label="Click me" onClick={handleClick} /> // OK
+<Button text="Click me" onClick={handleClick} /> // L Error: Property 'text' does not exist
+<Button label="Click me" /> // L Error: Property 'onClick' is missing
+<Button label="Delete" onClick={handleDelete} variant="danger" /> // OK
+<Button label="Save" onClick={handleSave} variant="success" /> // L Error: Type '"success"' is not assignable to type
+```
+
+Your editor will autocomplete the props. You'll catch mistakes instantly. Refactoring becomes safe.
+
+## Real Scenario - Why This Matters
+
+Imagine you're building a dashboard that displays user data. You fetch data from an API:
+
+```typescript
+// Define the shape of data from your API
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: "admin" | "user" | "guest";
+  lastLogin: string; // ISO date string
+}
+
+interface DashboardData {
+  users: User[];
+  totalCount: number;
+  page: number;
+}
+
+// Now your component knows exactly what to expect
+function Dashboard() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/dashboard")
+      .then(res => res.json())
+      .then((json: DashboardData) => {
+        setData(json);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <p>Loading...</p>;
+  if (!data) return <p>No data</p>;
+
+  return (
+    <div>
+      <h1>Users ({data.totalCount})</h1>
+      {data.users.map(user => (
+        <UserCard key={user.id} user={user} />
+      ))}
+    </div>
+  );
+}
+
+interface UserCardProps {
+  user: User;
+}
+
+function UserCard({ user }: UserCardProps) {
+  return (
+    <div className="card">
+      <h3>{user.name}</h3>
+      <p>{user.email}</p>
+      <span className={`badge badge-${user.role}`}>{user.role}</span>
+      <p>Last login: {new Date(user.lastLogin).toLocaleDateString()}</p>
+    </div>
+  );
+}
+```
+
+**What TypeScript catches:**
+- Typos in property names (`user.nmae` ’ error)
+- Missing required fields in mock data
+- Wrong types (`user.id = "123"` ’ error, should be number)
+- Invalid role values (`role: "superadmin"` ’ error, not in union)
+- Passing wrong props to components
+
+**What you get:**
+- Autocomplete for all properties
+- Inline documentation (hover over any prop)
+- Safe refactoring (rename `lastLogin` everywhere instantly)
+- Confidence that if it compiles, it probably works
+
+## Common Patterns
+
+### 1. Extending interfaces for variations
+
+```typescript
+interface BaseButtonProps {
+  label: string;
+  disabled?: boolean;
+}
+
+interface PrimaryButtonProps extends BaseButtonProps {
+  onClick: () => void;
+}
+
+interface LinkButtonProps extends BaseButtonProps {
+  href: string;
+}
+```
+
+### 2. Readonly properties
+
+```typescript
+interface Config {
+  readonly apiUrl: string;
+  readonly timeout: number;
+}
+
+const config: Config = {
+  apiUrl: "https://api.example.com",
+  timeout: 5000
+};
+
+config.timeout = 10000; // L Error: Cannot assign to 'timeout' because it is a read-only property
+```
+
+### 3. Index signatures (dynamic keys)
+
+```typescript
+interface Dictionary {
+  [key: string]: string;
+}
+
+const translations: Dictionary = {
+  hello: "Hola",
+  goodbye: "Adiós",
+  thanks: "Gracias"
+};
+
+// Any string key is allowed
+translations.welcome = "Bienvenido";
+```
+
+### 4. Function types in interfaces
+
+```typescript
+interface MathOperation {
+  (a: number, b: number): number;
+}
+
+const add: MathOperation = (a, b) => a + b;
+const subtract: MathOperation = (a, b) => a - b;
+```
+
+### 5. Intersection types (combine multiple types)
+
+```typescript
+type Identifiable = {
+  id: number;
+};
+
+type Timestamped = {
+  createdAt: string;
+  updatedAt: string;
+};
+
+type User = Identifiable & Timestamped & {
+  name: string;
+  email: string;
+};
+
+// User has all properties from all three types
+const user: User = {
+  id: 1,
+  name: "Alice",
+  email: "alice@example.com",
+  createdAt: "2025-01-01",
+  updatedAt: "2025-01-15"
+};
+```
+
+## Interview Questions
+
+<details>
+<summary>What's the difference between `interface` and `type`?</summary>
+
+For basic object shapes, they're almost identical:
+
+```typescript
+interface User { name: string; }
+type User = { name: string; };
+```
+
+**Key differences:**
+
+1. **Interfaces can be extended easily:**
+```typescript
+interface Animal { name: string; }
+interface Dog extends Animal { breed: string; }
+```
+
+2. **Types can create unions:**
+```typescript
+type Status = "pending" | "approved" | "rejected";
+```
+
+3. **Interfaces can be merged (declaration merging):**
+```typescript
+interface Window {
+  customProp: string;
+}
+// Later in another file
+interface Window {
+  anotherProp: number;
+}
+// Window now has both properties
+```
+
+4. **Types can alias primitives:**
+```typescript
+type ID = string | number;
+```
+
+**Rule of thumb:**
+- Use `interface` for object shapes and React props (convention)
+- Use `type` for unions, utilities, and when you need more flexibility
+
+In practice, either works fine for most cases. Pick one and be consistent.
+</details>
+
+<details>
+<summary>When should you use optional properties vs. union with undefined?</summary>
+
+These look similar but have subtle differences:
+
+```typescript
+// Optional property
+interface User {
+  name: string;
+  age?: number;
+}
+
+// Union with undefined
+interface User {
+  name: string;
+  age: number | undefined;
+}
+```
+
+**With optional (`age?`):**
+```typescript
+const user: User = { name: "Alice" }; // OK - age can be omitted
+```
+
+**With union (`age: number | undefined`):**
+```typescript
+const user: User = { name: "Alice" }; // L Error - age is required (but can be undefined)
+const user: User = { name: "Alice", age: undefined }; // OK
+```
+
+**When to use each:**
+
+Use **optional** when:
+- The property might not exist at all
+- You want cleaner object literals
+- The absence of the property has meaning
+
+Use **union with undefined** when:
+- You want to explicitly track "no value" vs "unknown"
+- The property must always be present in the object
+
+In React, optional props are more common:
+```typescript
+interface ButtonProps {
+  label: string;
+  icon?: string; // Icon is truly optional
+}
+```
+</details>
+
+<details>
+<summary>How do you type a component that accepts children?</summary>
+
+There are several ways, but `React.ReactNode` is the most flexible:
+
+```typescript
+interface CardProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+function Card({ title, children }: CardProps) {
+  return (
+    <div className="card">
+      <h2>{title}</h2>
+      <div className="card-body">{children}</div>
+    </div>
+  );
+}
+
+// Works with anything React can render
+<Card title="Hello">
+  <p>Text content</p>
+  <button>Click me</button>
+  {someBoolean && <span>Conditional</span>}
+</Card>
+```
+
+**Different types for children:**
+
+```typescript
+children: React.ReactNode      // Anything React can render (most common)
+children: React.ReactElement   // Only React elements (not strings, numbers)
+children: JSX.Element          // Similar to ReactElement
+children: string               // Only strings
+children: React.ReactNode[]    // Array of nodes
+```
+
+**Most of the time, use `React.ReactNode`** - it accepts everything: elements, strings, numbers, fragments, null, undefined, booleans.
+
+For even better typing, you can make children optional:
+```typescript
+interface CardProps {
+  title: string;
+  children?: React.ReactNode;
+}
+```
+</details>
+
+## Key Takeaways
+
+1. **Interfaces describe object shapes** - They're contracts for your data structures
+2. **Use optional properties (`?`) for flexibility** - Not everything needs to be required
+3. **Union types limit values** - `"pending" | "approved"` prevents typos and invalid states
+4. **Type your React props** - Autocomplete, documentation, and safety in one
+5. **Nested interfaces keep code organized** - Break complex types into smaller pieces
+6. **Discriminated unions are powerful** - Use a common property to distinguish between variants
+7. **Interfaces make refactoring safe** - Rename a property once, update everywhere instantly
+
+## Next Steps
+
+You can describe data shapes with interfaces. But React components have more than just props - they have state, events, refs, and children.
+
+How do you type `useState` with complex data? What about `onClick` handlers? How do you work with `useRef`?
+
+**[TypeScript with React](/docs/typescript/typescript-with-react)** connects all these pieces. You'll learn the patterns that make TypeScript and React work beautifully together.
+
+[Continue to TypeScript with React ’](/docs/typescript/typescript-with-react)

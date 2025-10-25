@@ -1,0 +1,403 @@
+---
+sidebar_position: 5
+---
+
+# Async JavaScript
+
+Most React apps fetch data from APIs. Understanding promises and async/await is essential for building real-world applications.
+
+## The Problem: Synchronous Code
+
+JavaScript runs line by line. But some operations take time (API calls, timers):
+
+```javascript
+// L This won't work as expected
+const data = fetch("https://api.example.com/users");
+console.log(data);  // Promise {<pending>} - not the actual data!
+```
+
+We need a way to wait for operations to complete. Enter: **Promises**.
+
+## Promises: The Foundation
+
+A Promise represents a value that will be available in the future:
+
+```javascript
+// Creating a promise (usually libraries do this for you)
+const promise = new Promise((resolve, reject) => {
+  setTimeout(() => {
+    resolve("Done!");
+  }, 1000);
+});
+
+// Using a promise
+promise
+  .then(result => console.log(result))  // "Done!" after 1 second
+  .catch(error => console.error(error));
+```
+
+**Promise states:**
+- Pending: Operation in progress
+- Fulfilled: Operation succeeded (resolve called)
+- Rejected: Operation failed (reject called)
+
+## Fetch API: Making HTTP Requests
+
+```javascript
+fetch("https://api.example.com/users")
+  .then(response => response.json())  // Convert to JSON
+  .then(data => console.log(data))    // Use the data
+  .catch(error => console.error(error));  // Handle errors
+```
+
+Breaking it down:
+1. `fetch()` returns a Promise
+2. First `.then()` converts Response to JSON (also returns Promise)
+3. Second `.then()` receives the actual data
+4. `.catch()` handles any errors in the chain
+
+## async/await: Cleaner Syntax
+
+Same logic as promises, but easier to read:
+
+```javascript
+// With promises
+function getUsers() {
+  fetch("https://api.example.com/users")
+    .then(response => response.json())
+    .then(data => console.log(data))
+    .catch(error => console.error(error));
+}
+
+// With async/await
+async function getUsers() {
+  try {
+    const response = await fetch("https://api.example.com/users");
+    const data = await response.json();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+```
+
+**Key rules:**
+- `await` can only be used inside `async` functions
+- `await` pauses execution until the Promise resolves
+- Use `try/catch` for error handling
+
+## React useEffect Data Fetching
+
+The pattern you'll use constantly:
+
+```jsx
+import { useState, useEffect } from "react";
+
+function UserList() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const response = await fetch("https://api.example.com/users");
+        if (!response.ok) {
+          throw new Error("Failed to fetch");
+        }
+        const data = await response.json();
+        setUsers(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchUsers();
+  }, []);  // Empty array = run once on mount
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  return (
+    <ul>
+      {users.map(user => (
+        <li key={user.id}>{user.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+Breaking it down:
+- `useState` for data, loading state, and errors
+- `useEffect` runs on component mount
+- `async` function for cleaner fetch code
+- `try/catch/finally` for error handling and cleanup
+- Conditional rendering based on loading/error state
+
+## Handling Multiple Requests
+
+### Sequential (one after another)
+
+```javascript
+async function getData() {
+  const users = await fetch("/api/users").then(r => r.json());
+  const posts = await fetch("/api/posts").then(r => r.json());
+  return { users, posts };
+}
+```
+
+### Parallel (at the same time)
+
+```javascript
+async function getData() {
+  const [users, posts] = await Promise.all([
+    fetch("/api/users").then(r => r.json()),
+    fetch("/api/posts").then(r => r.json())
+  ]);
+  return { users, posts };
+}
+```
+
+`Promise.all()` is faster - both requests run simultaneously.
+
+## Common Patterns in React
+
+### Fetching with dependencies
+
+```jsx
+function UserPosts({ userId }) {
+  const [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    async function fetchPosts() {
+      const response = await fetch(`/api/users/${userId}/posts`);
+      const data = await response.json();
+      setPosts(data);
+    }
+
+    fetchPosts();
+  }, [userId]);  // Re-fetch when userId changes
+
+  return (/* ... */);
+}
+```
+
+### Cleanup to prevent memory leaks
+
+```jsx
+useEffect(() => {
+  let isMounted = true;
+
+  async function fetchData() {
+    const data = await fetch("/api/data").then(r => r.json());
+    if (isMounted) {
+      setData(data);  // Only update if component still mounted
+    }
+  }
+
+  fetchData();
+
+  return () => {
+    isMounted = false;  // Cleanup
+  };
+}, []);
+```
+
+## Common Mistakes
+
+### 1. Not handling errors
+
+```javascript
+// L Wrong - no error handling
+async function getUsers() {
+  const response = await fetch("/api/users");
+  const data = await response.json();
+  return data;
+}
+
+//  Correct
+async function getUsers() {
+  try {
+    const response = await fetch("/api/users");
+    if (!response.ok) throw new Error("Fetch failed");
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    throw error;
+  }
+}
+```
+
+### 2. Forgetting await
+
+```javascript
+// L Wrong - returns Promise, not data
+async function getUsers() {
+  const data = fetch("/api/users").then(r => r.json());
+  return data;  // Promise {<pending>}
+}
+
+//  Correct
+async function getUsers() {
+  const response = await fetch("/api/users");
+  const data = await response.json();
+  return data;  // Actual data
+}
+```
+
+### 3. Using async directly in useEffect
+
+```jsx
+// L Wrong - useEffect callback can't be async
+useEffect(async () => {
+  const data = await fetchData();
+}, []);
+
+//  Correct - define async function inside
+useEffect(() => {
+  async function loadData() {
+    const data = await fetchData();
+  }
+  loadData();
+}, []);
+```
+
+## Interview Questions
+
+<details>
+<summary>Q1: What's the difference between .then() and async/await?</summary>
+
+**Answer:** They're two ways to handle promises. `async/await` is syntactic sugar for `.then()` chains.
+
+**With .then():**
+```javascript
+function getUser() {
+  return fetch("/api/user")
+    .then(response => response.json())
+    .then(data => {
+      console.log(data);
+      return data;
+    })
+    .catch(error => console.error(error));
+}
+```
+
+**With async/await:**
+```javascript
+async function getUser() {
+  try {
+    const response = await fetch("/api/user");
+    const data = await response.json();
+    console.log(data);
+    return data;
+  } catch (error) {
+    console.error(error);
+  }
+}
+```
+
+**Advantages of async/await:**
+- More readable, looks like synchronous code
+- Easier to debug
+- Better error handling with try/catch
+
+**When to use .then():**
+- Simple single promises
+- When you don't need async function context
+</details>
+
+<details>
+<summary>Q2: What does Promise.all() do?</summary>
+
+**Answer:** `Promise.all()` takes an array of promises and returns a single promise that resolves when **all** promises resolve, or rejects if **any** promise rejects.
+
+```javascript
+const promise1 = fetch("/api/users");
+const promise2 = fetch("/api/posts");
+const promise3 = fetch("/api/comments");
+
+// Run all at once
+Promise.all([promise1, promise2, promise3])
+  .then(([users, posts, comments]) => {
+    // All three completed
+  })
+  .catch(error => {
+    // Any one failed
+  });
+
+// With async/await
+try {
+  const [users, posts, comments] = await Promise.all([
+    fetch("/api/users").then(r => r.json()),
+    fetch("/api/posts").then(r => r.json()),
+    fetch("/api/comments").then(r => r.json())
+  ]);
+} catch (error) {
+  // Handle error
+}
+```
+
+**Benefits:**
+- Faster than sequential requests (runs in parallel)
+- Cleaner than managing multiple promises separately
+
+**Note:** If you need all-or-nothing behavior, use `Promise.all()`. If you want to continue even if some fail, use `Promise.allSettled()`.
+</details>
+
+<details>
+<summary>Q3: Why can't you make useEffect callback async?</summary>
+
+**Answer:** `useEffect` expects its callback to either return nothing or a cleanup function. An async function always returns a Promise, which breaks this contract.
+
+```jsx
+// L Wrong - async returns Promise
+useEffect(async () => {
+  const data = await fetchData();
+  setData(data);
+}, []);
+
+//  Correct - define async function inside
+useEffect(() => {
+  async function loadData() {
+    const data = await fetchData();
+    setData(data);
+  }
+  loadData();
+}, []);
+
+//  Also correct - with cleanup
+useEffect(() => {
+  let cancelled = false;
+
+  async function loadData() {
+    const data = await fetchData();
+    if (!cancelled) setData(data);
+  }
+
+  loadData();
+
+  return () => {
+    cancelled = true;  // Cleanup function
+  };
+}, []);
+```
+</details>
+
+## Key Takeaways
+
+1. Use `async/await` for cleaner asynchronous code
+2. Always wrap async operations in `try/catch` for error handling
+3. `fetch()` requires two steps: get response, then parse JSON
+4. In React, fetch data inside `useEffect`
+5. Manage loading and error states explicitly
+6. Use `Promise.all()` for parallel requests
+7. Add cleanup to prevent memory leaks when components unmount
+
+## Next Up
+
+Almost done! Let's cover modern ES6+ features that make React code cleaner and more concise.
+

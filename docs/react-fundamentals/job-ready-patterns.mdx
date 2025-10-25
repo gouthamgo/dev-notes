@@ -1,0 +1,1182 @@
+---
+sidebar_position: 11
+title: "Job-Ready Patterns"
+description: "Master the real-world React patterns that appear in interviews and production codebases"
+---
+
+# Job-Ready Patterns
+
+## Real-World React Patterns
+
+This guide covers the patterns you'll **actually use** in professional React development. These patterns appear in:
+- **Take-home coding challenges**
+- **Technical interviews**
+- **Production codebases**
+- **Open source projects**
+
+Master these, and you'll be ready for real React work.
+
+## Routing Basics
+
+### Why We Need Routing
+
+**The Problem:** SPAs (Single Page Applications) need to handle navigation without full page reloads.
+
+```jsx
+// ❌ Without routing - everything in one component!
+function App() {
+  const [page, setPage] = useState('home');
+
+  return (
+    <div>
+      <nav>
+        <button onClick={() => setPage('home')}>Home</button>
+        <button onClick={() => setPage('about')}>About</button>
+        <button onClick={() => setPage('products')}>Products</button>
+      </nav>
+
+      {page === 'home' && <HomePage />}
+      {page === 'about' && <AboutPage />}
+      {page === 'products' && <ProductsPage />}
+      {/* Problems:
+          - No URL changes (can't bookmark/share)
+          - No browser back/forward
+          - No nested routes
+      */}
+    </div>
+  );
+}
+```
+
+### React Router Solution
+
+```bash
+npm install react-router-dom
+```
+
+```jsx
+import { BrowserRouter, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
+
+function App() {
+  return (
+    <BrowserRouter>
+      <nav>
+        <Link to="/">Home</Link>
+        <Link to="/about">About</Link>
+        <Link to="/products">Products</Link>
+      </nav>
+
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/products" element={<ProductsPage />} />
+        <Route path="/products/:id" element={<ProductDetailPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+// Access URL parameters
+function ProductDetailPage() {
+  const { id } = useParams();
+  const [product, setProduct] = useState(null);
+
+  useEffect(() => {
+    fetch(`/api/products/${id}`)
+      .then(res => res.json())
+      .then(setProduct);
+  }, [id]);
+
+  if (!product) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <h1>{product.name}</h1>
+      <p>${product.price}</p>
+    </div>
+  );
+}
+```
+
+### Programmatic Navigation
+
+```jsx
+function LoginForm() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+
+    if (response.ok) {
+      navigate('/dashboard'); // Redirect after login
+    } else {
+      alert('Login failed');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input value={email} onChange={(e) => setEmail(e.target.value)} />
+      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+```
+
+### Protected Routes
+
+```jsx
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/login" />;
+
+  return children;
+}
+
+// Usage
+<Routes>
+  <Route path="/login" element={<LoginPage />} />
+  <Route
+    path="/dashboard"
+    element={
+      <ProtectedRoute>
+        <DashboardPage />
+      </ProtectedRoute>
+    }
+  />
+</Routes>
+```
+
+### Nested Routes
+
+```jsx
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<HomePage />} />
+        <Route path="products" element={<ProductsLayout />}>
+          <Route index element={<ProductsList />} />
+          <Route path=":id" element={<ProductDetail />} />
+        </Route>
+      </Route>
+    </Routes>
+  );
+}
+
+function Layout() {
+  return (
+    <div>
+      <Header />
+      <Outlet /> {/* Child routes render here */}
+      <Footer />
+    </div>
+  );
+}
+```
+
+## Forms and Validation
+
+### Controlled Forms
+
+```jsx
+function SignupForm() {
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched(prev => ({
+      ...prev,
+      [name]: true
+    }));
+    validateField(name, formData[name]);
+  };
+
+  const validateField = (name, value) => {
+    let error = '';
+
+    switch (name) {
+      case 'username':
+        if (!value) error = 'Username is required';
+        else if (value.length < 3) error = 'Username must be at least 3 characters';
+        break;
+
+      case 'email':
+        if (!value) error = 'Email is required';
+        else if (!/\S+@\S+\.\S+/.test(value)) error = 'Email is invalid';
+        break;
+
+      case 'password':
+        if (!value) error = 'Password is required';
+        else if (value.length < 8) error = 'Password must be at least 8 characters';
+        break;
+
+      case 'confirmPassword':
+        if (!value) error = 'Please confirm password';
+        else if (value !== formData.password) error = 'Passwords do not match';
+        break;
+    }
+
+    setErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
+
+    return !error;
+  };
+
+  const validateForm = () => {
+    const fields = ['username', 'email', 'password', 'confirmPassword'];
+    const isValid = fields.every(field =>
+      validateField(field, formData[field])
+    );
+    return isValid;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Mark all fields as touched
+    const allTouched = Object.keys(formData).reduce((acc, key) => ({
+      ...acc,
+      [key]: true
+    }), {});
+    setTouched(allTouched);
+
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        alert('Signup successful!');
+      } else {
+        const error = await response.json();
+        setErrors({ submit: error.message });
+      }
+    } catch (err) {
+      setErrors({ submit: 'Network error. Please try again.' });
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div>
+        <label>Username</label>
+        <input
+          name="username"
+          value={formData.username}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
+        {touched.username && errors.username && (
+          <span className="error">{errors.username}</span>
+        )}
+      </div>
+
+      <div>
+        <label>Email</label>
+        <input
+          name="email"
+          type="email"
+          value={formData.email}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
+        {touched.email && errors.email && (
+          <span className="error">{errors.email}</span>
+        )}
+      </div>
+
+      <div>
+        <label>Password</label>
+        <input
+          name="password"
+          type="password"
+          value={formData.password}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
+        {touched.password && errors.password && (
+          <span className="error">{errors.password}</span>
+        )}
+      </div>
+
+      <div>
+        <label>Confirm Password</label>
+        <input
+          name="confirmPassword"
+          type="password"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
+        {touched.confirmPassword && errors.confirmPassword && (
+          <span className="error">{errors.confirmPassword}</span>
+        )}
+      </div>
+
+      {errors.submit && <div className="error">{errors.submit}</div>}
+
+      <button type="submit">Sign Up</button>
+    </form>
+  );
+}
+```
+
+### Custom Form Hook
+
+```jsx
+function useForm(initialValues, validate) {
+  const [values, setValues] = useState(initialValues);
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setValues(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+
+    if (validate) {
+      const fieldErrors = validate({ [name]: values[name] });
+      setErrors(prev => ({ ...prev, ...fieldErrors }));
+    }
+  };
+
+  const handleSubmit = (onSubmit) => async (e) => {
+    e.preventDefault();
+
+    if (validate) {
+      const formErrors = validate(values);
+      setErrors(formErrors);
+
+      if (Object.keys(formErrors).length > 0) {
+        return;
+      }
+    }
+
+    await onSubmit(values);
+  };
+
+  return {
+    values,
+    errors,
+    touched,
+    handleChange,
+    handleBlur,
+    handleSubmit
+  };
+}
+
+// Usage
+function LoginForm() {
+  const validate = (values) => {
+    const errors = {};
+    if (!values.email) errors.email = 'Required';
+    if (!values.password) errors.password = 'Required';
+    return errors;
+  };
+
+  const form = useForm({ email: '', password: '' }, validate);
+
+  const onSubmit = async (values) => {
+    console.log('Submitting:', values);
+  };
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      <input
+        name="email"
+        value={form.values.email}
+        onChange={form.handleChange}
+        onBlur={form.handleBlur}
+      />
+      {form.touched.email && form.errors.email && <span>{form.errors.email}</span>}
+
+      <input
+        name="password"
+        type="password"
+        value={form.values.password}
+        onChange={form.handleChange}
+        onBlur={form.handleBlur}
+      />
+      {form.touched.password && form.errors.password && <span>{form.errors.password}</span>}
+
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+```
+
+## API Error/Loading Management
+
+### Complete Fetch Pattern
+
+```jsx
+function useApi(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchData() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const json = await response.json();
+
+        if (!cancelled) {
+          setData(json);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+
+  return { data, loading, error };
+}
+
+// Usage
+function UserProfile({ userId }) {
+  const { data: user, loading, error } = useApi(`/api/users/${userId}`);
+
+  if (loading) {
+    return (
+      <div className="loading">
+        <Spinner />
+        <p>Loading user...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error">
+        <h2>Error</h2>
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()}>Retry</button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h1>{user.name}</h1>
+      <p>{user.email}</p>
+    </div>
+  );
+}
+```
+
+### Error Boundaries
+
+Error boundaries catch JavaScript errors in component trees.
+
+```jsx
+import { Component } from 'react';
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+    // Log to error reporting service
+    // logErrorToService(error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="error-boundary">
+          <h1>Something went wrong</h1>
+          <p>{this.state.error?.message}</p>
+          <button onClick={() => this.setState({ hasError: false })}>
+            Try again
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Usage
+function App() {
+  return (
+    <ErrorBoundary>
+      <UserProfile />
+    </ErrorBoundary>
+  );
+}
+```
+
+### Loading States Pattern
+
+```jsx
+function ProductList() {
+  const [products, setProducts] = useState([]);
+  const [status, setStatus] = useState('idle'); // idle, loading, success, error
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      setStatus('loading');
+
+      try {
+        const response = await fetch('/api/products');
+        const data = await response.json();
+        setProducts(data);
+        setStatus('success');
+      } catch (err) {
+        setError(err);
+        setStatus('error');
+      }
+    }
+
+    fetchProducts();
+  }, []);
+
+  if (status === 'loading') {
+    return <LoadingSkeleton />;
+  }
+
+  if (status === 'error') {
+    return <ErrorMessage error={error} />;
+  }
+
+  if (status === 'success' && products.length === 0) {
+    return <EmptyState message="No products found" />;
+  }
+
+  return (
+    <div className="product-grid">
+      {products.map(product => (
+        <ProductCard key={product.id} product={product} />
+      ))}
+    </div>
+  );
+}
+```
+
+## State Management
+
+### When to Use Context vs External State
+
+**Use Context for:**
+- Theme (dark/light mode)
+- User authentication
+- Language/locale
+- Infrequently changing global state
+
+**Use External State (Zustand, Redux) for:**
+- Frequently updated shared state
+- Complex state logic
+- State that needs persistence
+- Large applications with many state updates
+
+### Context API Pattern
+
+```jsx
+import { createContext, useContext, useState, useEffect } from 'react';
+
+const CartContext = createContext();
+
+export function useCart() {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within CartProvider');
+  }
+  return context;
+}
+
+export function CartProvider({ children }) {
+  const [items, setItems] = useState(() => {
+    // Load from localStorage
+    const saved = localStorage.getItem('cart');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Save to localStorage when items change
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(items));
+  }, [items]);
+
+  const addItem = (product) => {
+    setItems(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, { ...product, quantity: 1 }];
+    });
+  };
+
+  const removeItem = (productId) => {
+    setItems(prev => prev.filter(item => item.id !== productId));
+  };
+
+  const updateQuantity = (productId, quantity) => {
+    if (quantity === 0) {
+      removeItem(productId);
+      return;
+    }
+    setItems(prev =>
+      prev.map(item =>
+        item.id === productId ? { ...item, quantity } : item
+      )
+    );
+  };
+
+  const clearCart = () => {
+    setItems([]);
+  };
+
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const value = {
+    items,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    total,
+    itemCount: items.reduce((sum, item) => sum + item.quantity, 0)
+  };
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+}
+
+// Usage
+function ProductPage({ product }) {
+  const { addItem } = useCart();
+
+  return (
+    <div>
+      <h1>{product.name}</h1>
+      <button onClick={() => addItem(product)}>Add to Cart</button>
+    </div>
+  );
+}
+
+function CartSummary() {
+  const { items, total, itemCount } = useCart();
+
+  return (
+    <div>
+      <p>{itemCount} items</p>
+      <p>Total: ${total.toFixed(2)}</p>
+    </div>
+  );
+}
+```
+
+### Zustand (Lightweight State Management)
+
+```bash
+npm install zustand
+```
+
+```jsx
+import create from 'zustand';
+
+// Create store
+const useStore = create((set) => ({
+  bears: 0,
+  increasePopulation: () => set((state) => ({ bears: state.bears + 1 })),
+  removeAllBears: () => set({ bears: 0 })
+}));
+
+// Usage - anywhere in your app!
+function BearCounter() {
+  const bears = useStore((state) => state.bears);
+  return <h1>{bears} bears around here...</h1>;
+}
+
+function Controls() {
+  const increasePopulation = useStore((state) => state.increasePopulation);
+  return <button onClick={increasePopulation}>Add bear</button>;
+}
+```
+
+### Zustand Shopping Cart Example
+
+```jsx
+import create from 'zustand';
+import { persist } from 'zustand/middleware';
+
+const useCartStore = create(
+  persist(
+    (set, get) => ({
+      items: [],
+
+      addItem: (product) => set((state) => {
+        const existing = state.items.find(item => item.id === product.id);
+        if (existing) {
+          return {
+            items: state.items.map(item =>
+              item.id === product.id
+                ? { ...item, quantity: item.quantity + 1 }
+                : item
+            )
+          };
+        }
+        return { items: [...state.items, { ...product, quantity: 1 }] };
+      }),
+
+      removeItem: (id) => set((state) => ({
+        items: state.items.filter(item => item.id !== id)
+      })),
+
+      updateQuantity: (id, quantity) => set((state) => {
+        if (quantity === 0) {
+          return { items: state.items.filter(item => item.id !== id) };
+        }
+        return {
+          items: state.items.map(item =>
+            item.id === id ? { ...item, quantity } : item
+          )
+        };
+      }),
+
+      clearCart: () => set({ items: [] }),
+
+      // Computed values
+      get total() {
+        return get().items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      },
+
+      get itemCount() {
+        return get().items.reduce((sum, item) => sum + item.quantity, 0);
+      }
+    }),
+    {
+      name: 'cart-storage' // localStorage key
+    }
+  )
+);
+
+// Usage
+function Product({ product }) {
+  const addItem = useCartStore((state) => state.addItem);
+  return <button onClick={() => addItem(product)}>Add to Cart</button>;
+}
+
+function CartBadge() {
+  const itemCount = useCartStore((state) => state.itemCount);
+  return <span className="badge">{itemCount}</span>;
+}
+```
+
+## Testing Basics
+
+### React Testing Library
+
+```bash
+npm install --save-dev @testing-library/react @testing-library/jest-dom
+```
+
+### Testing Components
+
+```jsx
+// Counter.jsx
+export function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+      <button onClick={() => setCount(count - 1)}>Decrement</button>
+      <button onClick={() => setCount(0)}>Reset</button>
+    </div>
+  );
+}
+
+// Counter.test.jsx
+import { render, screen, fireEvent } from '@testing-library/react';
+import { Counter } from './Counter';
+
+describe('Counter', () => {
+  test('renders initial count', () => {
+    render(<Counter />);
+    expect(screen.getByText('Count: 0')).toBeInTheDocument();
+  });
+
+  test('increments count', () => {
+    render(<Counter />);
+    const incrementButton = screen.getByText('Increment');
+
+    fireEvent.click(incrementButton);
+    expect(screen.getByText('Count: 1')).toBeInTheDocument();
+
+    fireEvent.click(incrementButton);
+    expect(screen.getByText('Count: 2')).toBeInTheDocument();
+  });
+
+  test('decrements count', () => {
+    render(<Counter />);
+    const decrementButton = screen.getByText('Decrement');
+
+    fireEvent.click(decrementButton);
+    expect(screen.getByText('Count: -1')).toBeInTheDocument();
+  });
+
+  test('resets count', () => {
+    render(<Counter />);
+
+    fireEvent.click(screen.getByText('Increment'));
+    fireEvent.click(screen.getByText('Increment'));
+    expect(screen.getByText('Count: 2')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Reset'));
+    expect(screen.getByText('Count: 0')).toBeInTheDocument();
+  });
+});
+```
+
+### Testing Async Components
+
+```jsx
+// UserProfile.jsx
+export function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/users/${userId}`)
+      .then(res => res.json())
+      .then(data => {
+        setUser(data);
+        setLoading(false);
+      });
+  }, [userId]);
+
+  if (loading) return <div>Loading...</div>;
+  return <div>{user.name}</div>;
+}
+
+// UserProfile.test.jsx
+import { render, screen, waitFor } from '@testing-library/react';
+import { UserProfile } from './UserProfile';
+
+// Mock fetch
+global.fetch = jest.fn();
+
+describe('UserProfile', () => {
+  beforeEach(() => {
+    fetch.mockClear();
+  });
+
+  test('shows loading state', () => {
+    fetch.mockImplementation(() => new Promise(() => {})); // Never resolves
+
+    render(<UserProfile userId="1" />);
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+  });
+
+  test('displays user data', async () => {
+    fetch.mockResolvedValueOnce({
+      json: async () => ({ name: 'John Doe' })
+    });
+
+    render(<UserProfile userId="1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
+  });
+});
+```
+
+## Interview Questions
+
+### Question 1: Protected Routes
+
+**Interviewer:** "How would you implement protected routes in React Router?"
+
+**Answer:**
+Protected routes restrict access to certain pages based on authentication status.
+
+```jsx
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  // Still checking auth status
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  // Not authenticated - redirect to login
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Authenticated - render the page
+  return children;
+}
+
+// Usage
+<Routes>
+  <Route path="/login" element={<LoginPage />} />
+  <Route
+    path="/dashboard"
+    element={
+      <ProtectedRoute>
+        <DashboardPage />
+      </ProtectedRoute>
+    }
+  />
+</Routes>
+```
+
+**Key points:**
+- Check authentication state
+- Show loading while checking
+- Redirect if not authenticated
+- Use `replace` to avoid back button issues
+- Can extend with role-based access
+
+### Question 2: Form Validation
+
+**Interviewer:** "How do you handle form validation in React?"
+
+**Answer:**
+Form validation should happen at multiple stages:
+
+1. **On blur** - validate when user leaves field
+2. **On submit** - validate entire form
+3. **Real-time** (optional) - validate while typing
+
+```jsx
+function useFormValidation(initialValues, validationRules) {
+  const [values, setValues] = useState(initialValues);
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+
+  const validate = (fieldName, value) => {
+    const rule = validationRules[fieldName];
+    if (!rule) return '';
+
+    if (rule.required && !value) {
+      return rule.required;
+    }
+
+    if (rule.minLength && value.length < rule.minLength) {
+      return `Must be at least ${rule.minLength} characters`;
+    }
+
+    if (rule.pattern && !rule.pattern.test(value)) {
+      return rule.message || 'Invalid format';
+    }
+
+    return '';
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setValues(prev => ({ ...prev, [name]: value }));
+
+    // Clear error on change
+    if (touched[name]) {
+      const error = validate(name, value);
+      setErrors(prev => ({ ...prev, [name]: error }));
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+    const error = validate(name, value);
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
+
+  const handleSubmit = (callback) => (e) => {
+    e.preventDefault();
+
+    // Validate all fields
+    const newErrors = {};
+    Object.keys(validationRules).forEach(field => {
+      const error = validate(field, values[field]);
+      if (error) newErrors[field] = error;
+    });
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length === 0) {
+      callback(values);
+    }
+  };
+
+  return {
+    values,
+    errors,
+    touched,
+    handleChange,
+    handleBlur,
+    handleSubmit
+  };
+}
+```
+
+### Question 3: State Management Choice
+
+**Interviewer:** "When would you use Context vs Zustand vs Redux?"
+
+**Answer:**
+
+**Context API:**
+- Small to medium apps
+- Infrequently changing state (theme, auth)
+- Already using React, no extra dependency
+- Example: User authentication, theme
+
+**Zustand:**
+- Medium to large apps
+- Frequently changing state
+- Want simple API without boilerplate
+- Need computed values
+- Example: Shopping cart, notifications
+
+**Redux:**
+- Large, complex apps
+- Need time-travel debugging
+- Strict patterns required
+- Team familiar with Redux
+- Example: Enterprise dashboards
+
+**Decision flow:**
+```
+Does state change frequently?
+  No → Context
+  Yes ↓
+
+Need computed values or middleware?
+  No → Context
+  Yes ↓
+
+Team comfortable with Redux?
+  Yes → Redux
+  No → Zustand
+```
+
+## These Patterns Appear in Take-Home Projects
+
+When you get a take-home coding challenge, expect to use:
+
+1. **Routing** - Multi-page app with URL navigation
+2. **Forms** - Input validation and error handling
+3. **API calls** - Fetch data with loading/error states
+4. **State management** - Share data between components
+5. **Error handling** - Graceful failures
+6. **Testing** - At least basic test coverage
+
+**Example challenge:** "Build a product listing app with search, filters, cart, and checkout."
+
+You'd need:
+- React Router (pages: home, product detail, cart, checkout)
+- Forms (search, filters, checkout form with validation)
+- API calls (fetch products, submit order)
+- State (cart with Zustand or Context)
+- Error boundaries (handle API failures)
+- Tests (key user flows)
+
+## Key Takeaways
+
+1. **Routing** - React Router for navigation
+2. **Forms** - Controlled components with validation
+3. **Error handling** - Error boundaries + try/catch
+4. **Loading states** - Always handle loading/error/empty
+5. **State management** - Context for simple, Zustand for complex
+6. **Testing** - React Testing Library for user-centric tests
+
+**You're now job-ready!** These patterns will carry you through interviews, take-home projects, and real production work.
+
+## Next Steps
+
+Congratulations on completing the React Fundamentals! You now have the knowledge to build real React applications. Continue practicing by:
+
+- Building projects that use these patterns
+- Contributing to open source
+- Taking on coding challenges
+- Reviewing real production codebases
+
+Happy coding!

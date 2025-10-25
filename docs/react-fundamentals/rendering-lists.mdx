@@ -1,0 +1,1020 @@
+---
+sidebar_position: 5
+title: Rendering Lists
+description: Learn how to render arrays of data in React using map, keys, and filtering
+---
+
+# Rendering Lists
+
+## Why map()?
+
+Imagine you need to display a list of users. Your first attempt might look like this:
+
+```jsx
+// ❌ Hardcoded - Repetitive and inflexible
+function UserList() {
+  return (
+    <ul>
+      <li>Alice - Software Engineer</li>
+      <li>Bob - Product Designer</li>
+      <li>Charlie - Data Scientist</li>
+    </ul>
+  );
+}
+```
+
+**The pain points:**
+- ❌ What if you have 100 users? Copy-paste 100 times?
+- ❌ What if users come from an API? Can't hardcode them
+- ❌ What if users change? Need to update JSX manually
+- ❌ Can't filter, sort, or manipulate the list
+
+**The need:** We have an array of data and want to convert it to an array of JSX elements.
+
+**JavaScript's map() to the rescue:**
+
+```jsx
+// ✅ Dynamic - Works with any array
+function UserList() {
+  const users = [
+    { id: 1, name: 'Alice', role: 'Software Engineer' },
+    { id: 2, name: 'Bob', role: 'Product Designer' },
+    { id: 3, name: 'Charlie', role: 'Data Scientist' }
+  ];
+
+  return (
+    <ul>
+      {users.map(user => (
+        <li key={user.id}>
+          {user.name} - {user.role}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+**Now you can:**
+- ✅ Handle any number of items
+- ✅ Work with data from APIs
+- ✅ Filter, sort, and transform the list
+- ✅ Add/remove items dynamically
+
+:::tip The Big Idea
+**Use `.map()` to transform an array of data into an array of JSX elements**
+
+`map()` takes each item in your array and returns a JSX element for it. React then renders all those elements.
+:::
+
+## Mapping Lists to JSX
+
+### Basic Example
+
+```jsx
+function FruitList() {
+  const fruits = ['Apple', 'Banana', 'Cherry'];
+
+  return (
+    <ul>
+      {fruits.map((fruit, index) => (
+        <li key={index}>{fruit}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+**How it works:**
+
+1. `fruits` is an array of strings
+2. `map()` loops through each fruit
+3. For each fruit, return a `<li>` element
+4. Wrap in `{}` to embed in JSX
+5. Result: Array of `<li>` elements that React renders
+
+### With Objects
+
+```jsx
+function ProductList() {
+  const products = [
+    { id: 1, name: 'Laptop', price: 999 },
+    { id: 2, name: 'Mouse', price: 29 },
+    { id: 3, name: 'Keyboard', price: 79 }
+  ];
+
+  return (
+    <div>
+      {products.map(product => (
+        <div key={product.id} className="product-card">
+          <h3>{product.name}</h3>
+          <p>${product.price}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+### With Components
+
+```jsx
+function ProductCard({ name, price }) {
+  return (
+    <div className="product-card">
+      <h3>{name}</h3>
+      <p>${price}</p>
+    </div>
+  );
+}
+
+function ProductList() {
+  const products = [
+    { id: 1, name: 'Laptop', price: 999 },
+    { id: 2, name: 'Mouse', price: 29 },
+    { id: 3, name: 'Keyboard', price: 79 }
+  ];
+
+  return (
+    <div>
+      {products.map(product => (
+        <ProductCard
+          key={product.id}
+          name={product.name}
+          price={product.price}
+        />
+      ))}
+    </div>
+  );
+}
+```
+
+**Benefits of extracting components:**
+- More readable
+- ProductCard is reusable
+- Easier to maintain
+
+## The "key" Prop: Why It's Critical
+
+Notice the `key={product.id}` in the examples above? This is **required** when rendering lists.
+
+### What is a key?
+
+A key is a special prop that helps React identify which items have changed, been added, or removed.
+
+```jsx
+// ❌ Warning: Each child should have a unique "key" prop
+<ul>
+  {users.map(user => (
+    <li>{user.name}</li>
+  ))}
+</ul>
+
+// ✅ Correct: Each item has a unique key
+<ul>
+  {users.map(user => (
+    <li key={user.id}>{user.name}</li>
+  ))}
+</ul>
+```
+
+### Why keys matter
+
+**Without keys:** React doesn't know which items changed, so it has to re-render everything.
+
+**With keys:** React can efficiently update only the items that changed.
+
+**Example of what goes wrong without keys:**
+
+```jsx
+function TodoList() {
+  const [todos, setTodos] = useState([
+    { id: 1, text: 'Buy milk', done: false },
+    { id: 2, text: 'Walk dog', done: false }
+  ]);
+
+  // User checks the first checkbox
+  // Without proper keys, React might update the wrong item!
+}
+```
+
+**With proper keys, React knows:**
+- Item with `key={1}` is "Buy milk"
+- Item with `key={2}` is "Walk dog"
+- If you check item 1's checkbox, only that item updates
+
+### What makes a good key?
+
+**✅ Good keys:**
+- Unique IDs from your database
+- UUIDs generated when creating items
+- Unique stable identifiers
+
+```jsx
+// ✅ Database ID
+<li key={user.id}>{user.name}</li>
+
+// ✅ UUID or unique identifier
+<li key={todo.uuid}>{todo.text}</li>
+
+// ✅ If truly stable and unique
+<li key={user.email}>{user.name}</li>
+```
+
+**❌ Bad keys:**
+- Array index (in most cases - see below)
+- Random numbers generated each render
+- Non-unique values
+
+```jsx
+// ❌ Random - changes every render
+<li key={Math.random()}>{user.name}</li>
+
+// ❌ Non-unique - multiple items have same key
+<li key={user.role}>{user.name}</li>
+```
+
+### Using index as key: When is it okay?
+
+**✅ Okay to use index when:**
+- List is static (never changes)
+- Items have no stable IDs
+- List is never reordered, filtered, or items added/removed
+
+```jsx
+// ✅ Okay - static list
+const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+<ul>
+  {weekdays.map((day, index) => (
+    <li key={index}>{day}</li>
+  ))}
+</ul>
+```
+
+**❌ NOT okay to use index when:**
+- Items can be reordered (drag-and-drop)
+- Items can be added/removed
+- List can be filtered
+- Items have input fields or checkboxes
+
+```jsx
+// ❌ BAD - items can be deleted
+function TodoList({ todos }) {
+  return (
+    <ul>
+      {todos.map((todo, index) => (
+        <li key={index}> {/* Wrong! */}
+          <input type="checkbox" />
+          {todo.text}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+**Why it breaks:** If you delete the first todo, the second todo moves to index 0. React thinks the item at index 0 just changed its text, but the checkbox state gets confused.
+
+**Rule of thumb:** If in doubt, don't use index as key. Generate stable IDs instead.
+
+## Filtering and Mapping
+
+Often you want to display a subset of your data:
+
+### Basic Filtering
+
+```jsx
+function UserList() {
+  const users = [
+    { id: 1, name: 'Alice', active: true },
+    { id: 2, name: 'Bob', active: false },
+    { id: 3, name: 'Charlie', active: true }
+  ];
+
+  // Filter before mapping
+  const activeUsers = users.filter(user => user.active);
+
+  return (
+    <ul>
+      {activeUsers.map(user => (
+        <li key={user.id}>{user.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### Inline Filtering
+
+```jsx
+function UserList({ users }) {
+  return (
+    <ul>
+      {users
+        .filter(user => user.active)
+        .map(user => (
+          <li key={user.id}>{user.name}</li>
+        ))}
+    </ul>
+  );
+}
+```
+
+### Searchable List
+
+```jsx
+function SearchableUserList() {
+  const [search, setSearch] = useState('');
+
+  const users = [
+    { id: 1, name: 'Alice Johnson' },
+    { id: 2, name: 'Bob Smith' },
+    { id: 3, name: 'Charlie Brown' }
+  ];
+
+  const filteredUsers = users.filter(user =>
+    user.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div>
+      <input
+        type="text"
+        placeholder="Search users..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      <ul>
+        {filteredUsers.map(user => (
+          <li key={user.id}>{user.name}</li>
+        ))}
+      </ul>
+
+      {filteredUsers.length === 0 && (
+        <p>No users found matching "{search}"</p>
+      )}
+    </div>
+  );
+}
+```
+
+### Sorting Before Rendering
+
+```jsx
+function ProductList() {
+  const products = [
+    { id: 1, name: 'Laptop', price: 999 },
+    { id: 2, name: 'Mouse', price: 29 },
+    { id: 3, name: 'Keyboard', price: 79 }
+  ];
+
+  // Sort by price (ascending)
+  const sortedProducts = [...products].sort((a, b) => a.price - b.price);
+
+  return (
+    <div>
+      {sortedProducts.map(product => (
+        <div key={product.id}>
+          {product.name} - ${product.price}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+**Important:** Use `[...products]` to create a copy before sorting, because `.sort()` mutates the array.
+
+### Combining Filter, Sort, and Map
+
+```jsx
+function ProductList({ minPrice = 0 }) {
+  const products = [
+    { id: 1, name: 'Laptop', price: 999, inStock: true },
+    { id: 2, name: 'Mouse', price: 29, inStock: true },
+    { id: 3, name: 'Keyboard', price: 79, inStock: false },
+    { id: 4, name: 'Monitor', price: 299, inStock: true }
+  ];
+
+  const displayProducts = products
+    .filter(p => p.inStock)           // Only in-stock items
+    .filter(p => p.price >= minPrice)  // Above minimum price
+    .sort((a, b) => a.price - b.price); // Cheapest first
+
+  return (
+    <div>
+      {displayProducts.map(product => (
+        <div key={product.id}>
+          {product.name} - ${product.price}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+## Rendering Empty States
+
+Always handle the case where your array is empty:
+
+### Basic Empty State
+
+```jsx
+function UserList({ users }) {
+  if (users.length === 0) {
+    return <p>No users found</p>;
+  }
+
+  return (
+    <ul>
+      {users.map(user => (
+        <li key={user.id}>{user.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### Inline Conditional
+
+```jsx
+function UserList({ users }) {
+  return (
+    <div>
+      {users.length === 0 ? (
+        <p>No users found</p>
+      ) : (
+        <ul>
+          {users.map(user => (
+            <li key={user.id}>{user.name}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+```
+
+### With Loading State
+
+```jsx
+function UserList({ users, isLoading }) {
+  if (isLoading) {
+    return <p>Loading...</p>;
+  }
+
+  if (users.length === 0) {
+    return <p>No users found</p>;
+  }
+
+  return (
+    <ul>
+      {users.map(user => (
+        <li key={user.id}>{user.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### Empty State with Search
+
+```jsx
+function SearchableList() {
+  const [search, setSearch] = useState('');
+  const items = ['Apple', 'Banana', 'Cherry'];
+
+  const filteredItems = items.filter(item =>
+    item.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div>
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search..."
+      />
+
+      {filteredItems.length === 0 ? (
+        <p>
+          {search
+            ? `No results for "${search}"`
+            : 'No items available'
+          }
+        </p>
+      ) : (
+        <ul>
+          {filteredItems.map((item, index) => (
+            <li key={index}>{item}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+```
+
+## Common List Bugs
+
+<details>
+<summary>❌ Bug #1: Forgetting the key prop</summary>
+
+```jsx
+// ❌ Missing key - React will warn
+function UserList({ users }) {
+  return (
+    <ul>
+      {users.map(user => (
+        <li>{user.name}</li> {/* No key! */}
+      ))}
+    </ul>
+  );
+}
+
+// Console warning: "Warning: Each child in a list should have a unique "key" prop."
+
+// ✅ Fixed
+function UserList({ users }) {
+  return (
+    <ul>
+      {users.map(user => (
+        <li key={user.id}>{user.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+</details>
+
+<details>
+<summary>❌ Bug #2: Using non-unique keys</summary>
+
+```jsx
+// ❌ Non-unique keys
+const users = [
+  { id: 1, name: 'Alice', role: 'Developer' },
+  { id: 2, name: 'Bob', role: 'Developer' },  // Same role!
+];
+
+<ul>
+  {users.map(user => (
+    <li key={user.role}>{user.name}</li> {/* 'Developer' used twice! */}
+  ))}
+</ul>
+
+// ✅ Use unique identifier
+<ul>
+  {users.map(user => (
+    <li key={user.id}>{user.name}</li>
+  ))}
+</ul>
+```
+
+</details>
+
+<details>
+<summary>❌ Bug #3: Using index when items can change</summary>
+
+```jsx
+// ❌ BAD - deleting items breaks state
+function TodoList() {
+  const [todos, setTodos] = useState([
+    'Buy milk',
+    'Walk dog',
+    'Write code'
+  ]);
+
+  const deleteTodo = (indexToDelete) => {
+    setTodos(todos.filter((_, i) => i !== indexToDelete));
+  };
+
+  return (
+    <ul>
+      {todos.map((todo, index) => (
+        <li key={index}> {/* Using index - BAD! */}
+          <input type="checkbox" />
+          {todo}
+          <button onClick={() => deleteTodo(index)}>Delete</button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// If you check "Walk dog" then delete "Buy milk",
+// "Walk dog" becomes index 0, and React thinks you checked "Buy milk"!
+```
+
+**Solution:** Use stable IDs:
+
+```jsx
+// ✅ GOOD - stable IDs
+function TodoList() {
+  const [todos, setTodos] = useState([
+    { id: 1, text: 'Buy milk' },
+    { id: 2, text: 'Walk dog' },
+    { id: 3, text: 'Write code' }
+  ]);
+
+  const deleteTodo = (idToDelete) => {
+    setTodos(todos.filter(todo => todo.id !== idToDelete));
+  };
+
+  return (
+    <ul>
+      {todos.map(todo => (
+        <li key={todo.id}> {/* Stable ID */}
+          <input type="checkbox" />
+          {todo.text}
+          <button onClick={() => deleteTodo(todo.id)}>Delete</button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+</details>
+
+<details>
+<summary>❌ Bug #4: Directly mapping without wrapping in JSX expression</summary>
+
+```jsx
+// ❌ Wrong - map() returns an array, not JSX
+function UserList({ users }) {
+  return (
+    <ul>
+      users.map(user => <li key={user.id}>{user.name}</li>) {/* No curly braces! */}
+    </ul>
+  );
+}
+
+// ✅ Correct - wrap in { }
+function UserList({ users }) {
+  return (
+    <ul>
+      {users.map(user => <li key={user.id}>{user.name}</li>)}
+    </ul>
+  );
+}
+```
+
+</details>
+
+<details>
+<summary>❌ Bug #5: Mutating array before mapping</summary>
+
+```jsx
+// ❌ WRONG - sort() mutates the original array
+function ProductList({ products }) {
+  products.sort((a, b) => a.price - b.price); // Mutates props!
+
+  return (
+    <div>
+      {products.map(product => (
+        <div key={product.id}>{product.name}</div>
+      ))}
+    </div>
+  );
+}
+
+// ✅ CORRECT - create a copy first
+function ProductList({ products }) {
+  const sortedProducts = [...products].sort((a, b) => a.price - b.price);
+
+  return (
+    <div>
+      {sortedProducts.map(product => (
+        <div key={product.id}>{product.name}</div>
+      ))}
+    </div>
+  );
+}
+```
+
+</details>
+
+## Practical Examples
+
+### Todo List with Add/Delete
+
+```jsx
+import { useState } from 'react';
+
+function TodoApp() {
+  const [todos, setTodos] = useState([
+    { id: 1, text: 'Learn React', done: false },
+    { id: 2, text: 'Build a project', done: false }
+  ]);
+  const [input, setInput] = useState('');
+  const [nextId, setNextId] = useState(3);
+
+  const addTodo = () => {
+    if (input.trim()) {
+      setTodos([...todos, { id: nextId, text: input, done: false }]);
+      setInput('');
+      setNextId(nextId + 1);
+    }
+  };
+
+  const toggleTodo = (id) => {
+    setTodos(todos.map(todo =>
+      todo.id === id ? { ...todo, done: !todo.done } : todo
+    ));
+  };
+
+  const deleteTodo = (id) => {
+    setTodos(todos.filter(todo => todo.id !== id));
+  };
+
+  return (
+    <div>
+      <h1>My Todos</h1>
+
+      <div>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Add a todo..."
+          onKeyPress={(e) => e.key === 'Enter' && addTodo()}
+        />
+        <button onClick={addTodo}>Add</button>
+      </div>
+
+      <ul>
+        {todos.map(todo => (
+          <li key={todo.id} style={{ textDecoration: todo.done ? 'line-through' : 'none' }}>
+            <input
+              type="checkbox"
+              checked={todo.done}
+              onChange={() => toggleTodo(todo.id)}
+            />
+            {todo.text}
+            <button onClick={() => deleteTodo(todo.id)}>Delete</button>
+          </li>
+        ))}
+      </ul>
+
+      {todos.length === 0 && <p>No todos yet. Add one above!</p>}
+    </div>
+  );
+}
+```
+
+### Filterable Product Grid
+
+```jsx
+import { useState } from 'react';
+
+function ProductGrid() {
+  const [category, setCategory] = useState('all');
+
+  const products = [
+    { id: 1, name: 'Laptop', category: 'electronics', price: 999 },
+    { id: 2, name: 'Desk', category: 'furniture', price: 299 },
+    { id: 3, name: 'Mouse', category: 'electronics', price: 29 },
+    { id: 4, name: 'Chair', category: 'furniture', price: 199 },
+  ];
+
+  const filteredProducts = category === 'all'
+    ? products
+    : products.filter(p => p.category === category);
+
+  return (
+    <div>
+      <div>
+        <button onClick={() => setCategory('all')}>All</button>
+        <button onClick={() => setCategory('electronics')}>Electronics</button>
+        <button onClick={() => setCategory('furniture')}>Furniture</button>
+      </div>
+
+      <div className="product-grid">
+        {filteredProducts.map(product => (
+          <div key={product.id} className="product-card">
+            <h3>{product.name}</h3>
+            <p>${product.price}</p>
+            <span className="category">{product.category}</span>
+          </div>
+        ))}
+      </div>
+
+      {filteredProducts.length === 0 && (
+        <p>No products in this category</p>
+      )}
+    </div>
+  );
+}
+```
+
+### Contact List with Search
+
+```jsx
+import { useState } from 'react';
+
+function ContactList() {
+  const [search, setSearch] = useState('');
+
+  const contacts = [
+    { id: 1, name: 'Alice Johnson', email: 'alice@example.com', phone: '555-0101' },
+    { id: 2, name: 'Bob Smith', email: 'bob@example.com', phone: '555-0102' },
+    { id: 3, name: 'Charlie Brown', email: 'charlie@example.com', phone: '555-0103' },
+  ];
+
+  const filteredContacts = contacts.filter(contact =>
+    contact.name.toLowerCase().includes(search.toLowerCase()) ||
+    contact.email.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div>
+      <input
+        type="text"
+        placeholder="Search by name or email..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      <div className="contact-list">
+        {filteredContacts.map(contact => (
+          <div key={contact.id} className="contact-card">
+            <h3>{contact.name}</h3>
+            <p>{contact.email}</p>
+            <p>{contact.phone}</p>
+          </div>
+        ))}
+      </div>
+
+      {filteredContacts.length === 0 && (
+        <p>No contacts match your search</p>
+      )}
+    </div>
+  );
+}
+```
+
+## Interview Questions
+
+<details>
+<summary>Q1: Why do we need the "key" prop when rendering lists in React?</summary>
+
+**Answer:**
+
+The `key` prop helps React identify which items in a list have changed, been added, or removed. It's crucial for React's efficient update algorithm.
+
+**How React uses keys:**
+
+Without keys, React doesn't know which element is which:
+```jsx
+// Before: ['A', 'B', 'C']
+<li>A</li>
+<li>B</li>
+<li>C</li>
+
+// After removing 'A': ['B', 'C']
+<li>B</li>  // React doesn't know this was the 2nd item
+<li>C</li>
+```
+
+React might think:
+- First `<li>` changed from "A" to "B" (update)
+- Second `<li>` changed from "B" to "C" (update)
+- Third `<li>` was removed
+
+With keys, React knows exactly what happened:
+```jsx
+// Before
+<li key="a">A</li>
+<li key="b">B</li>
+<li key="c">C</li>
+
+// After removing 'A'
+<li key="b">B</li>
+<li key="c">C</li>
+```
+
+React now knows:
+- Item with key "a" was removed
+- Items "b" and "c" didn't change (just moved up)
+
+**Performance impact:**
+- **Without keys:** React might re-render all items
+- **With keys:** React only updates what actually changed
+
+**State preservation:**
+If list items have input fields or local state, proper keys ensure that state stays with the correct item even when the list is reordered.
+
+**What makes a good key:**
+- Stable (doesn't change between renders)
+- Unique (no two items have the same key)
+- Predictable (same item = same key)
+
+**Examples:**
+```jsx
+// ✅ Good: database ID
+<li key={user.id}>{user.name}</li>
+
+// ⚠️ Okay only if list never changes:
+<li key={index}>{user.name}</li>
+
+// ❌ Bad: random value
+<li key={Math.random()}>{user.name}</li>
+```
+
+</details>
+
+<details>
+<summary>Q2: When is it okay to use array index as a key, and when is it not?</summary>
+
+**Answer:**
+
+**It's OKAY to use index as key when:**
+
+1. **List is static** and never changes
+2. **Items have no IDs** and you can't generate stable ones
+3. **No reordering, filtering, or adding/removing** items
+4. **Items don't have state** (no inputs, checkboxes, or component state)
+
+**Example where index is okay:**
+```jsx
+const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+// ✅ Okay - static list, never changes
+<ul>
+  {weekdays.map((day, index) => (
+    <li key={index}>{day}</li>
+  ))}
+</ul>
+```
+
+**It's NOT okay to use index as key when:**
+
+1. **Items can be added or removed**
+2. **List can be reordered** (sorting, drag-and-drop)
+3. **Items can be filtered**
+4. **Items have state** (input fields, checkboxes, local component state)
+
+**Example where index causes bugs:**
+```jsx
+function TodoList() {
+  const [todos, setTodos] = useState(['Task 1', 'Task 2', 'Task 3']);
+
+  return (
+    <ul>
+      {todos.map((todo, index) => (
+        <li key={index}> {/* ❌ BAD! */}
+          <input type="checkbox" />
+          {todo}
+          <button onClick={() => deleteTodo(index)}>Delete</button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+**What goes wrong:**
+1. User checks the checkbox for "Task 2" (index 1)
+2. User deletes "Task 1"
+3. "Task 2" is now at index 0
+4. React thinks the checkbox at index 0 should be checked
+5. The wrong checkbox appears checked!
+
+**The fix: Use stable IDs:**
+```jsx
+const [todos, setTodos] = useState([
+  { id: 1, text: 'Task 1' },
+  { id: 2, text: 'Task 2' },
+  { id: 3, text: 'Task 3' }
+]);
+
+// ✅ GOOD
+{todos.map(todo => (
+  <li key={todo.id}>
+    <input type="checkbox" />
+    {todo.text}
+  </li>
+))}
+```
+
+**Rule of thumb:** If you're ever uncertain, **don't use index**. Generate a unique ID instead (using `Date.now()`, `crypto.randomUUID()`, or a library like `nanoid`).
+
+</details>
+
+## Key Takeaways
+
+- ✅ Use `.map()` to convert arrays of data into arrays of JSX
+- ✅ Always provide a `key` prop when rendering lists
+- ✅ Keys should be unique and stable (usually IDs from your data)
+- ✅ Using index as key is okay only for static lists that never change
+- ✅ You can chain `.filter()`, `.sort()`, and `.map()` for complex lists
+- ✅ Always handle empty states gracefully
+- ✅ Don't mutate arrays before mapping (create copies with `[...]`)
+
+## What's Next?
+
+You can now display lists of data. But how do you make them interactive? Let's learn about handling events in React!
+
+[Next: Handling Events →](/react-fundamentals/handling-events)

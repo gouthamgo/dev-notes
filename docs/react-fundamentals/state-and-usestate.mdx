@@ -1,0 +1,946 @@
+---
+sidebar_position: 4
+title: State and useState
+description: Learn how to manage changing data in React with the useState hook
+---
+
+# State and useState
+
+## Why Do We Need State?
+
+Let's say you want to build a counter button. Your first attempt might look like this:
+
+```jsx
+// ❌ This doesn't work!
+function Counter() {
+  let count = 0;
+
+  const increment = () => {
+    count = count + 1;
+    console.log(count); // This logs correctly: 1, 2, 3...
+  };
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={increment}>Increment</button>
+    </div>
+  );
+}
+```
+
+**What happens:** The `count` variable changes in the console, but the UI doesn't update! You keep seeing "Count: 0" on the screen.
+
+**Why?** React doesn't know it needs to re-render the component. Regular variables don't trigger re-renders.
+
+**The need:** UI needs to update when something changes. We need a way to tell React "this value changed, please re-render."
+
+**React's solution: State**
+
+```jsx
+// ✅ This works!
+import { useState } from 'react';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  const increment = () => {
+    setCount(count + 1); // This triggers a re-render!
+  };
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={increment}>Increment</button>
+    </div>
+  );
+}
+```
+
+**Now it works!** Clicking the button updates the display because `setCount` tells React to re-render.
+
+:::tip The Big Idea
+**State = Data that can change over time**
+
+When state changes, React automatically re-renders the component with the new value. State is how you make your UI interactive.
+:::
+
+## Using useState
+
+The `useState` hook is how you add state to a component.
+
+### Basic Syntax
+
+```jsx
+import { useState } from 'react';
+
+const [value, setValue] = useState(initialValue);
+```
+
+**Breaking it down:**
+
+1. **Import useState** from 'react'
+2. **Call useState** with an initial value
+3. **Array destructuring** gives you two things:
+   - `value` - the current state value
+   - `setValue` - function to update the state
+4. **Naming convention:** `[x, setX]`
+
+### Simple Examples
+
+```jsx
+// Boolean state
+const [isOpen, setIsOpen] = useState(false);
+
+// String state
+const [name, setName] = useState('');
+
+// Number state
+const [age, setAge] = useState(0);
+
+// Array state
+const [items, setItems] = useState([]);
+
+// Object state
+const [user, setUser] = useState({ name: '', email: '' });
+```
+
+## How State Updates Work
+
+When you call `setValue`, React:
+
+1. **Updates the state** with the new value
+2. **Schedules a re-render** of the component
+3. **Re-runs the component function** with the new state value
+4. **Updates the DOM** if the output changed
+
+```jsx
+function Counter() {
+  const [count, setCount] = useState(0);
+  console.log('Component rendered with count:', count);
+
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      Count: {count}
+    </button>
+  );
+}
+
+// First render: logs "Component rendered with count: 0"
+// After clicking: logs "Component rendered with count: 1"
+// After clicking: logs "Component rendered with count: 2"
+```
+
+**Key insight:** Each time state changes, your component function runs again, but `useState` remembers the value between renders.
+
+## Common State Patterns
+
+### 1. Toggle Boolean
+
+```jsx
+function ToggleButton() {
+  const [isOn, setIsOn] = useState(false);
+
+  const toggle = () => {
+    setIsOn(!isOn); // Flip the boolean
+  };
+
+  return (
+    <button onClick={toggle}>
+      {isOn ? '🔦 On' : '🔦 Off'}
+    </button>
+  );
+}
+```
+
+**Shorter version:**
+```jsx
+<button onClick={() => setIsOn(!isOn)}>
+  {isOn ? '🔦 On' : '🔦 Off'}
+</button>
+```
+
+### 2. Form Inputs
+
+```jsx
+function NameForm() {
+  const [name, setName] = useState('');
+
+  return (
+    <div>
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+      <p>Hello, {name}!</p>
+    </div>
+  );
+}
+```
+
+**How it works:**
+1. User types in the input
+2. `onChange` event fires
+3. `setName` updates state with new value
+4. Component re-renders
+5. Input shows the new value
+
+### 3. Counter with Multiple Operations
+
+```jsx
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <h2>Count: {count}</h2>
+      <button onClick={() => setCount(count + 1)}>+1</button>
+      <button onClick={() => setCount(count - 1)}>-1</button>
+      <button onClick={() => setCount(count * 2)}>×2</button>
+      <button onClick={() => setCount(0)}>Reset</button>
+    </div>
+  );
+}
+```
+
+### 4. Arrays - Adding Items
+
+```jsx
+function TodoList() {
+  const [todos, setTodos] = useState([]);
+  const [input, setInput] = useState('');
+
+  const addTodo = () => {
+    if (input.trim()) {
+      // ✅ Create a NEW array with the new item
+      setTodos([...todos, input]);
+      setInput(''); // Clear input
+    }
+  };
+
+  return (
+    <div>
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+      />
+      <button onClick={addTodo}>Add</button>
+
+      <ul>
+        {todos.map((todo, index) => (
+          <li key={index}>{todo}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+**Important:** Use `...todos` (spread operator) to create a new array. Don't mutate the original array!
+
+```jsx
+// ❌ WRONG - Mutates state directly
+const addTodo = () => {
+  todos.push(input); // DON'T DO THIS
+  setTodos(todos);
+};
+
+// ✅ CORRECT - Creates new array
+const addTodo = () => {
+  setTodos([...todos, input]);
+};
+```
+
+### 5. Arrays - Removing Items
+
+```jsx
+function TodoList() {
+  const [todos, setTodos] = useState(['Buy milk', 'Walk dog', 'Code']);
+
+  const removeTodo = (indexToRemove) => {
+    setTodos(todos.filter((_, index) => index !== indexToRemove));
+  };
+
+  return (
+    <ul>
+      {todos.map((todo, index) => (
+        <li key={index}>
+          {todo}
+          <button onClick={() => removeTodo(index)}>Delete</button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### 6. Objects - Updating Properties
+
+```jsx
+function UserProfile() {
+  const [user, setUser] = useState({
+    name: '',
+    email: '',
+    age: 0
+  });
+
+  const updateName = (e) => {
+    // ✅ Spread existing properties, override name
+    setUser({ ...user, name: e.target.value });
+  };
+
+  const updateEmail = (e) => {
+    setUser({ ...user, email: e.target.value });
+  };
+
+  return (
+    <div>
+      <input
+        placeholder="Name"
+        value={user.name}
+        onChange={updateName}
+      />
+      <input
+        placeholder="Email"
+        value={user.email}
+        onChange={updateEmail}
+      />
+      <p>Name: {user.name}</p>
+      <p>Email: {user.email}</p>
+    </div>
+  );
+}
+```
+
+**Important:** Always spread the existing object when updating:
+
+```jsx
+// ❌ WRONG - Loses other properties
+setUser({ name: 'Alice' }); // Overwrites email and age!
+
+// ✅ CORRECT - Keeps other properties
+setUser({ ...user, name: 'Alice' });
+```
+
+### 7. Multiple State Variables
+
+```jsx
+function RegistrationForm() {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  const handleSubmit = () => {
+    console.log({ username, password, agreedToTerms });
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        placeholder="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <label>
+        <input
+          type="checkbox"
+          checked={agreedToTerms}
+          onChange={(e) => setAgreedToTerms(e.target.checked)}
+        />
+        I agree to the terms
+      </label>
+      <button type="submit">Register</button>
+    </form>
+  );
+}
+```
+
+**Should you use multiple state variables or one object?**
+
+```jsx
+// Option 1: Multiple variables (simpler for independent values)
+const [name, setName] = useState('');
+const [email, setEmail] = useState('');
+
+// Option 2: One object (better when values are related)
+const [user, setUser] = useState({ name: '', email: '' });
+```
+
+**Rule of thumb:** If values are related and updated together, use an object. If independent, use separate state variables.
+
+## State vs Props: The Comparison
+
+| Feature | State | Props |
+|---------|-------|-------|
+| **Defined where?** | Inside the component | Passed from parent |
+| **Can change?** | Yes (with `setState`) | No (read-only) |
+| **Who controls it?** | The component itself | The parent component |
+| **Triggers re-render?** | Yes, when updated | Yes, when parent passes new values |
+| **Purpose** | Manage changing data | Configure component behavior |
+
+**Example showing both:**
+
+```jsx
+function Parent() {
+  const [count, setCount] = useState(0); // State in Parent
+
+  return (
+    <Child count={count} onIncrement={() => setCount(count + 1)} />
+  );
+}
+
+function Child({ count, onIncrement }) { // Props in Child
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={onIncrement}>Increment</button>
+    </div>
+  );
+}
+```
+
+- Parent manages **state**
+- Child receives **props**
+- Child can't modify `count` directly, but can call `onIncrement`
+
+## Functional Updates
+
+When the new state depends on the previous state, use the functional form:
+
+### The Problem
+
+```jsx
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  const incrementThreeTimes = () => {
+    setCount(count + 1);
+    setCount(count + 1);
+    setCount(count + 1);
+  };
+
+  // Expected: +3, Actual: +1
+  // Why? All three calls use the same 'count' value
+}
+```
+
+### The Solution
+
+```jsx
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  const incrementThreeTimes = () => {
+    setCount(prevCount => prevCount + 1);
+    setCount(prevCount => prevCount + 1);
+    setCount(prevCount => prevCount + 1);
+  };
+
+  // Now it works! Increments by 3
+}
+```
+
+**When to use functional updates:**
+- When new state depends on previous state
+- In async operations (setTimeout, fetch, etc.)
+- To avoid stale closure issues
+
+```jsx
+// ✅ Safe with functional update
+setTimeout(() => {
+  setCount(prevCount => prevCount + 1);
+}, 1000);
+
+// ❌ May use stale count value
+setTimeout(() => {
+  setCount(count + 1);
+}, 1000);
+```
+
+## Lazy Initialization
+
+If the initial state is expensive to compute, use a function:
+
+```jsx
+// ❌ Runs on every render (inefficient)
+const [data, setData] = useState(expensiveComputation());
+
+// ✅ Runs only once on mount
+const [data, setData] = useState(() => expensiveComputation());
+```
+
+**Example:**
+
+```jsx
+function TodoList() {
+  // Only reads from localStorage on the first render
+  const [todos, setTodos] = useState(() => {
+    const saved = localStorage.getItem('todos');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  return <div>{/* ... */}</div>;
+}
+```
+
+## Common Mistakes
+
+<details>
+<summary>❌ Mistake #1: Directly mutating state</summary>
+
+```jsx
+// ❌ WRONG - Mutating state directly
+function TodoList() {
+  const [todos, setTodos] = useState([]);
+
+  const addTodo = (text) => {
+    todos.push(text); // DON'T DO THIS!
+    setTodos(todos); // React won't detect the change!
+  };
+}
+
+// ✅ CORRECT - Create new array
+function TodoList() {
+  const [todos, setTodos] = useState([]);
+
+  const addTodo = (text) => {
+    setTodos([...todos, text]); // Creates new array
+  };
+}
+```
+
+**Why?** React compares state by reference. If you mutate the array/object, it's still the same reference, so React thinks nothing changed.
+
+**For objects:**
+```jsx
+// ❌ WRONG
+user.name = "Alice";
+setUser(user);
+
+// ✅ CORRECT
+setUser({ ...user, name: "Alice" });
+```
+
+</details>
+
+<details>
+<summary>❌ Mistake #2: Expecting state to update immediately</summary>
+
+```jsx
+// ❌ This doesn't work as expected
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  const increment = () => {
+    setCount(count + 1);
+    console.log(count); // Still logs the OLD value!
+  };
+}
+```
+
+**Why?** State updates are **asynchronous**. The new value isn't available until the next render.
+
+**Solutions:**
+
+```jsx
+// ✅ Option 1: Use the new value directly
+const increment = () => {
+  const newCount = count + 1;
+  setCount(newCount);
+  console.log(newCount); // Logs the new value
+};
+
+// ✅ Option 2: Use useEffect to react to changes
+import { useEffect } from 'react';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    console.log('Count changed to:', count);
+  }, [count]);
+}
+```
+
+</details>
+
+<details>
+<summary>❌ Mistake #3: Stale closures in event handlers</summary>
+
+```jsx
+// ❌ Problem: count is "stale" inside setTimeout
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  const incrementAsync = () => {
+    setTimeout(() => {
+      setCount(count + 1); // Uses old 'count' value!
+    }, 1000);
+  };
+}
+
+// If you click twice quickly, count only goes to 1 (not 2)
+```
+
+**Why?** The `count` variable in the setTimeout closure captures the value from when the timeout was created.
+
+**Solutions:**
+
+```jsx
+// ✅ Option 1: Functional update
+const incrementAsync = () => {
+  setTimeout(() => {
+    setCount(prevCount => prevCount + 1); // Uses latest value
+  }, 1000);
+};
+
+// ✅ Option 2: Use useRef for latest value (advanced)
+```
+
+</details>
+
+<details>
+<summary>❌ Mistake #4: Using objects without spreading</summary>
+
+```jsx
+// ❌ WRONG - Overwrites entire object
+const [user, setUser] = useState({ name: 'Alice', age: 25, email: 'alice@example.com' });
+
+const updateName = (newName) => {
+  setUser({ name: newName }); // Loses age and email!
+};
+
+// ✅ CORRECT - Spread existing properties
+const updateName = (newName) => {
+  setUser({ ...user, name: newName }); // Keeps age and email
+};
+```
+
+</details>
+
+<details>
+<summary>❌ Mistake #5: Calling setter inside render</summary>
+
+```jsx
+// ❌ WRONG - Infinite loop!
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  setCount(count + 1); // Called during render = infinite loop!
+
+  return <div>{count}</div>;
+}
+
+// ✅ CORRECT - Call setter in event handler or useEffect
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    // Runs after render
+    const timer = setInterval(() => {
+      setCount(c => c + 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  return <div>{count}</div>;
+}
+```
+
+**Rule:** Never call `setState` directly in the component body (outside of event handlers or useEffect).
+
+</details>
+
+## Practical Examples
+
+### Like Button with Count
+
+```jsx
+function LikeButton() {
+  const [likes, setLikes] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+
+  const handleLike = () => {
+    if (isLiked) {
+      setLikes(likes - 1);
+      setIsLiked(false);
+    } else {
+      setLikes(likes + 1);
+      setIsLiked(true);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleLike}
+      style={{ color: isLiked ? 'red' : 'gray' }}
+    >
+      {isLiked ? '❤️' : '🤍'} {likes}
+    </button>
+  );
+}
+```
+
+### Searchable List
+
+```jsx
+function SearchableList() {
+  const [search, setSearch] = useState('');
+  const items = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry'];
+
+  const filteredItems = items.filter(item =>
+    item.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div>
+      <input
+        type="text"
+        placeholder="Search..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+      <ul>
+        {filteredItems.map(item => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+      {filteredItems.length === 0 && <p>No results found</p>}
+    </div>
+  );
+}
+```
+
+### Shopping Cart Counter
+
+```jsx
+function ShoppingCart() {
+  const [quantity, setQuantity] = useState(1);
+  const pricePerItem = 29.99;
+
+  const increment = () => setQuantity(quantity + 1);
+  const decrement = () => setQuantity(Math.max(1, quantity - 1));
+
+  return (
+    <div>
+      <h3>Wireless Headphones</h3>
+      <p>${pricePerItem} each</p>
+
+      <div>
+        <button onClick={decrement}>-</button>
+        <span> {quantity} </span>
+        <button onClick={increment}>+</button>
+      </div>
+
+      <p>Total: ${(pricePerItem * quantity).toFixed(2)}</p>
+      <button>Add to Cart</button>
+    </div>
+  );
+}
+```
+
+## Interview Questions
+
+<details>
+<summary>Q1: What is state in React and why is it needed?</summary>
+
+**Answer:**
+
+**State** is data that a component manages internally and can change over time. When state changes, React automatically re-renders the component to reflect the new value in the UI.
+
+**Why it's needed:**
+
+Without state, components are static - they can't respond to user interactions or update their display.
+
+```jsx
+// Without state - can't update the UI
+function Counter() {
+  let count = 0; // Just a variable
+
+  return (
+    <button onClick={() => count++}>
+      {count} {/* Always shows 0 */}
+    </button>
+  );
+}
+
+// With state - UI updates on changes
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      {count} {/* Updates correctly */}
+    </button>
+  );
+}
+```
+
+**Key points:**
+- State triggers re-renders when it changes
+- Managed with `useState` hook
+- Local to the component (unlike props which come from parent)
+- Persists between re-renders
+
+**Use state for:** Form inputs, toggles, counters, fetched data, UI state (modals open/closed), etc.
+
+</details>
+
+<details>
+<summary>Q2: Explain the useState hook. What does it return and how does it work?</summary>
+
+**Answer:**
+
+`useState` is a React Hook that adds state to functional components.
+
+**Syntax:**
+```jsx
+const [value, setValue] = useState(initialValue);
+```
+
+**What it returns:**
+
+An array with exactly two elements:
+1. **Current state value** - the current value of the state
+2. **Setter function** - function to update the state
+
+**Example:**
+```jsx
+const [count, setCount] = useState(0);
+//      ^        ^              ^
+//      |        |              |
+//   current   setter    initial value
+//    value   function
+```
+
+**How it works:**
+
+1. **First render:**
+   - `useState(0)` initializes state to 0
+   - Returns `[0, setCount]`
+
+2. **When you call `setCount(5)`:**
+   - React updates state to 5
+   - Schedules a re-render
+   - Component function runs again
+
+3. **Next render:**
+   - `useState(0)` doesn't reinitialize - React remembers the value
+   - Returns `[5, setCount]` with the updated value
+
+**Key behaviors:**
+
+- **Array destructuring:** Can name variables anything:
+  ```jsx
+  const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState('');
+  ```
+
+- **Functional updates:** When new state depends on old state:
+  ```jsx
+  setCount(prevCount => prevCount + 1);
+  ```
+
+- **Lazy initialization:** For expensive initial values:
+  ```jsx
+  const [data, setData] = useState(() => expensiveComputation());
+  ```
+
+**Important rules:**
+- Only call at the top level of component (not in loops/conditions)
+- Each `useState` is independent
+- Setting state is asynchronous
+
+</details>
+
+<details>
+<summary>Q3: Why should you never mutate state directly? What happens if you do?</summary>
+
+**Answer:**
+
+**You should never mutate state directly because React won't detect the change and won't re-render your component.**
+
+**Why this happens:**
+
+React uses **reference equality** to detect state changes. When you mutate an object or array, you're changing its contents but not its reference—React compares references and thinks nothing changed.
+
+**Example of the problem:**
+
+```jsx
+function TodoList() {
+  const [todos, setTodos] = useState(['Task 1']);
+
+  const addTodo = () => {
+    // ❌ WRONG - Mutating state
+    todos.push('Task 2'); // Changes the array
+    setTodos(todos); // Same reference!
+    // React thinks: "same array reference = no change = no re-render"
+  };
+
+  return <div>{todos.length}</div>; // Won't update!
+}
+```
+
+**The correct approach:**
+
+Create a **new** array/object with the changes:
+
+```jsx
+function TodoList() {
+  const [todos, setTodos] = useState(['Task 1']);
+
+  const addTodo = () => {
+    // ✅ CORRECT - Create new array
+    setTodos([...todos, 'Task 2']); // New reference!
+    // React thinks: "different reference = change = re-render"
+  };
+
+  return <div>{todos.length}</div>; // Updates correctly!
+}
+```
+
+**For objects:**
+```jsx
+// ❌ WRONG
+user.name = 'Alice';
+setUser(user);
+
+// ✅ CORRECT
+setUser({ ...user, name: 'Alice' });
+```
+
+**Additional problems with mutation:**
+
+1. **Breaks React's batching** - React may batch multiple state updates for performance
+2. **Causes bugs with useEffect** - Dependencies won't trigger correctly
+3. **Breaks time-travel debugging** - Tools can't track state changes
+4. **Violates React's principles** - React assumes state is immutable
+
+**Interview tip:** Mention that this is part of React's **immutability principle**, which helps with predictability and performance optimizations.
+
+</details>
+
+## Key Takeaways
+
+- ✅ State is data that can change over time
+- ✅ Use `useState` to add state to components
+- ✅ State changes trigger re-renders automatically
+- ✅ Never mutate state directly - always create new arrays/objects
+- ✅ State updates are asynchronous
+- ✅ Use functional updates when new state depends on old state
+- ✅ Multiple state variables vs single object - choose based on whether values are related
+- ✅ State is local to the component (props come from parent)
+
+## What's Next?
+
+Now you can manage data that changes. But what about displaying lists of data? Let's learn how to render arrays in React!
+
+[Next: Rendering Lists →](/react-fundamentals/rendering-lists)

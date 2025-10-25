@@ -1,0 +1,866 @@
+---
+sidebar_position: 3
+title: Props and Children
+description: Learn how to pass data to components using props and the special children prop for composition
+---
+
+# Props and Children
+
+## Why Props?
+
+Remember the UserCard component from the previous lesson? It was reusable, but it had a major limitation:
+
+```jsx
+// ❌ Problem: Every card shows the same data
+function UserCard() {
+  return (
+    <div className="user-card">
+      <img src="avatar1.jpg" alt="User" />
+      <h2>John Doe</h2>
+      <p>Software Engineer</p>
+      <button>Follow</button>
+    </div>
+  );
+}
+
+// All three cards are identical!
+<UserCard />
+<UserCard />
+<UserCard />
+```
+
+**The problem:** The data is hardcoded inside the component. We need a way to pass different data to each instance.
+
+**React's solution: Props (Properties)**
+
+```jsx
+// ✅ Solution: Accept data through props
+function UserCard(props) {
+  return (
+    <div className="user-card">
+      <img src={props.avatar} alt="User" />
+      <h2>{props.name}</h2>
+      <p>{props.title}</p>
+      <button>Follow</button>
+    </div>
+  );
+}
+
+// Now each card can have different data!
+<UserCard
+  name="John Doe"
+  title="Software Engineer"
+  avatar="avatar1.jpg"
+/>
+<UserCard
+  name="Jane Smith"
+  title="Product Designer"
+  avatar="avatar2.jpg"
+/>
+<UserCard
+  name="Bob Johnson"
+  title="Data Scientist"
+  avatar="avatar3.jpg"
+/>
+```
+
+:::tip The Big Idea
+**Props = Parameters for your component functions**
+
+Just like regular functions accept arguments, React components accept props. Props let you customize what each component displays.
+:::
+
+## How Props Work
+
+### Passing Props
+
+You pass props like HTML attributes:
+
+```jsx
+<Welcome name="Alice" age={25} isPremium={true} />
+```
+
+### Receiving Props
+
+Props arrive as an object in the first parameter:
+
+```jsx
+function Welcome(props) {
+  console.log(props); // { name: "Alice", age: 25, isPremium: true }
+
+  return (
+    <div>
+      <h1>Welcome, {props.name}!</h1>
+      <p>Age: {props.age}</p>
+      {props.isPremium && <span className="badge">Premium User</span>}
+    </div>
+  );
+}
+```
+
+**Key points:**
+- `props` is always an object
+- Attribute names become object keys
+- String values can be passed without `{}`
+- Other types (numbers, booleans, arrays, objects) need `{}`
+
+## Destructuring Props
+
+Instead of writing `props.name`, `props.age` repeatedly, you can destructure:
+
+### Option 1: Destructure in the function body
+
+```jsx
+function Welcome(props) {
+  const { name, age, isPremium } = props;
+
+  return (
+    <div>
+      <h1>Welcome, {name}!</h1>
+      <p>Age: {age}</p>
+      {isPremium && <span className="badge">Premium User</span>}
+    </div>
+  );
+}
+```
+
+### Option 2: Destructure in the parameter (most common)
+
+```jsx
+function Welcome({ name, age, isPremium }) {
+  return (
+    <div>
+      <h1>Welcome, {name}!</h1>
+      <p>Age: {age}</p>
+      {isPremium && <span className="badge">Premium User</span>}
+    </div>
+  );
+}
+```
+
+**This is the preferred approach** because it's clearer what props the component expects.
+
+## Real-World Example: Product Card
+
+```jsx title="components/ProductCard.jsx"
+function ProductCard({ name, price, image, inStock, onAddToCart }) {
+  return (
+    <div className="product-card">
+      <img src={image} alt={name} />
+      <h3>{name}</h3>
+      <p className="price">${price.toFixed(2)}</p>
+
+      {inStock ? (
+        <button onClick={onAddToCart}>Add to Cart</button>
+      ) : (
+        <button disabled>Out of Stock</button>
+      )}
+    </div>
+  );
+}
+
+export default ProductCard;
+```
+
+```jsx title="App.jsx"
+function App() {
+  const handleAddToCart = () => {
+    alert('Added to cart!');
+  };
+
+  return (
+    <div className="products">
+      <ProductCard
+        name="Wireless Headphones"
+        price={99.99}
+        image="headphones.jpg"
+        inStock={true}
+        onAddToCart={handleAddToCart}
+      />
+      <ProductCard
+        name="Smart Watch"
+        price={299.99}
+        image="watch.jpg"
+        inStock={false}
+        onAddToCart={handleAddToCart}
+      />
+    </div>
+  );
+}
+```
+
+**Notice:**
+- Props can be any type: strings, numbers, booleans, functions, arrays, objects
+- You can pass functions as props (like `onAddToCart`)
+- Functions are passed without `()` - we pass the reference, not call it
+
+## Default Props
+
+What if a prop isn't provided? Use default parameter values:
+
+```jsx
+function Button({ text = "Click me", variant = "primary" }) {
+  return (
+    <button className={`btn btn-${variant}`}>
+      {text}
+    </button>
+  );
+}
+
+// Uses defaults
+<Button /> // Renders: "Click me" with "primary" style
+
+// Overrides defaults
+<Button text="Submit" variant="success" />
+```
+
+### Alternative: Destructuring with defaults
+
+```jsx
+function Avatar({ src, size = 100, shape = "circle" }) {
+  return (
+    <img
+      src={src}
+      alt="Avatar"
+      width={size}
+      height={size}
+      style={{ borderRadius: shape === "circle" ? "50%" : "0" }}
+    />
+  );
+}
+
+<Avatar src="user.jpg" /> // Uses default size=100, shape="circle"
+<Avatar src="user.jpg" size={150} shape="square" />
+```
+
+## The Special "children" Prop
+
+The `children` prop is special—it represents the content between opening and closing tags:
+
+### Basic Example
+
+```jsx
+function Card({ children }) {
+  return (
+    <div className="card">
+      {children}
+    </div>
+  );
+}
+
+// Whatever you put between <Card> and </Card> becomes 'children'
+<Card>
+  <h2>Card Title</h2>
+  <p>Card content goes here</p>
+</Card>
+```
+
+**Renders:**
+```html
+<div class="card">
+  <h2>Card Title</h2>
+  <p>Card content goes here</p>
+</div>
+```
+
+### Why is this useful?
+
+The `children` prop enables **composition**—building complex components from simpler ones:
+
+```jsx
+function Layout({ children }) {
+  return (
+    <div className="layout">
+      <header>
+        <h1>My App</h1>
+      </header>
+      <main>
+        {children}
+      </main>
+      <footer>
+        <p>&copy; 2024</p>
+      </footer>
+    </div>
+  );
+}
+
+// Different pages can reuse the same layout
+function HomePage() {
+  return (
+    <Layout>
+      <h2>Welcome Home</h2>
+      <p>This is the home page content</p>
+    </Layout>
+  );
+}
+
+function AboutPage() {
+  return (
+    <Layout>
+      <h2>About Us</h2>
+      <p>This is the about page content</p>
+    </Layout>
+  );
+}
+```
+
+### Button with Icon Example
+
+```jsx
+function Button({ children, variant = "primary", onClick }) {
+  return (
+    <button
+      className={`btn btn-${variant}`}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
+// Children can be text
+<Button>Click Me</Button>
+
+// Or JSX elements
+<Button variant="success">
+  <svg>...</svg>
+  <span>Save</span>
+</Button>
+
+// Or a mix
+<Button>
+  Submit Form
+  <span className="badge">5</span>
+</Button>
+```
+
+### Modal Example with Multiple Slots
+
+```jsx
+function Modal({ title, children, footer }) {
+  return (
+    <div className="modal">
+      <div className="modal-header">
+        <h2>{title}</h2>
+      </div>
+      <div className="modal-body">
+        {children}
+      </div>
+      <div className="modal-footer">
+        {footer}
+      </div>
+    </div>
+  );
+}
+
+// Usage
+<Modal
+  title="Confirm Delete"
+  footer={
+    <>
+      <button>Cancel</button>
+      <button>Delete</button>
+    </>
+  }
+>
+  <p>Are you sure you want to delete this item?</p>
+  <p>This action cannot be undone.</p>
+</Modal>
+```
+
+## Props vs Children: When to Use Each
+
+**Use regular props when:**
+- Passing simple data (strings, numbers, booleans)
+- Passing functions (event handlers)
+- The value is a single piece of data
+
+**Use children prop when:**
+- You want to wrap content with a component
+- Building layout components (Card, Modal, Layout)
+- The content is complex or has multiple elements
+- You want maximum flexibility in what can be passed
+
+```jsx
+// ✅ Good: Simple data = props
+<UserCard name="Alice" age={25} />
+
+// ✅ Good: Complex content = children
+<Card>
+  <h2>Title</h2>
+  <p>Description</p>
+  <img src="photo.jpg" />
+</Card>
+
+// ❌ Awkward: Passing complex JSX as a prop
+<Card
+  content={
+    <>
+      <h2>Title</h2>
+      <p>Description</p>
+    </>
+  }
+/>
+```
+
+## Props Flow Down the Component Tree
+
+Props create a one-way data flow from parent to child:
+
+```jsx
+function GrandParent() {
+  const user = { name: "Alice", role: "Admin" };
+
+  return <Parent user={user} />;
+}
+
+function Parent({ user }) {
+  return <Child user={user} />;
+}
+
+function Child({ user }) {
+  return <div>Hello, {user.name} ({user.role})</div>;
+}
+```
+
+**Key rule:** Data flows DOWN from parent to child. Children cannot directly modify parent props.
+
+```jsx
+// ❌ Children cannot pass data UP through props
+// ❌ This is wrong conceptually:
+function Child({ user }) {
+  // You cannot do this:
+  user = { name: "Bob" }; // Won't affect parent!
+  return <div>{user.name}</div>;
+}
+```
+
+**To pass data UP**, you use callback functions (we'll cover this pattern in detail later):
+
+```jsx
+function Parent() {
+  const handleChildClick = (message) => {
+    console.log("Child says:", message);
+  };
+
+  return <Child onChildClick={handleChildClick} />;
+}
+
+function Child({ onChildClick }) {
+  return (
+    <button onClick={() => onChildClick("Hello from child!")}>
+      Click me
+    </button>
+  );
+}
+```
+
+## Common Mistakes
+
+<details>
+<summary>❌ Mistake #1: Trying to mutate props</summary>
+
+```jsx
+// ❌ Wrong - props are read-only!
+function UserProfile({ user }) {
+  user.name = "New Name"; // DON'T DO THIS!
+
+  return <div>{user.name}</div>;
+}
+
+// ✅ Correct - props should not be modified
+function UserProfile({ user }) {
+  // If you need to modify, create a new object
+  const updatedUser = { ...user, name: "New Name" };
+
+  return <div>{updatedUser.name}</div>;
+}
+```
+
+**Why?** Props are **read-only**. React components should be "pure" with respect to their props—they should never modify them. This keeps your app predictable.
+
+</details>
+
+<details>
+<summary>❌ Mistake #2: Forgetting curly braces for non-string values</summary>
+
+```jsx
+// ❌ Wrong - numbers and booleans need {}
+<Counter count="5" />  // count is the STRING "5", not number 5
+<Button disabled="true" />  // disabled is the STRING "true", not boolean
+
+// ✅ Correct
+<Counter count={5} />  // count is the number 5
+<Button disabled={true} />  // disabled is the boolean true
+
+// ✅ Shorthand for boolean true
+<Button disabled />  // Same as disabled={true}
+```
+
+</details>
+
+<details>
+<summary>❌ Mistake #3: Confusing props and state</summary>
+
+```jsx
+// ❌ Wrong concept - trying to change props
+function Counter({ count }) {
+  const increment = () => {
+    count = count + 1; // This won't work!
+  };
+
+  return <button onClick={increment}>{count}</button>;
+}
+
+// ✅ Correct - use state for values that change
+import { useState } from 'react';
+
+function Counter({ initialCount }) {
+  const [count, setCount] = useState(initialCount);
+
+  const increment = () => {
+    setCount(count + 1); // This works!
+  };
+
+  return <button onClick={increment}>{count}</button>;
+}
+```
+
+**Remember:**
+- **Props** = Data passed FROM parent (read-only)
+- **State** = Data managed WITHIN component (can change)
+
+</details>
+
+<details>
+<summary>❌ Mistake #4: Destructuring non-existent props</summary>
+
+```jsx
+// ❌ Can cause issues if props aren't passed
+function UserCard({ name, age, email }) {
+  return (
+    <div>
+      <h2>{name}</h2>
+      <p>Age: {age}</p>
+      <p>Email: {email.toLowerCase()}</p> {/* Error if email is undefined! */}
+    </div>
+  );
+}
+
+// If used without email prop:
+<UserCard name="Alice" age={25} /> // Crashes: Cannot read 'toLowerCase' of undefined
+
+// ✅ Option 1: Provide defaults
+function UserCard({ name, age, email = "No email provided" }) {
+  return (
+    <div>
+      <h2>{name}</h2>
+      <p>Age: {age}</p>
+      <p>Email: {email.toLowerCase()}</p>
+    </div>
+  );
+}
+
+// ✅ Option 2: Check before using
+function UserCard({ name, age, email }) {
+  return (
+    <div>
+      <h2>{name}</h2>
+      <p>Age: {age}</p>
+      {email && <p>Email: {email.toLowerCase()}</p>}
+    </div>
+  );
+}
+```
+
+</details>
+
+<details>
+<summary>❌ Mistake #5: Calling functions instead of passing references</summary>
+
+```jsx
+// ❌ Wrong - calls the function immediately
+<button onClick={handleClick()}>Click me</button>
+// This runs handleClick() during render, not on click!
+
+// ✅ Correct - pass the function reference
+<button onClick={handleClick}>Click me</button>
+
+// ✅ If you need to pass arguments, use arrow function
+<button onClick={() => handleClick(123)}>Click me</button>
+```
+
+</details>
+
+## Spreading Props
+
+Sometimes you want to pass many props at once:
+
+```jsx
+function UserProfile(props) {
+  // Instead of accessing props.name, props.age, props.email individually...
+  return <UserCard {...props} />;
+}
+
+// Equivalent to:
+function UserProfile({ name, age, email }) {
+  return <UserCard name={name} age={age} email={email} />;
+}
+```
+
+**Common use case:** Forwarding props to a child component
+
+```jsx
+function FancyButton({ variant, ...otherProps }) {
+  // variant is extracted, all other props are spread
+  return (
+    <button
+      className={`btn btn-${variant}`}
+      {...otherProps}  // onClick, disabled, etc.
+    />
+  );
+}
+
+// Usage
+<FancyButton
+  variant="primary"
+  onClick={handleClick}
+  disabled={false}
+  aria-label="Submit form"
+/>
+```
+
+## Practical Examples
+
+### Alert Component with Variants
+
+```jsx
+function Alert({ type = "info", title, children, onClose }) {
+  const icons = {
+    success: "✓",
+    error: "✗",
+    warning: "⚠",
+    info: "ℹ"
+  };
+
+  return (
+    <div className={`alert alert-${type}`}>
+      <span className="alert-icon">{icons[type]}</span>
+      <div className="alert-content">
+        {title && <h4>{title}</h4>}
+        <div>{children}</div>
+      </div>
+      {onClose && (
+        <button className="alert-close" onClick={onClose}>
+          ×
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Usage
+<Alert type="success" title="Success!">
+  Your changes have been saved.
+</Alert>
+
+<Alert type="error" onClose={() => console.log("Closed")}>
+  Something went wrong. Please try again.
+</Alert>
+```
+
+### Tabs Component
+
+```jsx
+function Tabs({ children }) {
+  return <div className="tabs">{children}</div>;
+}
+
+function Tab({ label, isActive, onClick }) {
+  return (
+    <button
+      className={`tab ${isActive ? 'active' : ''}`}
+      onClick={onClick}
+    >
+      {label}
+    </button>
+  );
+}
+
+// Usage
+<Tabs>
+  <Tab label="Profile" isActive={true} onClick={() => {}} />
+  <Tab label="Settings" isActive={false} onClick={() => {}} />
+  <Tab label="Messages" isActive={false} onClick={() => {}} />
+</Tabs>
+```
+
+## Interview Questions
+
+<details>
+<summary>Q1: What are props in React and how do they differ from state?</summary>
+
+**Answer:**
+
+**Props (Properties):**
+- Data passed FROM parent component TO child component
+- **Read-only** - cannot be modified by the receiving component
+- Used to configure and customize child components
+- Flow one-way down the component tree
+
+**State:**
+- Data managed WITHIN a component
+- **Can be changed** using `setState` or `setX` functions
+- When state changes, the component re-renders
+- Private to the component
+
+**Analogy:**
+- Props are like function **parameters** (passed in from outside)
+- State is like function **local variables** (managed inside)
+
+```jsx
+// Props: Parent decides the initial count
+function Parent() {
+  return <Counter initialCount={0} />; // Props flow down
+}
+
+function Counter({ initialCount }) { // Props come in
+  const [count, setCount] = useState(initialCount); // State managed inside
+
+  return <button onClick={() => setCount(count + 1)}>{count}</button>;
+}
+```
+
+**Key difference:** Props are **immutable** (read-only), state is **mutable** (can change).
+
+</details>
+
+<details>
+<summary>Q2: What is the 'children' prop and when would you use it?</summary>
+
+**Answer:**
+
+The `children` prop is a special prop that contains the content between a component's opening and closing tags.
+
+**How it works:**
+```jsx
+<Card>
+  <h2>Title</h2>  {/* This becomes the 'children' prop */}
+  <p>Content</p>
+</Card>
+
+function Card({ children }) {
+  return <div className="card">{children}</div>;
+}
+```
+
+**When to use children:**
+
+1. **Layout/wrapper components**
+```jsx
+function Container({ children }) {
+  return <div className="container">{children}</div>;
+}
+```
+
+2. **Components that enhance/wrap content**
+```jsx
+function Highlighted({ children }) {
+  return <mark>{children}</mark>;
+}
+```
+
+3. **When content is complex or varied**
+```jsx
+<Modal>
+  <h2>Title</h2>
+  <p>Paragraph 1</p>
+  <p>Paragraph 2</p>
+  <img src="..." />
+</Modal>
+```
+
+**Benefits:**
+- More flexible than passing content as a regular prop
+- Feels more natural (like HTML)
+- Enables composition patterns
+
+**Alternative (less flexible):**
+```jsx
+// Less flexible - must pass as prop
+<Card content={<h2>Title</h2>} />
+
+// More flexible - use children
+<Card><h2>Title</h2></Card>
+```
+
+</details>
+
+<details>
+<summary>Q3: Can you modify props inside a component? Why or why not?</summary>
+
+**Answer:** **No, you cannot and should not modify props.** Props are read-only.
+
+**Why props are read-only:**
+
+1. **Predictability** - If children could modify props, it would be hard to track where data changes
+2. **One-way data flow** - React enforces data flowing down from parent to child
+3. **Pure functions** - Components should be pure with respect to their props (same props = same output)
+
+```jsx
+// ❌ WRONG - Mutating props
+function UserCard({ user }) {
+  user.name = "Changed"; // DON'T DO THIS!
+  return <div>{user.name}</div>;
+}
+
+// ✅ CORRECT - Read props, don't modify
+function UserCard({ user }) {
+  return <div>{user.name}</div>;
+}
+
+// ✅ If you need to derive new data from props
+function UserCard({ user }) {
+  const displayName = user.name.toUpperCase(); // Create new variable
+  return <div>{displayName}</div>;
+}
+```
+
+**What if you need to change a value from props?**
+
+Use it as the **initial value for state**:
+
+```jsx
+function Counter({ initialCount }) {
+  // initialCount is a prop (read-only)
+  // count is state (can be modified)
+  const [count, setCount] = useState(initialCount);
+
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      {count}
+    </button>
+  );
+}
+```
+
+**In interviews, also mention:** React will warn you if you try to modify props directly, and it can lead to bugs where the parent component's data gets unexpectedly changed.
+
+</details>
+
+## Key Takeaways
+
+- ✅ Props are how you pass data from parent to child components
+- ✅ Props are read-only - never modify them
+- ✅ Destructure props in parameters for cleaner code
+- ✅ Use default values for optional props
+- ✅ The `children` prop is special - it contains JSX between component tags
+- ✅ Use children for layout/wrapper components
+- ✅ Data flows one-way: DOWN the component tree via props
+- ✅ To pass data UP, use callback functions passed as props
+
+## What's Next?
+
+Props let you pass data DOWN to components. But what about data that CHANGES over time? That's where **state** comes in!
+
+[Next: State and useState →](/react-fundamentals/state-and-usestate)

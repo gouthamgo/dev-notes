@@ -1,0 +1,912 @@
+---
+sidebar_position: 10
+title: "Component Patterns"
+description: "Learn proven patterns for building flexible, reusable React components"
+---
+
+# Component Patterns
+
+## Why Patterns?
+
+React's superpower is **composition** - combining simple components into complex UIs. But as apps grow, you need patterns to:
+
+- **Avoid code duplication**
+- **Share logic between components**
+- **Create flexible, reusable APIs**
+- **Separate concerns** (logic vs presentation)
+
+Think of patterns as **proven recipes** for solving common problems.
+
+## Presentational vs Container Components
+
+This pattern separates **what things look like** from **what things do**.
+
+### The Problem
+
+```jsx
+// ❌ Mixed concerns - logic and presentation together
+function UserList() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('');
+
+  useEffect(() => {
+    fetch('/api/users')
+      .then(res => res.json())
+      .then(data => {
+        setUsers(data);
+        setLoading(false);
+      });
+  }, []);
+
+  const filtered = users.filter(u =>
+    u.name.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  if (loading) return <div className="loading">Loading...</div>;
+
+  return (
+    <div className="user-list">
+      <input
+        className="search"
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+        placeholder="Search users..."
+      />
+      <ul className="list">
+        {filtered.map(user => (
+          <li key={user.id} className="user-item">
+            <img src={user.avatar} alt="" />
+            <div>
+              <h3>{user.name}</h3>
+              <p>{user.email}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+**Problems:**
+- Can't reuse the list UI with different data
+- Can't test UI without data fetching
+- Hard to modify styling without touching logic
+
+### The Solution: Separate Concerns
+
+```jsx
+// Container - handles data and logic
+function UserListContainer() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('');
+
+  useEffect(() => {
+    fetch('/api/users')
+      .then(res => res.json())
+      .then(data => {
+        setUsers(data);
+        setLoading(false);
+      });
+  }, []);
+
+  const filtered = users.filter(u =>
+    u.name.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <UserList
+      users={filtered}
+      filter={filter}
+      onFilterChange={setFilter}
+    />
+  );
+}
+
+// Presentational - pure UI component
+function UserList({ users, filter, onFilterChange }) {
+  return (
+    <div className="user-list">
+      <SearchBox value={filter} onChange={onFilterChange} />
+      <ul className="list">
+        {users.map(user => (
+          <UserCard key={user.id} user={user} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function SearchBox({ value, onChange }) {
+  return (
+    <input
+      className="search"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder="Search..."
+    />
+  );
+}
+
+function UserCard({ user }) {
+  return (
+    <li className="user-item">
+      <img src={user.avatar} alt="" />
+      <div>
+        <h3>{user.name}</h3>
+        <p>{user.email}</p>
+      </div>
+    </li>
+  );
+}
+```
+
+### Benefits
+
+✅ **Presentational components** can be reused with different data
+✅ **Easy to test** - presentational components are pure functions
+✅ **Clear separation** - designers work on presentational, developers on containers
+✅ **Better performance** - presentational components are easier to optimize
+
+### Modern Alternative: Custom Hooks
+
+```jsx
+// Extract logic into a custom hook
+function useUserList() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('');
+
+  useEffect(() => {
+    fetch('/api/users')
+      .then(res => res.json())
+      .then(setUsers)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = users.filter(u =>
+    u.name.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  return { users: filtered, loading, filter, setFilter };
+}
+
+// Component is now just presentation
+function UserList() {
+  const { users, loading, filter, setFilter } = useUserList();
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div>
+      <SearchBox value={filter} onChange={setFilter} />
+      <ul>
+        {users.map(user => <UserCard key={user.id} user={user} />)}
+      </ul>
+    </div>
+  );
+}
+```
+
+## Compound Components
+
+Components that work together to form a complete UI, sharing implicit state.
+
+### The Problem
+
+```jsx
+// ❌ Hard to customize - all or nothing
+function Tabs({ tabs }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  return (
+    <div>
+      <div className="tab-list">
+        {tabs.map((tab, i) => (
+          <button
+            key={i}
+            className={i === activeIndex ? 'active' : ''}
+            onClick={() => setActiveIndex(i)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <div className="tab-panel">
+        {tabs[activeIndex].content}
+      </div>
+    </div>
+  );
+}
+
+// Usage - not very flexible
+<Tabs tabs={[
+  { label: 'Tab 1', content: <div>Content 1</div> },
+  { label: 'Tab 2', content: <div>Content 2</div> }
+]} />
+```
+
+### The Solution: Compound Components
+
+```jsx
+import { createContext, useContext, useState } from 'react';
+
+// 1. Create context for shared state
+const TabsContext = createContext();
+
+// 2. Parent component manages state
+function Tabs({ children, defaultIndex = 0 }) {
+  const [activeIndex, setActiveIndex] = useState(defaultIndex);
+
+  return (
+    <TabsContext.Provider value={{ activeIndex, setActiveIndex }}>
+      <div className="tabs">{children}</div>
+    </TabsContext.Provider>
+  );
+}
+
+// 3. Child components access shared state
+function TabList({ children }) {
+  return <div className="tab-list">{children}</div>;
+}
+
+function Tab({ index, children }) {
+  const { activeIndex, setActiveIndex } = useContext(TabsContext);
+
+  return (
+    <button
+      className={index === activeIndex ? 'tab active' : 'tab'}
+      onClick={() => setActiveIndex(index)}
+    >
+      {children}
+    </button>
+  );
+}
+
+function TabPanels({ children }) {
+  return <div className="tab-panels">{children}</div>;
+}
+
+function TabPanel({ index, children }) {
+  const { activeIndex } = useContext(TabsContext);
+
+  return (
+    <div
+      className="tab-panel"
+      style={{ display: index === activeIndex ? 'block' : 'none' }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// 4. Attach as properties for nice API
+Tabs.List = TabList;
+Tabs.Tab = Tab;
+Tabs.Panels = TabPanels;
+Tabs.Panel = TabPanel;
+
+// Usage - super flexible!
+function App() {
+  return (
+    <Tabs defaultIndex={0}>
+      <Tabs.List>
+        <Tabs.Tab index={0}>Profile</Tabs.Tab>
+        <Tabs.Tab index={1}>Settings</Tabs.Tab>
+        <Tabs.Tab index={2}>Notifications</Tabs.Tab>
+      </Tabs.List>
+
+      <Tabs.Panels>
+        <Tabs.Panel index={0}>
+          <h2>Profile Content</h2>
+          <p>Your profile information...</p>
+        </Tabs.Panel>
+        <Tabs.Panel index={1}>
+          <h2>Settings Content</h2>
+          <p>Your settings...</p>
+        </Tabs.Panel>
+        <Tabs.Panel index={2}>
+          <h2>Notifications</h2>
+          <p>Your notifications...</p>
+        </Tabs.Panel>
+      </Tabs.Panels>
+    </Tabs>
+  );
+}
+```
+
+### Real Example: Accordion
+
+```jsx
+const AccordionContext = createContext();
+
+function Accordion({ children, allowMultiple = false }) {
+  const [openItems, setOpenItems] = useState([]);
+
+  const toggleItem = (id) => {
+    if (allowMultiple) {
+      setOpenItems(prev =>
+        prev.includes(id)
+          ? prev.filter(item => item !== id)
+          : [...prev, id]
+      );
+    } else {
+      setOpenItems(prev => prev.includes(id) ? [] : [id]);
+    }
+  };
+
+  return (
+    <AccordionContext.Provider value={{ openItems, toggleItem }}>
+      <div className="accordion">{children}</div>
+    </AccordionContext.Provider>
+  );
+}
+
+function AccordionItem({ id, children }) {
+  return <div className="accordion-item">{children}</div>;
+}
+
+function AccordionHeader({ id, children }) {
+  const { openItems, toggleItem } = useContext(AccordionContext);
+  const isOpen = openItems.includes(id);
+
+  return (
+    <button
+      className="accordion-header"
+      onClick={() => toggleItem(id)}
+    >
+      {children}
+      <span>{isOpen ? '−' : '+'}</span>
+    </button>
+  );
+}
+
+function AccordionPanel({ id, children }) {
+  const { openItems } = useContext(AccordionContext);
+  const isOpen = openItems.includes(id);
+
+  if (!isOpen) return null;
+
+  return <div className="accordion-panel">{children}</div>;
+}
+
+Accordion.Item = AccordionItem;
+Accordion.Header = AccordionHeader;
+Accordion.Panel = AccordionPanel;
+
+// Usage
+<Accordion allowMultiple>
+  <Accordion.Item id="1">
+    <Accordion.Header id="1">What is React?</Accordion.Header>
+    <Accordion.Panel id="1">React is a JavaScript library...</Accordion.Panel>
+  </Accordion.Item>
+
+  <Accordion.Item id="2">
+    <Accordion.Header id="2">What are hooks?</Accordion.Header>
+    <Accordion.Panel id="2">Hooks let you use state...</Accordion.Panel>
+  </Accordion.Item>
+</Accordion>
+```
+
+### Benefits
+
+✅ **Flexible API** - consumers control the structure
+✅ **Implicit state sharing** - no prop drilling
+✅ **Great developer experience** - self-documenting API
+✅ **Easy to extend** - add new sub-components
+
+## Render Props
+
+Pass a function as a prop to share code between components.
+
+### The Problem
+
+```jsx
+// ❌ How do we reuse mouse tracking logic?
+function MouseTracker() {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e) => {
+    setPosition({ x: e.clientX, y: e.clientY });
+  };
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  return (
+    <div>
+      Mouse position: {position.x}, {position.y}
+    </div>
+  );
+}
+
+// Can't reuse the mouse tracking for a different UI!
+```
+
+### The Solution: Render Props
+
+```jsx
+function MouseTracker({ render }) {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e) => {
+    setPosition({ x: e.clientX, y: e.clientY });
+  };
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  return render(position); // Call the render function with position
+}
+
+// Usage 1: Display coordinates
+<MouseTracker render={({ x, y }) => (
+  <div>Mouse at {x}, {y}</div>
+)} />
+
+// Usage 2: Move a cat cursor
+<MouseTracker render={({ x, y }) => (
+  <img
+    src="cat.png"
+    style={{ position: 'fixed', left: x, top: y }}
+  />
+)} />
+
+// Usage 3: Draw on canvas
+<MouseTracker render={({ x, y }) => (
+  <canvas
+    ref={canvas => {
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.fillRect(x, y, 5, 5);
+      }
+    }}
+  />
+)} />
+```
+
+### Alternative: Children as Function
+
+```jsx
+function MouseTracker({ children }) {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e) => {
+    setPosition({ x: e.clientX, y: e.clientY });
+  };
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  return children(position); // children is a function!
+}
+
+// Usage - cleaner syntax
+<MouseTracker>
+  {({ x, y }) => <div>Mouse at {x}, {y}</div>}
+</MouseTracker>
+```
+
+### Real Example: Data Fetcher
+
+```jsx
+function DataFetcher({ url, children }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch(url)
+      .then(res => res.json())
+      .then(setData)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, [url]);
+
+  return children({ data, loading, error });
+}
+
+// Usage
+<DataFetcher url="/api/users">
+  {({ data, loading, error }) => {
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error.message}</div>;
+    return (
+      <ul>
+        {data.map(user => <li key={user.id}>{user.name}</li>)}
+      </ul>
+    );
+  }}
+</DataFetcher>
+```
+
+### Modern Alternative: Custom Hooks
+
+**Note:** Custom hooks have largely replaced render props for sharing logic.
+
+```jsx
+// Instead of render props
+function useMousePosition() {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setPosition({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  return position;
+}
+
+// Usage - much simpler!
+function Component() {
+  const { x, y } = useMousePosition();
+  return <div>Mouse at {x}, {y}</div>;
+}
+```
+
+**When to use render props:**
+- Need to control **when** rendering happens
+- Want to avoid coupling to specific hooks
+- Building a library with maximum flexibility
+
+## Higher-Order Components (HOC)
+
+A function that takes a component and returns a new enhanced component.
+
+### The Pattern
+
+```jsx
+// HOC - function that returns a component
+function withAuth(Component) {
+  return function AuthenticatedComponent(props) {
+    const { user, loading } = useAuth();
+
+    if (loading) return <div>Loading...</div>;
+    if (!user) return <div>Please log in</div>;
+
+    return <Component {...props} user={user} />;
+  };
+}
+
+// Usage
+function Dashboard({ user }) {
+  return <div>Welcome, {user.name}</div>;
+}
+
+export default withAuth(Dashboard);
+```
+
+### Real Example: With Loading
+
+```jsx
+function withLoading(Component) {
+  return function WithLoadingComponent({ isLoading, ...props }) {
+    if (isLoading) {
+      return <div className="loading">Loading...</div>;
+    }
+    return <Component {...props} />;
+  };
+}
+
+// Usage
+function UserList({ users }) {
+  return (
+    <ul>
+      {users.map(user => <li key={user.id}>{user.name}</li>)}
+    </ul>
+  );
+}
+
+const UserListWithLoading = withLoading(UserList);
+
+function App() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  return (
+    <UserListWithLoading isLoading={loading} users={users} />
+  );
+}
+```
+
+### Problems with HOCs
+
+❌ **Wrapper hell** - multiple HOCs create deep nesting
+❌ **Name collisions** - props can conflict
+❌ **Ref forwarding** - need special handling
+❌ **Static methods** - don't get copied automatically
+
+```jsx
+// ❌ Wrapper hell
+export default withAuth(
+  withLoading(
+    withErrorBoundary(
+      withAnalytics(
+        Component
+      )
+    )
+  )
+);
+```
+
+### Modern Alternative: Hooks
+
+```jsx
+// ✅ Use hooks instead
+function Dashboard() {
+  const { user, loading } = useAuth();
+  const { trackEvent } = useAnalytics();
+
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <div>Please log in</div>;
+
+  return <div>Welcome, {user.name}</div>;
+}
+```
+
+**Note:** HOCs are less common in modern React. Use hooks for most cases.
+
+## Composition vs Inheritance
+
+React recommends **composition over inheritance**. Don't extend components - compose them!
+
+### ❌ Inheritance (Avoid in React)
+
+```jsx
+// DON'T do this
+class BaseButton extends React.Component {
+  render() {
+    return <button>{this.props.children}</button>;
+  }
+}
+
+class PrimaryButton extends BaseButton {
+  render() {
+    return <button className="primary">{this.props.children}</button>;
+  }
+}
+```
+
+### ✅ Composition (The React Way)
+
+```jsx
+// DO this instead
+function Button({ variant = 'default', children, ...props }) {
+  const className = `button button-${variant}`;
+  return (
+    <button className={className} {...props}>
+      {children}
+    </button>
+  );
+}
+
+// Usage
+<Button variant="primary">Click me</Button>
+<Button variant="secondary">Cancel</Button>
+<Button variant="danger">Delete</Button>
+```
+
+### Specialization Through Props
+
+```jsx
+// Generic component
+function Dialog({ title, children, footer }) {
+  return (
+    <div className="dialog">
+      <header>{title}</header>
+      <main>{children}</main>
+      <footer>{footer}</footer>
+    </div>
+  );
+}
+
+// Specialized versions through composition
+function WelcomeDialog() {
+  return (
+    <Dialog
+      title="Welcome"
+      footer={<button>Get Started</button>}
+    >
+      <p>Thank you for visiting our app!</p>
+    </Dialog>
+  );
+}
+
+function ConfirmDialog({ message, onConfirm, onCancel }) {
+  return (
+    <Dialog
+      title="Confirm"
+      footer={
+        <>
+          <button onClick={onConfirm}>Yes</button>
+          <button onClick={onCancel}>No</button>
+        </>
+      }
+    >
+      <p>{message}</p>
+    </Dialog>
+  );
+}
+```
+
+### Containment with Children
+
+```jsx
+// Container component
+function Card({ children, title, actions }) {
+  return (
+    <div className="card">
+      {title && <div className="card-header">{title}</div>}
+      <div className="card-body">{children}</div>
+      {actions && <div className="card-footer">{actions}</div>}
+    </div>
+  );
+}
+
+// Compose different cards
+function ProductCard({ product }) {
+  return (
+    <Card
+      title={product.name}
+      actions={<button>Add to Cart</button>}
+    >
+      <img src={product.image} alt={product.name} />
+      <p>${product.price}</p>
+    </Card>
+  );
+}
+
+function UserCard({ user }) {
+  return (
+    <Card
+      title={user.name}
+      actions={<button>Follow</button>}
+    >
+      <img src={user.avatar} alt={user.name} />
+      <p>{user.bio}</p>
+    </Card>
+  );
+}
+```
+
+### Multiple Children Slots
+
+```jsx
+function Layout({ header, sidebar, content, footer }) {
+  return (
+    <div className="layout">
+      <header className="layout-header">{header}</header>
+      <div className="layout-main">
+        <aside className="layout-sidebar">{sidebar}</aside>
+        <main className="layout-content">{content}</main>
+      </div>
+      <footer className="layout-footer">{footer}</footer>
+    </div>
+  );
+}
+
+// Usage
+<Layout
+  header={<Navigation />}
+  sidebar={<Sidebar />}
+  content={<MainContent />}
+  footer={<Footer />}
+/>
+```
+
+## Pattern Comparison
+
+| Pattern | When to Use | Modern Alternative |
+|---------|-------------|-------------------|
+| **Presentational/Container** | Separate UI from logic | Custom Hooks |
+| **Compound Components** | Related components that work together | Still relevant ✅ |
+| **Render Props** | Share logic, control rendering | Custom Hooks |
+| **Higher-Order Components** | Cross-cutting concerns | Custom Hooks |
+| **Composition** | Build complex UIs | Always use ✅ |
+
+## Interview Questions
+
+### Question 1: Compound Components
+
+**Interviewer:** "Explain compound components. When would you use this pattern?"
+
+**Answer:**
+Compound components are a pattern where multiple components work together to form a complete UI, sharing implicit state through Context.
+
+**Example:**
+```jsx
+<Tabs>
+  <Tabs.List>
+    <Tabs.Tab>Tab 1</Tabs.Tab>
+    <Tabs.Tab>Tab 2</Tabs.Tab>
+  </Tabs.List>
+  <Tabs.Panels>
+    <Tabs.Panel>Content 1</Tabs.Panel>
+    <Tabs.Panel>Content 2</Tabs.Panel>
+  </Tabs.Panels>
+</Tabs>
+```
+
+**When to use:**
+- Building UI component libraries (tabs, accordions, dropdowns)
+- Need flexible, composable API
+- Components must coordinate state
+- Want to avoid prop drilling
+
+**Benefits:**
+- Flexible structure
+- Clear relationships between components
+- Better developer experience
+- Easier to extend
+
+**How it works:**
+1. Parent component manages shared state
+2. State provided via Context
+3. Child components access Context
+4. Sub-components attached as properties for nice API
+
+### Question 2: Composition vs Inheritance
+
+**Interviewer:** "Why does React recommend composition over inheritance?"
+
+**Answer:**
+React recommends composition because:
+
+1. **More Flexible** - Can combine components in any way
+   ```jsx
+   // Composition allows any combination
+   <Card>
+     <Header />
+     <Image />
+     <Button />
+   </Card>
+   ```
+
+2. **Easier to Understand** - Props and children make data flow explicit
+   ```jsx
+   // Clear what data flows where
+   <Dialog title="Welcome" footer={<Button />}>
+     <p>Content</p>
+   </Dialog>
+   ```
+
+3. **No Coupling Issues** - Inheritance creates tight coupling
+   ```jsx
+   // ❌ Inheritance - tightly coupled
+   class PrimaryButton extends Button {}
+
+   // ✅ Composition - loosely coupled
+   <Button variant="primary" />
+   ```
+
+4. **React's Component Model** - React components are functions, not classes. Functions don't inherit well.
+
+**Facebook says:** "At Facebook, we use React in thousands of components, and we haven't found any use cases where we would recommend creating component inheritance hierarchies."
+
+**Instead:** Use props, children, and composition to specialize components.
+
+## Key Takeaways
+
+1. **Presentational vs Container** - Separate UI from logic (or use custom hooks)
+2. **Compound Components** - Related components that share state
+3. **Render Props** - Share logic by passing functions (custom hooks often better)
+4. **HOCs** - Add functionality by wrapping (hooks usually better)
+5. **Composition over Inheritance** - Always compose, never extend
+6. **Modern React** - Custom hooks solve most problems that used to need patterns
+
+## Next Steps
+
+You've mastered component patterns! Now learn the **[Job-Ready Patterns](/react-fundamentals/job-ready-patterns)** that appear in real interviews and projects.

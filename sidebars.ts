@@ -38,11 +38,17 @@ const sidebars: SidebarsConfig = {
       label: '⚛️ React Fundamentals',
       collapsed: true,
       items: [
-        {
-          type: 'doc',
-          id: 'react-fundamentals/intro',
-          label: 'Coming Soon',
-        },
+        'react-fundamentals/intro',
+        'react-fundamentals/first-component',
+        'react-fundamentals/props-and-children',
+        'react-fundamentals/state-and-usestate',
+        'react-fundamentals/rendering-lists',
+        'react-fundamentals/handling-events',
+        'react-fundamentals/useeffect-and-data-fetching',
+        'react-fundamentals/lifting-state-up',
+        'react-fundamentals/essential-hooks',
+        'react-fundamentals/component-patterns',
+        'react-fundamentals/job-ready-patterns',
       ],
     },
     {

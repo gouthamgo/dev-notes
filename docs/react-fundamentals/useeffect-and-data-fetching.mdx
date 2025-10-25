@@ -1,0 +1,736 @@
+---
+sidebar_position: 7
+title: "useEffect and Data Fetching"
+description: "Master side effects in React - fetch data, subscribe to services, and manage component lifecycle"
+---
+
+# useEffect and Data Fetching
+
+## Why useEffect?
+
+React components need to be **pure functions** - given the same props, they should always render the same output. But real applications need to do **side effects**:
+
+- Fetch data from an API
+- Subscribe to external events
+- Manually update the DOM
+- Set up timers
+- Connect to WebSockets
+- Log analytics
+
+**The Problem Without useEffect:**
+
+```jsx
+// ❌ BAD: Side effect directly in component body
+function UserProfile({ userId }) {
+  // This will run on EVERY render - infinite loop!
+  const response = fetch(`/api/users/${userId}`);
+  const user = response.json(); // This doesn't even work - fetch is async!
+
+  return <div>{user.name}</div>;
+}
+```
+
+**Why This Breaks:**
+1. Fetch runs on every render
+2. If fetch updates state, it triggers a re-render
+3. Re-render causes another fetch
+4. Infinite loop crashes your app
+
+**React's Solution: useEffect**
+
+```jsx
+import { useState, useEffect } from 'react';
+
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
+
+  // ✅ GOOD: Side effect isolated in useEffect
+  useEffect(() => {
+    fetch(`/api/users/${userId}`)
+      .then(res => res.json())
+      .then(data => setUser(data));
+  }, [userId]); // Only re-run when userId changes
+
+  if (!user) return <div>Loading...</div>;
+  return <div>{user.name}</div>;
+}
+```
+
+## useEffect Basics
+
+**Syntax:**
+
+```jsx
+useEffect(() => {
+  // Your side effect code here
+
+  return () => {
+    // Cleanup code (optional)
+  };
+}, [dependencies]); // Dependency array
+```
+
+**When Does useEffect Run?**
+
+1. **After first render** (component mounts)
+2. **After re-renders** (if dependencies changed)
+3. **Cleanup runs** before next effect and before unmount
+
+## Fetching Data with useEffect
+
+### Basic Fetch Example
+
+```jsx
+import { useState, useEffect } from 'react';
+
+function BlogPost({ postId }) {
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Reset states when postId changes
+    setLoading(true);
+    setError(null);
+
+    fetch(`https://jsonplaceholder.typicode.com/posts/${postId}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setPost(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [postId]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!post) return null;
+
+  return (
+    <article>
+      <h1>{post.title}</h1>
+      <p>{post.body}</p>
+    </article>
+  );
+}
+```
+
+### Modern Async/Await Pattern
+
+```jsx
+function UserList() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Can't make useEffect callback async directly
+    // So create an async function inside
+    async function fetchUsers() {
+      try {
+        setLoading(true);
+        const response = await fetch('https://jsonplaceholder.typicode.com/users');
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setUsers(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchUsers();
+  }, []); // Empty array = run once on mount
+
+  if (loading) return <div className="loading">Loading users...</div>;
+  if (error) return <div className="error">Error: {error}</div>;
+
+  return (
+    <ul>
+      {users.map(user => (
+        <li key={user.id}>{user.name} - {user.email}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### Fetch with Abort Controller (Prevents Memory Leaks)
+
+```jsx
+function SearchResults({ query }) {
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // If query is empty, don't search
+    if (!query) {
+      setResults([]);
+      return;
+    }
+
+    // Create AbortController to cancel request
+    const controller = new AbortController();
+
+    async function searchProducts() {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `https://api.example.com/search?q=${query}`,
+          { signal: controller.signal } // Pass abort signal
+        );
+        const data = await response.json();
+        setResults(data);
+      } catch (err) {
+        // Ignore abort errors
+        if (err.name !== 'AbortError') {
+          console.error('Search failed:', err);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    searchProducts();
+
+    // Cleanup: abort request if component unmounts or query changes
+    return () => {
+      controller.abort();
+    };
+  }, [query]);
+
+  return (
+    <div>
+      {loading && <div>Searching...</div>}
+      <ul>
+        {results.map(item => (
+          <li key={item.id}>{item.name}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+## The Dependency Array
+
+The dependency array controls when useEffect runs. This is the most important concept to understand.
+
+### Empty Array: Run Once on Mount
+
+```jsx
+useEffect(() => {
+  console.log('Component mounted');
+  // Runs ONCE when component first renders
+}, []); // Empty array
+```
+
+**Use Case:** Initial data fetching, setting up subscriptions
+
+### With Dependencies: Run When Dependencies Change
+
+```jsx
+function ProductDetails({ productId, currency }) {
+  const [product, setProduct] = useState(null);
+
+  useEffect(() => {
+    console.log('Fetching product with ID:', productId, 'in', currency);
+    fetch(`/api/products/${productId}?currency=${currency}`)
+      .then(res => res.json())
+      .then(setProduct);
+  }, [productId, currency]); // Re-run when either changes
+
+  return <div>{product?.name}</div>;
+}
+```
+
+**Rule:** Include ALL values from component scope that the effect uses.
+
+### No Array: Run After Every Render
+
+```jsx
+useEffect(() => {
+  console.log('This runs after EVERY render');
+  // Usually a mistake - causes performance issues
+}); // No dependency array
+```
+
+**Use Case:** Almost never. Usually indicates a bug.
+
+### Visual Comparison
+
+```jsx
+function EffectComparison({ count }) {
+  // Run once on mount
+  useEffect(() => {
+    console.log('A: Mounted once');
+  }, []);
+
+  // Run when count changes
+  useEffect(() => {
+    console.log('B: Count changed to', count);
+  }, [count]);
+
+  // Run after every render
+  useEffect(() => {
+    console.log('C: Component rendered');
+  });
+
+  return <button onClick={() => setCount(count + 1)}>Count: {count}</button>;
+}
+
+// On first render:
+// A: Mounted once
+// B: Count changed to 0
+// C: Component rendered
+
+// On button click (count becomes 1):
+// B: Count changed to 1
+// C: Component rendered
+```
+
+## Cleanup Functions
+
+Some effects need cleanup to prevent memory leaks.
+
+### Cleanup Pattern
+
+```jsx
+useEffect(() => {
+  // Setup
+  const subscription = someAPI.subscribe();
+
+  // Cleanup (runs before next effect and on unmount)
+  return () => {
+    subscription.unsubscribe();
+  };
+}, []);
+```
+
+### Timer Cleanup
+
+```jsx
+function Countdown({ seconds }) {
+  const [timeLeft, setTimeLeft] = useState(seconds);
+
+  useEffect(() => {
+    // ❌ Without cleanup - timers keep running!
+    // setInterval(() => {
+    //   setTimeLeft(t => t - 1);
+    // }, 1000);
+
+    // ✅ With cleanup
+    const timerId = setInterval(() => {
+      setTimeLeft(t => t - 1);
+    }, 1000);
+
+    return () => {
+      clearInterval(timerId); // Cleanup timer
+    };
+  }, []);
+
+  return <div>Time left: {timeLeft}s</div>;
+}
+```
+
+### Event Listener Cleanup
+
+```jsx
+function WindowSize() {
+  const [size, setSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
+
+  useEffect(() => {
+    function handleResize() {
+      setSize({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    }
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+
+    // Remove on cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []); // No dependencies - setup once
+
+  return <div>Window: {size.width} x {size.height}</div>;
+}
+```
+
+### WebSocket Cleanup
+
+```jsx
+function ChatMessages({ roomId }) {
+  const [messages, setMessages] = useState([]);
+
+  useEffect(() => {
+    const socket = new WebSocket(`wss://chat.example.com/room/${roomId}`);
+
+    socket.addEventListener('message', (event) => {
+      const message = JSON.parse(event.data);
+      setMessages(prev => [...prev, message]);
+    });
+
+    // Cleanup: close socket when roomId changes or component unmounts
+    return () => {
+      socket.close();
+    };
+  }, [roomId]);
+
+  return (
+    <ul>
+      {messages.map((msg, i) => <li key={i}>{msg.text}</li>)}
+    </ul>
+  );
+}
+```
+
+## Common Mistakes
+
+### 1. Infinite Loops
+
+```jsx
+// ❌ BAD: Creates infinite loop
+function BadExample() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    setCount(count + 1); // Updates state
+  }); // No dependency array - runs after every render
+
+  // Cycle: render → effect → setState → render → effect → ...
+}
+
+// ✅ GOOD: Controlled effect
+function GoodExample() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    console.log('Count is:', count);
+  }, [count]); // Only runs when count actually changes
+}
+```
+
+### 2. Missing Dependencies
+
+```jsx
+// ❌ BAD: Missing dependencies
+function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+
+  useEffect(() => {
+    fetch(`/api/search?q=${query}`) // Uses 'query'
+      .then(res => res.json())
+      .then(setResults);
+  }, []); // But query not in dependencies!
+
+  // Effect won't re-run when query changes
+}
+
+// ✅ GOOD: Include all dependencies
+function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+
+  useEffect(() => {
+    if (!query) return;
+
+    fetch(`/api/search?q=${query}`)
+      .then(res => res.json())
+      .then(setResults);
+  }, [query]); // Query included
+}
+```
+
+### 3. Not Handling Errors
+
+```jsx
+// ❌ BAD: No error handling
+function BadFetch() {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/data')
+      .then(res => res.json())
+      .then(setData);
+    // What if fetch fails? User sees nothing!
+  }, []);
+
+  return <div>{data?.name}</div>;
+}
+
+// ✅ GOOD: Proper error handling
+function GoodFetch() {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch('/api/data');
+        if (!res.ok) throw new Error('Failed to fetch');
+        const json = await res.json();
+        setData(json);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  return <div>{data?.name}</div>;
+}
+```
+
+### 4. Forgetting Cleanup
+
+```jsx
+// ❌ BAD: No cleanup - memory leak
+function BadTimer() {
+  useEffect(() => {
+    setInterval(() => {
+      console.log('Tick'); // Runs forever even after unmount!
+    }, 1000);
+  }, []);
+}
+
+// ✅ GOOD: Cleanup prevents memory leak
+function GoodTimer() {
+  useEffect(() => {
+    const id = setInterval(() => {
+      console.log('Tick');
+    }, 1000);
+
+    return () => clearInterval(id);
+  }, []);
+}
+```
+
+### 5. Using Async Directly in useEffect
+
+```jsx
+// ❌ BAD: Can't make useEffect callback async
+useEffect(async () => {
+  const data = await fetch('/api/data');
+  // TypeScript/React will complain
+}, []);
+
+// ✅ GOOD: Create async function inside
+useEffect(() => {
+  async function fetchData() {
+    const response = await fetch('/api/data');
+    const json = await response.json();
+    setData(json);
+  }
+  fetchData();
+}, []);
+```
+
+### 6. Stale Closure
+
+```jsx
+// ❌ BAD: Stale closure problem
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setCount(count + 1); // Always uses initial count (0)
+    }, 1000);
+    return () => clearInterval(id);
+  }, []); // Empty array - captures count = 0
+
+  // Count stays at 1!
+}
+
+// ✅ GOOD: Use functional update
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setCount(c => c + 1); // Uses current count
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return <div>Count: {count}</div>;
+}
+```
+
+## Real-World Pattern: Custom Fetch Hook
+
+```jsx
+// Reusable hook for data fetching
+function useFetch(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Fetch failed');
+        const json = await response.json();
+
+        if (!cancelled) {
+          setData(json);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchData();
+
+    return () => {
+      cancelled = true; // Prevent state updates after unmount
+    };
+  }, [url]);
+
+  return { data, loading, error };
+}
+
+// Usage
+function UserProfile({ userId }) {
+  const { data: user, loading, error } = useFetch(`/api/users/${userId}`);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  return <div>{user.name}</div>;
+}
+```
+
+## Interview Questions
+
+### Question 1: Infinite Loop Bug
+
+**Interviewer:** "This code creates an infinite loop. Why, and how do you fix it?"
+
+```jsx
+function BuggyComponent() {
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/users')
+      .then(res => res.json())
+      .then(data => setUsers(data));
+  }); // No dependency array!
+
+  return <ul>{users.map(u => <li key={u.id}>{u.name}</li>)}</ul>;
+}
+```
+
+**Answer:**
+The useEffect has no dependency array, so it runs after every render. The sequence is:
+1. Component renders
+2. useEffect runs
+3. `setUsers` updates state
+4. State update triggers re-render
+5. Go to step 1 (infinite loop)
+
+**Fix:**
+```jsx
+useEffect(() => {
+  fetch('/api/users')
+    .then(res => res.json())
+    .then(data => setUsers(data));
+}, []); // Add empty array - run once on mount
+```
+
+### Question 2: Cleanup Function
+
+**Interviewer:** "When does the cleanup function run? Why is it important?"
+
+**Answer:**
+The cleanup function returned from useEffect runs:
+1. **Before the effect runs again** (when dependencies change)
+2. **When the component unmounts**
+
+It's important to prevent:
+- **Memory leaks** (timers, event listeners, subscriptions)
+- **Race conditions** (old requests completing after new ones)
+- **Errors** (trying to update state after unmount)
+
+```jsx
+useEffect(() => {
+  const timer = setInterval(() => {
+    console.log('tick');
+  }, 1000);
+
+  return () => clearInterval(timer); // Cleanup prevents memory leak
+}, []);
+```
+
+### Question 3: Dependency Array Behavior
+
+**Interviewer:** "What's the difference between these three useEffect calls?"
+
+```jsx
+// A
+useEffect(() => { console.log('A'); });
+
+// B
+useEffect(() => { console.log('B'); }, []);
+
+// C
+useEffect(() => { console.log('C'); }, [count]);
+```
+
+**Answer:**
+- **A (no array):** Runs after **every render**. Almost always a mistake - causes performance issues.
+- **B (empty array):** Runs **once on mount**. Use for initial setup, data fetching that doesn't depend on props/state.
+- **C (with dependencies):** Runs on mount and **whenever `count` changes**. Use when effect depends on props/state values.
+
+**Follow-up:** "Why should you include all dependencies?"
+- React compares dependencies with `Object.is()` to decide if effect should re-run
+- Missing dependencies cause stale closures - effect uses old values
+- ESLint's `exhaustive-deps` rule helps catch this
+
+## Key Takeaways
+
+1. **useEffect runs after render** - never during render
+2. **Always include dependencies** - use ESLint exhaustive-deps rule
+3. **Cleanup prevents leaks** - clear timers, remove listeners, cancel requests
+4. **Handle all states** - loading, error, success
+5. **Empty array = once on mount** - most common for data fetching
+6. **Can't make effect callback async** - create async function inside instead
+
+## Next Steps
+
+Now that you understand side effects and data fetching, learn how to share state between components with **[Lifting State Up](/react-fundamentals/lifting-state-up)**.

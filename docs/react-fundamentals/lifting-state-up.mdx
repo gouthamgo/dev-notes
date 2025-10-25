@@ -1,0 +1,678 @@
+---
+sidebar_position: 8
+title: "Lifting State Up"
+description: "Learn how to share state between components by moving it to their common parent"
+---
+
+# Lifting State Up
+
+## The Problem
+
+You have two components that need to **share the same data**. But each component manages its own state, so they get out of sync.
+
+### Broken Example: Separate States
+
+```jsx
+function TemperatureInput({ scale }) {
+  const [temperature, setTemperature] = useState('');
+
+  return (
+    <fieldset>
+      <legend>Enter temperature in {scale}:</legend>
+      <input
+        value={temperature}
+        onChange={(e) => setTemperature(e.target.value)}
+      />
+    </fieldset>
+  );
+}
+
+function Calculator() {
+  return (
+    <div>
+      <TemperatureInput scale="Celsius" />
+      <TemperatureInput scale="Fahrenheit" />
+      {/* Problem: These two inputs don't sync!
+          Changing Celsius doesn't update Fahrenheit */}
+    </div>
+  );
+}
+```
+
+**What's Wrong?**
+- Each `TemperatureInput` has its own `temperature` state
+- They're independent - changing one doesn't affect the other
+- No way to keep them in sync
+- Can't show boiling verdict based on both inputs
+
+**Real-World Scenarios:**
+- Shopping cart total and item list
+- Filter controls and filtered results
+- Form inputs that depend on each other
+- Master-detail views
+- Multi-step forms
+
+## The Solution: Lift State Up
+
+**Lifting state up** means moving state from child components to their closest **common parent**.
+
+### How It Works
+
+```
+Before (Broken):
+Calculator
+├── TemperatureInput (has own state ❌)
+└── TemperatureInput (has own state ❌)
+
+After (Fixed):
+Calculator (shared state ✅)
+├── TemperatureInput (receives props)
+└── TemperatureInput (receives props)
+```
+
+### Complete Working Example
+
+```jsx
+// Conversion functions
+function toCelsius(fahrenheit) {
+  return ((fahrenheit - 32) * 5) / 9;
+}
+
+function toFahrenheit(celsius) {
+  return (celsius * 9) / 5 + 32;
+}
+
+function tryConvert(temperature, convert) {
+  const input = parseFloat(temperature);
+  if (Number.isNaN(input)) {
+    return '';
+  }
+  const output = convert(input);
+  const rounded = Math.round(output * 1000) / 1000;
+  return rounded.toString();
+}
+
+// Child component - now controlled by parent
+function TemperatureInput({ scale, temperature, onTemperatureChange }) {
+  return (
+    <fieldset>
+      <legend>Enter temperature in {scale}:</legend>
+      <input
+        value={temperature}
+        onChange={(e) => onTemperatureChange(e.target.value)}
+      />
+    </fieldset>
+  );
+}
+
+// Parent component - manages shared state
+function Calculator() {
+  const [temperature, setTemperature] = useState('');
+  const [scale, setScale] = useState('c'); // 'c' or 'f'
+
+  // Handler for Celsius input
+  const handleCelsiusChange = (temp) => {
+    setScale('c');
+    setTemperature(temp);
+  };
+
+  // Handler for Fahrenheit input
+  const handleFahrenheitChange = (temp) => {
+    setScale('f');
+    setTemperature(temp);
+  };
+
+  // Calculate both values
+  const celsius = scale === 'f'
+    ? tryConvert(temperature, toCelsius)
+    : temperature;
+  const fahrenheit = scale === 'c'
+    ? tryConvert(temperature, toFahrenheit)
+    : temperature;
+
+  return (
+    <div>
+      <TemperatureInput
+        scale="Celsius"
+        temperature={celsius}
+        onTemperatureChange={handleCelsiusChange}
+      />
+      <TemperatureInput
+        scale="Fahrenheit"
+        temperature={fahrenheit}
+        onTemperatureChange={handleFahrenheitChange}
+      />
+      <BoilingVerdict celsius={parseFloat(celsius)} />
+    </div>
+  );
+}
+
+function BoilingVerdict({ celsius }) {
+  if (celsius >= 100) {
+    return <p>The water would boil.</p>;
+  }
+  return <p>The water would not boil.</p>;
+}
+```
+
+**What Changed?**
+1. **State moved up** to `Calculator` component
+2. **Children became controlled** - they receive data via props
+3. **Children notify parent** of changes via callback props
+4. **Single source of truth** - `Calculator` state determines everything
+
+## Data Flow Visualization
+
+### The Flow of Data
+
+```jsx
+function Parent() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <ChildA count={count} onIncrement={() => setCount(count + 1)} />
+      <ChildB count={count} onDecrement={() => setCount(count - 1)} />
+    </div>
+  );
+}
+```
+
+**Step-by-Step Flow:**
+
+```
+1. User clicks button in ChildA
+   ↓
+2. ChildA calls onIncrement() prop
+   ↓
+3. Parent's setCount() is called
+   ↓
+4. Parent's state updates, Parent re-renders
+   ↓
+5. Parent passes new count to BOTH children
+   ↓
+6. Both ChildA and ChildB re-render with new count
+```
+
+### One-Way Data Flow
+
+React enforces **one-way data flow** (also called "unidirectional data flow"):
+
+```
+Data flows DOWN (props)
+     ↓
+   Parent
+   ↓    ↓
+Child1 Child2
+     ↑
+Events flow UP (callbacks)
+```
+
+**Rules:**
+- **Data flows down** through props
+- **Events flow up** through callbacks
+- Child components **cannot directly modify** parent state
+- This makes apps **predictable** and **easier to debug**
+
+## Real-World Example: Shopping Cart
+
+```jsx
+// Product list and cart need to share state
+function ShoppingApp() {
+  const [cartItems, setCartItems] = useState([]);
+
+  const addToCart = (product) => {
+    setCartItems(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, { ...product, quantity: 1 }];
+    });
+  };
+
+  const removeFromCart = (productId) => {
+    setCartItems(prev => prev.filter(item => item.id !== productId));
+  };
+
+  const updateQuantity = (productId, quantity) => {
+    if (quantity === 0) {
+      removeFromCart(productId);
+      return;
+    }
+    setCartItems(prev =>
+      prev.map(item =>
+        item.id === productId ? { ...item, quantity } : item
+      )
+    );
+  };
+
+  return (
+    <div>
+      <ProductList onAddToCart={addToCart} />
+      <Cart
+        items={cartItems}
+        onRemove={removeFromCart}
+        onUpdateQuantity={updateQuantity}
+      />
+    </div>
+  );
+}
+
+function ProductList({ onAddToCart }) {
+  const products = [
+    { id: 1, name: 'Laptop', price: 999 },
+    { id: 2, name: 'Mouse', price: 29 },
+  ];
+
+  return (
+    <div>
+      <h2>Products</h2>
+      {products.map(product => (
+        <div key={product.id}>
+          <span>{product.name} - ${product.price}</span>
+          <button onClick={() => onAddToCart(product)}>
+            Add to Cart
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Cart({ items, onRemove, onUpdateQuantity }) {
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  return (
+    <div>
+      <h2>Cart</h2>
+      {items.map(item => (
+        <div key={item.id}>
+          <span>{item.name} x {item.quantity}</span>
+          <button onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}>-</button>
+          <button onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}>+</button>
+          <button onClick={() => onRemove(item.id)}>Remove</button>
+        </div>
+      ))}
+      <div>Total: ${total}</div>
+    </div>
+  );
+}
+```
+
+## When to Lift State
+
+### Decision Checklist
+
+**Lift state when:**
+
+✅ Two or more components need the same data
+✅ Components need to stay in sync
+✅ One component's action should affect another
+✅ You need to derive data from multiple sources
+
+**Don't lift state when:**
+
+❌ Only one component needs the data
+❌ Components are far apart in the tree (consider Context instead)
+❌ State is truly independent between components
+
+### Example: When NOT to Lift
+
+```jsx
+// ❌ Don't lift if state is independent
+function Dashboard() {
+  // Each widget has independent state - don't lift!
+  return (
+    <div>
+      <WeatherWidget /> {/* Has own location state */}
+      <NewsWidget />     {/* Has own category state */}
+      <StockWidget />    {/* Has own ticker state */}
+    </div>
+  );
+}
+
+// ✅ Each widget manages its own state
+function WeatherWidget() {
+  const [location, setLocation] = useState('New York');
+  // ... fetch weather for location
+}
+```
+
+### Example: When TO Lift
+
+```jsx
+// ✅ Lift when components need to sync
+function SearchPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({});
+
+  // Both SearchBar and ResultsList need the query
+  return (
+    <div>
+      <SearchBar query={searchQuery} onQueryChange={setSearchQuery} />
+      <FilterPanel filters={filters} onFiltersChange={setFilters} />
+      <ResultsList query={searchQuery} filters={filters} />
+    </div>
+  );
+}
+```
+
+## Multiple Levels of Lifting
+
+Sometimes you need to lift state through multiple levels:
+
+```jsx
+function App() {
+  const [user, setUser] = useState(null);
+
+  return (
+    <div>
+      <Header user={user} onLogout={() => setUser(null)} />
+      <Main user={user} />
+      <Footer />
+    </div>
+  );
+}
+
+function Header({ user, onLogout }) {
+  return (
+    <header>
+      {user ? (
+        <UserMenu user={user} onLogout={onLogout} />
+      ) : (
+        <LoginButton />
+      )}
+    </header>
+  );
+}
+
+function UserMenu({ user, onLogout }) {
+  return (
+    <div>
+      <span>Hello, {user.name}</span>
+      <button onClick={onLogout}>Logout</button>
+    </div>
+  );
+}
+```
+
+**Notice:** Props pass through `Header` to reach `UserMenu`. This is called **prop drilling**.
+
+## Common Mistakes
+
+### 1. Prop Drilling Too Deep
+
+```jsx
+// ❌ BAD: Passing props through many levels
+function App() {
+  const [theme, setTheme] = useState('dark');
+  return <Layout theme={theme} setTheme={setTheme} />;
+}
+
+function Layout({ theme, setTheme }) {
+  return <Sidebar theme={theme} setTheme={setTheme} />;
+}
+
+function Sidebar({ theme, setTheme }) {
+  return <Menu theme={theme} setTheme={setTheme} />;
+}
+
+function Menu({ theme, setTheme }) {
+  return <ThemeToggle theme={theme} setTheme={setTheme} />;
+}
+
+// ✅ BETTER: Use Context for deeply nested shared state
+const ThemeContext = createContext();
+
+function App() {
+  const [theme, setTheme] = useState('dark');
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <Layout />
+    </ThemeContext.Provider>
+  );
+}
+
+function ThemeToggle() {
+  const { theme, setTheme } = useContext(ThemeContext);
+  return <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+    Toggle
+  </button>;
+}
+```
+
+**Rule of Thumb:** If passing props through more than 2-3 levels, consider Context.
+
+### 2. Lifting State Too High
+
+```jsx
+// ❌ BAD: State in root when only a small subtree needs it
+function App() {
+  const [modalOpen, setModalOpen] = useState(false); // Only used in Settings!
+
+  return (
+    <div>
+      <Home />
+      <About />
+      <Settings modalOpen={modalOpen} setModalOpen={setModalOpen} />
+    </div>
+  );
+}
+
+// ✅ GOOD: State in the component that needs it
+function App() {
+  return (
+    <div>
+      <Home />
+      <About />
+      <Settings /> {/* Manages its own modal state */}
+    </div>
+  );
+}
+
+function Settings() {
+  const [modalOpen, setModalOpen] = useState(false);
+  // ... use modal state here
+}
+```
+
+**Rule of Thumb:** Keep state as close as possible to where it's used.
+
+### 3. Forgetting to Update Both Values
+
+```jsx
+// ❌ BAD: Not synchronizing related state
+function FormWithPreview() {
+  const [firstName, setFirstName] = useState('');
+  const [fullName, setFullName] = useState(''); // Out of sync!
+
+  return (
+    <div>
+      <input
+        value={firstName}
+        onChange={(e) => setFirstName(e.target.value)}
+        // fullName never updates!
+      />
+      <Preview name={fullName} />
+    </div>
+  );
+}
+
+// ✅ GOOD: Derive one from the other
+function FormWithPreview() {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+
+  // Derive fullName instead of storing it
+  const fullName = `${firstName} ${lastName}`.trim();
+
+  return (
+    <div>
+      <input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+      <input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+      <Preview name={fullName} />
+    </div>
+  );
+}
+```
+
+### 4. Mutating Props
+
+```jsx
+// ❌ BAD: Trying to mutate props
+function TodoItem({ todo, onToggle }) {
+  const handleClick = () => {
+    todo.completed = !todo.completed; // Can't mutate props!
+    onToggle(todo);
+  };
+
+  return <li onClick={handleClick}>{todo.text}</li>;
+}
+
+// ✅ GOOD: Call parent callback to update state
+function TodoItem({ todo, onToggle }) {
+  const handleClick = () => {
+    onToggle(todo.id); // Let parent update its state
+  };
+
+  return (
+    <li
+      onClick={handleClick}
+      style={{ textDecoration: todo.completed ? 'line-through' : 'none' }}
+    >
+      {todo.text}
+    </li>
+  );
+}
+
+function TodoList() {
+  const [todos, setTodos] = useState([
+    { id: 1, text: 'Learn React', completed: false },
+  ]);
+
+  const toggleTodo = (id) => {
+    setTodos(todos.map(todo =>
+      todo.id === id ? { ...todo, completed: !todo.completed } : todo
+    ));
+  };
+
+  return (
+    <ul>
+      {todos.map(todo => (
+        <TodoItem key={todo.id} todo={todo} onToggle={toggleTodo} />
+      ))}
+    </ul>
+  );
+}
+```
+
+## Controlled vs Uncontrolled Components
+
+Lifting state creates **controlled components**:
+
+```jsx
+// Uncontrolled - component manages its own state
+function UncontrolledInput() {
+  const [value, setValue] = useState('');
+  return <input value={value} onChange={(e) => setValue(e.target.value)} />;
+}
+
+// Controlled - parent controls the value
+function ControlledInput({ value, onChange }) {
+  return <input value={value} onChange={onChange} />;
+}
+
+// Parent controls multiple inputs
+function Form() {
+  const [formData, setFormData] = useState({ name: '', email: '' });
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  return (
+    <form>
+      <ControlledInput
+        value={formData.name}
+        onChange={(e) => handleChange('name', e.target.value)}
+      />
+      <ControlledInput
+        value={formData.email}
+        onChange={(e) => handleChange('email', e.target.value)}
+      />
+    </form>
+  );
+}
+```
+
+## Interview Questions
+
+### Question 1: Lifting State Explanation
+
+**Interviewer:** "What does 'lifting state up' mean? Why would you do it?"
+
+**Answer:**
+"Lifting state up" means moving state from a child component to its parent component. You do this when:
+
+1. **Multiple components need the same data** - If two sibling components need to access or modify the same state, that state must live in their common parent
+2. **Components need to stay synchronized** - When one component's actions should affect another component
+3. **Single source of truth** - To avoid having duplicate state that can get out of sync
+
+The pattern follows React's one-way data flow:
+- Parent manages the state
+- Children receive data via props
+- Children notify parent of changes via callback props
+- Parent updates state, triggering re-render of all children
+
+This creates a **controlled component** pattern where the parent controls the child's behavior.
+
+### Question 2: When to Use Context vs Lifting State
+
+**Interviewer:** "When would you use Context API instead of lifting state?"
+
+**Answer:**
+Use **lifting state** when:
+- State is shared by 2-3 nearby components
+- The component tree is shallow (props pass through 1-2 levels)
+- The relationship between components is direct (parent-child or siblings)
+
+Use **Context** when:
+- State needs to be accessed by many components across the tree
+- You're passing props through many intermediate components (prop drilling)
+- State is truly global (theme, user authentication, language preference)
+
+Example of when to use Context:
+```jsx
+// ❌ Too much prop drilling
+<App theme={theme}>
+  <Header theme={theme}>
+    <Nav theme={theme}>
+      <NavItem theme={theme} />
+
+// ✅ Use Context instead
+<ThemeContext.Provider value={theme}>
+  <App>
+    <Header>
+      <Nav>
+        <NavItem /> {/* Uses useContext(ThemeContext) */}
+```
+
+**Rule of thumb:** If you're passing props through more than 2-3 levels, consider Context.
+
+## Key Takeaways
+
+1. **Lift state to the lowest common ancestor** of components that need it
+2. **Data flows down, events flow up** - React's one-way data flow
+3. **Single source of truth** - avoid duplicating state
+4. **Don't lift too high** - keep state as local as possible
+5. **Consider Context** for deeply nested shared state
+6. **Derive values** instead of storing them when possible
+
+## Next Steps
+
+You now understand how to share state between components. Next, explore the complete **[Essential Hooks](/react-fundamentals/essential-hooks)** toolkit to solve common React problems.

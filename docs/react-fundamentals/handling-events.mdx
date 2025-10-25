@@ -1,0 +1,1180 @@
+---
+sidebar_position: 6
+title: Handling Events
+description: Learn how to handle user interactions with events, controlled components, and forms in React
+---
+
+# Handling Events
+
+## Why Events?
+
+User interfaces aren't static—they need to respond to user actions:
+
+- **Clicks** - buttons, links, cards
+- **Input** - typing in text fields, selecting dropdowns
+- **Form submission** - logging in, creating posts, searching
+- **Hover** - showing tooltips, highlighting elements
+- **Keyboard** - shortcuts, navigation, accessibility
+
+Without event handling, your UI would be completely non-interactive.
+
+:::tip The Big Idea
+**Events let your components respond to user interactions**
+
+React's event system is similar to HTML's, but with some key differences that make it more powerful and consistent across browsers.
+:::
+
+## React's Event System
+
+### Basic Syntax
+
+```jsx
+// HTML - lowercase, string
+<button onclick="handleClick()">Click me</button>
+
+// React - camelCase, function reference
+<button onClick={handleClick}>Click me</button>
+```
+
+**Key differences from HTML:**
+1. **camelCase** naming: `onClick`, `onChange`, `onSubmit`
+2. **Pass function reference**, not a string
+3. **Can't return `false`** to prevent default (must use `e.preventDefault()`)
+
+### Common Events
+
+```jsx
+function EventExamples() {
+  return (
+    <div>
+      {/* Click events */}
+      <button onClick={() => console.log('Clicked!')}>
+        Click me
+      </button>
+
+      {/* Mouse events */}
+      <div
+        onMouseEnter={() => console.log('Mouse entered')}
+        onMouseLeave={() => console.log('Mouse left')}
+      >
+        Hover over me
+      </div>
+
+      {/* Input events */}
+      <input
+        onChange={(e) => console.log('Input changed:', e.target.value)}
+        onFocus={() => console.log('Input focused')}
+        onBlur={() => console.log('Input blurred')}
+      />
+
+      {/* Form events */}
+      <form onSubmit={(e) => e.preventDefault()}>
+        <button type="submit">Submit</button>
+      </form>
+
+      {/* Keyboard events */}
+      <input
+        onKeyDown={(e) => console.log('Key pressed:', e.key)}
+        onKeyUp={(e) => console.log('Key released:', e.key)}
+      />
+    </div>
+  );
+}
+```
+
+## Handling Click Events
+
+### Inline Arrow Function
+
+```jsx
+function Button() {
+  return (
+    <button onClick={() => alert('Clicked!')}>
+      Click me
+    </button>
+  );
+}
+```
+
+**When to use:** For simple, one-line operations.
+
+### Defined Function
+
+```jsx
+function Button() {
+  const handleClick = () => {
+    console.log('Button clicked!');
+    alert('You clicked the button');
+  };
+
+  return (
+    <button onClick={handleClick}>
+      Click me
+    </button>
+  );
+}
+```
+
+**When to use:** When you have multiple lines of logic or want to reuse the handler.
+
+**Important:** Pass the function reference, not the result of calling it!
+
+```jsx
+// ❌ WRONG - calls the function immediately during render
+<button onClick={handleClick()}>Click me</button>
+
+// ✅ CORRECT - passes the function reference
+<button onClick={handleClick}>Click me</button>
+
+// ✅ ALSO CORRECT - arrow function that calls it when clicked
+<button onClick={() => handleClick()}>Click me</button>
+```
+
+### Passing Arguments to Event Handlers
+
+```jsx
+function ButtonList() {
+  const handleClick = (buttonName) => {
+    alert(`You clicked ${buttonName}`);
+  };
+
+  return (
+    <div>
+      {/* ✅ Use arrow function to pass arguments */}
+      <button onClick={() => handleClick('Button 1')}>
+        Button 1
+      </button>
+      <button onClick={() => handleClick('Button 2')}>
+        Button 2
+      </button>
+    </div>
+  );
+}
+```
+
+### With State
+
+```jsx
+import { useState } from 'react';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  const increment = () => {
+    setCount(count + 1);
+  };
+
+  const decrement = () => {
+    setCount(count - 1);
+  };
+
+  const reset = () => {
+    setCount(0);
+  };
+
+  return (
+    <div>
+      <h2>Count: {count}</h2>
+      <button onClick={increment}>+1</button>
+      <button onClick={decrement}>-1</button>
+      <button onClick={reset}>Reset</button>
+    </div>
+  );
+}
+```
+
+## Controlled Components
+
+In React, form inputs are typically "controlled" - their value is controlled by React state.
+
+### Uncontrolled vs Controlled
+
+```jsx
+// ❌ Uncontrolled - React doesn't know the value
+function UncontrolledInput() {
+  return <input type="text" />;
+}
+// The DOM manages the value. React can't access it easily.
+
+// ✅ Controlled - React controls the value
+function ControlledInput() {
+  const [value, setValue] = useState('');
+
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+    />
+  );
+}
+```
+
+### Basic Controlled Input
+
+```jsx
+import { useState } from 'react';
+
+function NameInput() {
+  const [name, setName] = useState('');
+
+  return (
+    <div>
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Enter your name"
+      />
+      <p>Hello, {name}!</p>
+    </div>
+  );
+}
+```
+
+**How it works:**
+1. User types in the input
+2. `onChange` fires
+3. `setName` updates state with new value
+4. Component re-renders
+5. Input shows the new value from state
+
+**The loop:**
+```
+User types → onChange → setState → re-render → input shows new value
+```
+
+### Multiple Inputs
+
+```jsx
+function UserForm() {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: ''
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value  // Computed property name
+    });
+  };
+
+  return (
+    <form>
+      <input
+        name="firstName"
+        value={formData.firstName}
+        onChange={handleChange}
+        placeholder="First Name"
+      />
+      <input
+        name="lastName"
+        value={formData.lastName}
+        onChange={handleChange}
+        placeholder="Last Name"
+      />
+      <input
+        name="email"
+        type="email"
+        value={formData.email}
+        onChange={handleChange}
+        placeholder="Email"
+      />
+
+      <div>
+        <h3>Form Data:</h3>
+        <pre>{JSON.stringify(formData, null, 2)}</pre>
+      </div>
+    </form>
+  );
+}
+```
+
+**Key technique:** One `handleChange` function for all inputs, using the `name` attribute to determine which field to update.
+
+### Different Input Types
+
+```jsx
+function FormInputs() {
+  const [data, setData] = useState({
+    name: '',
+    age: '',
+    country: 'USA',
+    newsletter: false,
+    gender: ''
+  });
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setData({
+      ...data,
+      [name]: type === 'checkbox' ? checked : value
+    });
+  };
+
+  return (
+    <form>
+      {/* Text input */}
+      <input
+        type="text"
+        name="name"
+        value={data.name}
+        onChange={handleChange}
+      />
+
+      {/* Number input */}
+      <input
+        type="number"
+        name="age"
+        value={data.age}
+        onChange={handleChange}
+      />
+
+      {/* Select dropdown */}
+      <select
+        name="country"
+        value={data.country}
+        onChange={handleChange}
+      >
+        <option value="USA">USA</option>
+        <option value="Canada">Canada</option>
+        <option value="UK">UK</option>
+      </select>
+
+      {/* Checkbox */}
+      <label>
+        <input
+          type="checkbox"
+          name="newsletter"
+          checked={data.newsletter}
+          onChange={handleChange}
+        />
+        Subscribe to newsletter
+      </label>
+
+      {/* Radio buttons */}
+      <label>
+        <input
+          type="radio"
+          name="gender"
+          value="male"
+          checked={data.gender === 'male'}
+          onChange={handleChange}
+        />
+        Male
+      </label>
+      <label>
+        <input
+          type="radio"
+          name="gender"
+          value="female"
+          checked={data.gender === 'female'}
+          onChange={handleChange}
+        />
+        Female
+      </label>
+    </form>
+  );
+}
+```
+
+**Important notes:**
+- **Checkbox:** Use `checked` instead of `value`, and `e.target.checked`
+- **Radio:** Multiple inputs with same `name`, check if `value === data.field`
+- **Select:** Use `value` on the `<select>` element, not individual `<option>`s
+
+## Form Submission
+
+### Basic Form Handling
+
+```jsx
+import { useState } from 'react';
+
+function LoginForm() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault(); // Prevents page reload!
+
+    console.log('Submitting:', { email, password });
+    // Here you'd typically make an API call
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+        required
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+        required
+      />
+      <button type="submit">Log In</button>
+    </form>
+  );
+}
+```
+
+**Key point:** `e.preventDefault()` stops the default form submission (which would reload the page).
+
+### Form Validation
+
+```jsx
+function SignupForm() {
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: ''
+  });
+  const [errors, setErrors] = useState({});
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    // Clear error for this field when user types
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: '' });
+    }
+  };
+
+  const validate = () => {
+    const newErrors = {};
+
+    if (formData.username.length < 3) {
+      newErrors.username = 'Username must be at least 3 characters';
+    }
+
+    if (!formData.email.includes('@')) {
+      newErrors.email = 'Please enter a valid email';
+    }
+
+    if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    return newErrors;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const newErrors = validate();
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return; // Don't submit if there are errors
+    }
+
+    // Form is valid, submit it
+    console.log('Form submitted:', formData);
+    alert('Account created!');
+
+    // Reset form
+    setFormData({ username: '', email: '', password: '' });
+    setErrors({});
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div>
+        <input
+          name="username"
+          value={formData.username}
+          onChange={handleChange}
+          placeholder="Username"
+        />
+        {errors.username && <p className="error">{errors.username}</p>}
+      </div>
+
+      <div>
+        <input
+          name="email"
+          type="email"
+          value={formData.email}
+          onChange={handleChange}
+          placeholder="Email"
+        />
+        {errors.email && <p className="error">{errors.email}</p>}
+      </div>
+
+      <div>
+        <input
+          name="password"
+          type="password"
+          value={formData.password}
+          onChange={handleChange}
+          placeholder="Password"
+        />
+        {errors.password && <p className="error">{errors.password}</p>}
+      </div>
+
+      <button type="submit">Sign Up</button>
+    </form>
+  );
+}
+```
+
+## The Event Object
+
+React passes a synthetic event object to your handlers:
+
+```jsx
+function EventObject() {
+  const handleClick = (e) => {
+    console.log('Event type:', e.type); // 'click'
+    console.log('Target element:', e.target); // The button element
+    console.log('Current target:', e.currentTarget); // Also the button
+  };
+
+  const handleInput = (e) => {
+    console.log('Input value:', e.target.value);
+    console.log('Input name:', e.target.name);
+  };
+
+  const handleKeyPress = (e) => {
+    console.log('Key pressed:', e.key);
+    console.log('Key code:', e.keyCode);
+
+    if (e.key === 'Enter') {
+      console.log('Enter key pressed!');
+    }
+  };
+
+  return (
+    <div>
+      <button onClick={handleClick}>Click me</button>
+      <input onChange={handleInput} name="username" />
+      <input onKeyPress={handleKeyPress} />
+    </div>
+  );
+}
+```
+
+### e.preventDefault()
+
+Prevents the default browser behavior:
+
+```jsx
+function Examples() {
+  return (
+    <div>
+      {/* Prevent form submission page reload */}
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        console.log('Form submitted');
+      }}>
+        <button type="submit">Submit</button>
+      </form>
+
+      {/* Prevent link navigation */}
+      <a href="https://google.com" onClick={(e) => {
+        e.preventDefault();
+        console.log('Link clicked but not followed');
+      }}>
+        Click me
+      </a>
+
+      {/* Prevent default right-click menu */}
+      <div onContextMenu={(e) => {
+        e.preventDefault();
+        console.log('Right-clicked');
+      }}>
+        Right-click me
+      </div>
+    </div>
+  );
+}
+```
+
+### e.stopPropagation()
+
+Stops the event from bubbling up to parent elements:
+
+```jsx
+function EventPropagation() {
+  return (
+    <div onClick={() => console.log('Div clicked')}>
+      <button onClick={(e) => {
+        e.stopPropagation(); // Stops event from reaching div
+        console.log('Button clicked');
+      }}>
+        Click me
+      </button>
+    </div>
+  );
+}
+
+// Without stopPropagation:
+//   Button clicked
+//   Div clicked
+
+// With stopPropagation:
+//   Button clicked
+```
+
+### Common event properties
+
+```jsx
+function EventProperties() {
+  const handleEvent = (e) => {
+    // Input events
+    console.log(e.target.value);     // Current value
+    console.log(e.target.name);      // Input name attribute
+    console.log(e.target.checked);   // Checkbox checked state
+
+    // Mouse events
+    console.log(e.clientX, e.clientY); // Mouse position
+    console.log(e.button);             // Which mouse button (0=left, 1=middle, 2=right)
+
+    // Keyboard events
+    console.log(e.key);                // Key pressed (e.g., "Enter", "a")
+    console.log(e.shiftKey);           // Was Shift held?
+    console.log(e.ctrlKey);            // Was Ctrl/Cmd held?
+    console.log(e.altKey);             // Was Alt held?
+  };
+}
+```
+
+## Common Mistakes
+
+<details>
+<summary>❌ Mistake #1: Calling function instead of passing reference</summary>
+
+```jsx
+function Button() {
+  const handleClick = () => {
+    console.log('Clicked!');
+  };
+
+  return (
+    <div>
+      {/* ❌ WRONG - calls function immediately during render */}
+      <button onClick={handleClick()}>Click me</button>
+
+      {/* ✅ CORRECT - passes function reference */}
+      <button onClick={handleClick}>Click me</button>
+
+      {/* ✅ ALSO CORRECT - arrow function */}
+      <button onClick={() => handleClick()}>Click me</button>
+    </div>
+  );
+}
+```
+
+**The problem:** `handleClick()` executes during render, not on click. This can cause infinite loops if it calls `setState`.
+
+</details>
+
+<details>
+<summary>❌ Mistake #2: Forgetting e.preventDefault() on forms</summary>
+
+```jsx
+// ❌ WRONG - page reloads on submit
+function LoginForm() {
+  const handleSubmit = () => {
+    console.log('Submitting...');
+    // Page reloads before you see this!
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+
+// ✅ CORRECT - prevent default behavior
+function LoginForm() {
+  const handleSubmit = (e) => {
+    e.preventDefault(); // Stop the page reload
+    console.log('Submitting...');
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+```
+
+</details>
+
+<details>
+<summary>❌ Mistake #3: Controlled input without onChange</summary>
+
+```jsx
+// ❌ WRONG - input can't be changed!
+function BrokenInput() {
+  const [value, setValue] = useState('');
+
+  return <input value={value} />; // No onChange!
+  // Input is "read-only" - typing does nothing
+}
+
+// ✅ CORRECT - provide onChange handler
+function WorkingInput() {
+  const [value, setValue] = useState('');
+
+  return (
+    <input
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+    />
+  );
+}
+```
+
+**React warning:** "You provided a `value` prop to a form field without an `onChange` handler..."
+
+</details>
+
+<details>
+<summary>❌ Mistake #4: Using 'this' in event handlers (class components)</summary>
+
+This is mainly a class component issue, but good to know:
+
+```jsx
+// ❌ WRONG - 'this' is undefined
+class Button extends React.Component {
+  handleClick() {
+    console.log(this.props); // Error: Cannot read property 'props' of undefined
+  }
+
+  render() {
+    return <button onClick={this.handleClick}>Click me</button>;
+  }
+}
+
+// ✅ Fix 1: Arrow function in JSX
+<button onClick={() => this.handleClick()}>Click me</button>
+
+// ✅ Fix 2: Arrow function property
+handleClick = () => {
+  console.log(this.props); // Works!
+}
+
+// ✅ Fix 3: Bind in constructor
+constructor(props) {
+  super(props);
+  this.handleClick = this.handleClick.bind(this);
+}
+```
+
+**With function components**, `this` is not an issue—another reason to prefer them!
+
+</details>
+
+<details>
+<summary>❌ Mistake #5: Not using the event parameter correctly</summary>
+
+```jsx
+// ❌ WRONG - accessing event properties later (async)
+function Input() {
+  const [value, setValue] = useState('');
+
+  const handleChange = (e) => {
+    setTimeout(() => {
+      console.log(e.target.value); // Error: Cannot read 'value' of null
+    }, 1000);
+  };
+
+  return <input onChange={handleChange} />;
+}
+
+// ✅ CORRECT - extract value immediately
+function Input() {
+  const [value, setValue] = useState('');
+
+  const handleChange = (e) => {
+    const newValue = e.target.value; // Extract immediately
+
+    setTimeout(() => {
+      console.log(newValue); // Works!
+    }, 1000);
+  };
+
+  return <input onChange={handleChange} />;
+}
+```
+
+**Why?** React reuses event objects for performance. After your handler returns, `e.target` becomes `null`.
+
+**Alternative:** Call `e.persist()` to keep the event object (rarely needed).
+
+</details>
+
+## Practical Examples
+
+### Toggle Button
+
+```jsx
+import { useState } from 'react';
+
+function ToggleButton() {
+  const [isOn, setIsOn] = useState(false);
+
+  const toggle = () => setIsOn(!isOn);
+
+  return (
+    <button
+      onClick={toggle}
+      style={{
+        backgroundColor: isOn ? 'green' : 'gray',
+        color: 'white'
+      }}
+    >
+      {isOn ? 'ON' : 'OFF'}
+    </button>
+  );
+}
+```
+
+### Search Input with Clear Button
+
+```jsx
+import { useState } from 'react';
+
+function SearchBox() {
+  const [search, setSearch] = useState('');
+
+  const handleClear = () => {
+    setSearch('');
+  };
+
+  return (
+    <div>
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search..."
+      />
+      {search && (
+        <button onClick={handleClear}>Clear</button>
+      )}
+      <p>Searching for: {search}</p>
+    </div>
+  );
+}
+```
+
+### Keyboard Shortcuts
+
+```jsx
+import { useState } from 'react';
+
+function KeyboardShortcuts() {
+  const [message, setMessage] = useState('');
+
+  const handleKeyDown = (e) => {
+    // Ctrl+K or Cmd+K
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      setMessage('You pressed Ctrl/Cmd + K');
+    }
+
+    // Escape key
+    if (e.key === 'Escape') {
+      setMessage('You pressed Escape');
+    }
+
+    // Enter key
+    if (e.key === 'Enter') {
+      setMessage('You pressed Enter');
+    }
+  };
+
+  return (
+    <div>
+      <input
+        onKeyDown={handleKeyDown}
+        placeholder="Try Ctrl+K, Enter, or Escape"
+      />
+      <p>{message}</p>
+    </div>
+  );
+}
+```
+
+### File Upload
+
+```jsx
+import { useState } from 'react';
+
+function FileUpload() {
+  const [file, setFile] = useState(null);
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!file) {
+      alert('Please select a file');
+      return;
+    }
+
+    console.log('Uploading file:', file.name);
+    // Here you'd typically use FormData and fetch to upload
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        type="file"
+        onChange={handleFileChange}
+        accept="image/*"
+      />
+
+      {file && (
+        <div>
+          <p>Selected: {file.name}</p>
+          <p>Size: {(file.size / 1024).toFixed(2)} KB</p>
+        </div>
+      )}
+
+      <button type="submit">Upload</button>
+    </form>
+  );
+}
+```
+
+## Interview Questions
+
+<details>
+<summary>Q1: What's the difference between controlled and uncontrolled components?</summary>
+
+**Answer:**
+
+**Controlled Components:**
+- Form data is controlled by React state
+- Value comes from state, changes via `onChange`
+- Single source of truth (React state)
+- Recommended approach in React
+
+```jsx
+function ControlledInput() {
+  const [value, setValue] = useState('');
+
+  return (
+    <input
+      value={value} // Value from state
+      onChange={(e) => setValue(e.target.value)} // Update state on change
+    />
+  );
+}
+```
+
+**Benefits:**
+- React always knows the current value
+- Easy to validate input in real-time
+- Can easily clear/modify the value programmatically
+- Enables features like conditional formatting
+
+**Uncontrolled Components:**
+- Form data is handled by the DOM itself
+- Use `ref` to access value when needed
+- DOM is the source of truth
+
+```jsx
+import { useRef } from 'react';
+
+function UncontrolledInput() {
+  const inputRef = useRef(null);
+
+  const handleSubmit = () => {
+    console.log(inputRef.current.value); // Get value from DOM
+  };
+
+  return (
+    <>
+      <input ref={inputRef} defaultValue="Hello" />
+      <button onClick={handleSubmit}>Submit</button>
+    </>
+  );
+}
+```
+
+**When to use uncontrolled:**
+- File inputs (must be uncontrolled)
+- Integration with non-React code
+- Simple forms where you don't need real-time validation
+
+**Comparison:**
+
+| Feature | Controlled | Uncontrolled |
+|---------|-----------|--------------|
+| Source of truth | React state | DOM |
+| Get current value | `value` variable | `ref.current.value` |
+| Set initial value | `value` prop | `defaultValue` prop |
+| Validation | Easy (on every change) | Only on submit |
+| React's recommendation | ✅ Preferred | ⚠️ Use sparingly |
+
+</details>
+
+<details>
+<summary>Q2: How do you prevent a form from submitting and reloading the page?</summary>
+
+**Answer:**
+
+Use `e.preventDefault()` in the submit handler:
+
+```jsx
+function LoginForm() {
+  const handleSubmit = (e) => {
+    e.preventDefault(); // Prevents page reload
+
+    // Now you can handle the submission
+    console.log('Form submitted');
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input type="text" />
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+```
+
+**Why this is needed:**
+
+By default, HTML forms cause a full page reload when submitted (they POST to the current URL or the `action` attribute). In React, you typically want to:
+
+1. Prevent the default behavior
+2. Handle the submission with JavaScript
+3. Make an API call (with `fetch` or similar)
+4. Update React state based on the response
+
+**What happens without `preventDefault()`:**
+```jsx
+function BrokenForm() {
+  const handleSubmit = () => {
+    console.log('Submitting...'); // You'll never see this!
+    // Page reloads immediately
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+```
+
+**Other use cases for `preventDefault()`:**
+- Preventing link navigation: `<a href="..." onClick={(e) => e.preventDefault()}>`
+- Preventing default right-click menu: `onContextMenu={(e) => e.preventDefault()}`
+- Preventing default drag-and-drop behavior
+
+**Interview tip:** Mention that `e` is React's **SyntheticEvent**, a cross-browser wrapper around the native event that ensures consistent behavior.
+
+</details>
+
+<details>
+<summary>Q3: What's the difference between passing a function reference vs calling a function in an event handler?</summary>
+
+**Answer:**
+
+**Passing a function reference** (correct):
+```jsx
+<button onClick={handleClick}>Click me</button>
+```
+- Passes the function itself to React
+- React calls it when the event happens
+- Function executes on user interaction
+
+**Calling a function** (usually wrong):
+```jsx
+<button onClick={handleClick()}>Click me</button>
+```
+- Executes the function immediately during render
+- Passes the return value to React (usually `undefined`)
+- Can cause infinite loops if the function calls `setState`
+
+**Example of the problem:**
+```jsx
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  const increment = () => {
+    setCount(count + 1);
+  };
+
+  return (
+    <button onClick={increment()}> {/* ❌ WRONG! */}
+      {count}
+    </button>
+  );
+}
+
+// What happens:
+// 1. Component renders
+// 2. increment() is called immediately
+// 3. setCount updates state
+// 4. Component re-renders
+// 5. increment() is called again
+// 6. Infinite loop!
+```
+
+**When you DO need to call a function:**
+
+If you need to pass arguments:
+```jsx
+function ButtonList() {
+  const handleClick = (id) => {
+    console.log('Clicked button', id);
+  };
+
+  return (
+    <>
+      {/* ❌ Wrong: calls immediately */}
+      <button onClick={handleClick(1)}>Button 1</button>
+
+      {/* ✅ Correct: wrap in arrow function */}
+      <button onClick={() => handleClick(1)}>Button 1</button>
+      <button onClick={() => handleClick(2)}>Button 2</button>
+    </>
+  );
+}
+```
+
+**Summary:**
+- `onClick={handleClick}` - ✅ Passes reference, React calls it later
+- `onClick={handleClick()}` - ❌ Calls immediately, passes return value
+- `onClick={() => handleClick()}` - ✅ Wraps in arrow function, calls when clicked
+- `onClick={() => handleClick(arg)}` - ✅ Passes arguments when clicked
+
+</details>
+
+## Key Takeaways
+
+- ✅ Use camelCase event names: `onClick`, `onChange`, `onSubmit`
+- ✅ Pass function references, not function calls: `onClick={handleClick}` not `onClick={handleClick()}`
+- ✅ Use `e.preventDefault()` to stop default browser behavior (especially for forms)
+- ✅ Controlled components: input value from state, update via `onChange`
+- ✅ Extract event properties immediately before async operations
+- ✅ Use `e.stopPropagation()` to prevent event bubbling
+- ✅ The event object provides useful info: `e.target.value`, `e.key`, `e.preventDefault()`
+
+## What's Next?
+
+You've learned how to make your UI interactive with events and forms. Now let's learn about side effects and data fetching with `useEffect`!
+
+[Next: useEffect and Data Fetching →](/react-fundamentals/useeffect-and-data-fetching)

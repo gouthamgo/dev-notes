@@ -1,0 +1,552 @@
+---
+sidebar_position: 2
+title: Your First Component
+description: Learn what React components are, why they exist, and how to create your first reusable component
+---
+
+# Your First Component
+
+## Why Components?
+
+Imagine you're building a profile page with three user cards. Without React, you'd write HTML like this:
+
+```html
+<!-- Without Components - Repetitive and Hard to Maintain -->
+<div class="user-card">
+  <img src="avatar1.jpg" alt="User" />
+  <h2>John Doe</h2>
+  <p>Software Engineer</p>
+  <button>Follow</button>
+</div>
+
+<div class="user-card">
+  <img src="avatar2.jpg" alt="User" />
+  <h2>Jane Smith</h2>
+  <p>Product Designer</p>
+  <button>Follow</button>
+</div>
+
+<div class="user-card">
+  <img src="avatar3.jpg" alt="User" />
+  <h2>Bob Johnson</h2>
+  <p>Data Scientist</p>
+  <button>Follow</button>
+</div>
+```
+
+**The pain points:**
+- ❌ Copying and pasting the same structure repeatedly
+- ❌ If you need to add a new field, you update it in 3+ places
+- ❌ Easy to make mistakes (forget to update one instance)
+- ❌ No way to "parameterize" the values
+
+**React's solution: Components**
+
+```jsx
+// With React Component - Reusable and Maintainable
+function UserCard() {
+  return (
+    <div className="user-card">
+      <img src="avatar1.jpg" alt="User" />
+      <h2>John Doe</h2>
+      <p>Software Engineer</p>
+      <button>Follow</button>
+    </div>
+  );
+}
+
+// Now use it anywhere:
+<UserCard />
+<UserCard />
+<UserCard />
+```
+
+:::tip The Big Idea
+**A Component = a function that returns UI**
+
+Components let you break your UI into reusable, independent pieces. They're just JavaScript functions that return what should appear on screen.
+:::
+
+## Hello World Example
+
+Let's create the simplest possible React component:
+
+```jsx title="components/Greeting.jsx"
+function Greeting() {
+  return <h1>Hello, World!</h1>;
+}
+
+export default Greeting;
+```
+
+**Breaking it down:**
+
+1. **`function Greeting()`** - It's just a regular JavaScript function
+2. **Capitalized name** - React components MUST start with a capital letter
+3. **Returns JSX** - Looks like HTML, but it's actually JavaScript
+4. **`export default`** - Makes it available to import elsewhere
+
+### Using Your Component
+
+```jsx title="App.jsx"
+import Greeting from './components/Greeting';
+
+function App() {
+  return (
+    <div>
+      <Greeting />
+      <Greeting />
+      <Greeting />
+    </div>
+  );
+}
+```
+
+**Output:**
+```
+Hello, World!
+Hello, World!
+Hello, World!
+```
+
+## JSX Syntax Rules
+
+JSX looks like HTML, but there are key differences:
+
+### 1. className instead of class
+
+```jsx
+// ❌ Wrong - 'class' is a reserved JavaScript keyword
+<div class="container">Content</div>
+
+// ✅ Correct
+<div className="container">Content</div>
+```
+
+### 2. Self-closing tags must have /
+
+```jsx
+// ❌ Wrong
+<img src="photo.jpg">
+<input type="text">
+
+// ✅ Correct
+<img src="photo.jpg" />
+<input type="text" />
+```
+
+### 3. Must return a single root element
+
+```jsx
+// ❌ Wrong - Multiple root elements
+function Header() {
+  return (
+    <h1>Title</h1>
+    <p>Subtitle</p>
+  );
+}
+
+// ✅ Option 1: Wrap in a div
+function Header() {
+  return (
+    <div>
+      <h1>Title</h1>
+      <p>Subtitle</p>
+    </div>
+  );
+}
+
+// ✅ Option 2: Use React Fragment (no extra DOM node)
+function Header() {
+  return (
+    <>
+      <h1>Title</h1>
+      <p>Subtitle</p>
+    </>
+  );
+}
+```
+
+### 4. JavaScript expressions in curly braces
+
+```jsx
+function WelcomeUser() {
+  const userName = "Alice";
+  const currentYear = 2024;
+
+  return (
+    <div>
+      <h1>Welcome, {userName}!</h1>
+      <p>Year: {currentYear}</p>
+      <p>Next year: {currentYear + 1}</p>
+    </div>
+  );
+}
+```
+
+## Where Do Components Live?
+
+### Typical Project Structure
+
+```
+my-app/
+├── src/
+│   ├── components/
+│   │   ├── Header.jsx
+│   │   ├── Footer.jsx
+│   │   └── UserCard.jsx
+│   ├── App.jsx
+│   └── main.jsx
+└── package.json
+```
+
+### Importing and Exporting
+
+**Default Export (one per file):**
+
+```jsx title="components/Button.jsx"
+function Button() {
+  return <button>Click me</button>;
+}
+
+export default Button;
+```
+
+```jsx title="App.jsx"
+// Import with any name you want
+import Button from './components/Button';
+import MyButton from './components/Button'; // Also works
+```
+
+**Named Export (multiple per file):**
+
+```jsx title="components/UI.jsx"
+export function Button() {
+  return <button>Click me</button>;
+}
+
+export function Input() {
+  return <input type="text" />;
+}
+```
+
+```jsx title="App.jsx"
+// Must import with exact names
+import { Button, Input } from './components/UI';
+```
+
+## A More Realistic Example
+
+```jsx title="components/ProductCard.jsx"
+function ProductCard() {
+  const productName = "Wireless Headphones";
+  const price = 99.99;
+  const inStock = true;
+
+  return (
+    <div className="product-card">
+      <img
+        src="https://via.placeholder.com/200"
+        alt={productName}
+      />
+      <h3>{productName}</h3>
+      <p className="price">${price}</p>
+      {inStock ? (
+        <span className="badge-success">In Stock</span>
+      ) : (
+        <span className="badge-danger">Out of Stock</span>
+      )}
+      <button>Add to Cart</button>
+    </div>
+  );
+}
+
+export default ProductCard;
+```
+
+**Key concepts shown:**
+- Variables inside the component function
+- Embedding JavaScript expressions with `{}`
+- Conditional rendering with ternary operator
+- Using variables in attributes (like `alt={productName}`)
+
+## Common Mistakes
+
+<details>
+<summary>❌ Mistake #1: Lowercase component names</summary>
+
+```jsx
+// ❌ Wrong - lowercase 'greeting'
+function greeting() {
+  return <h1>Hello</h1>;
+}
+
+// React treats this as an HTML tag, not a component
+<greeting /> // Won't work!
+
+// ✅ Correct - capitalized 'Greeting'
+function Greeting() {
+  return <h1>Hello</h1>;
+}
+
+<Greeting /> // Works!
+```
+
+**Why?** React uses capitalization to distinguish between HTML tags (`<div>`) and React components (`<Greeting />`).
+
+</details>
+
+<details>
+<summary>❌ Mistake #2: Forgetting to return JSX</summary>
+
+```jsx
+// ❌ Wrong - no return statement
+function Header() {
+  <h1>My Header</h1>
+}
+
+// ✅ Correct - explicit return
+function Header() {
+  return <h1>My Header</h1>;
+}
+
+// ✅ Also correct - implicit return with arrow function
+const Header = () => <h1>My Header</h1>;
+```
+
+</details>
+
+<details>
+<summary>❌ Mistake #3: Multiple root elements without a wrapper</summary>
+
+```jsx
+// ❌ Wrong
+function Card() {
+  return (
+    <h2>Title</h2>
+    <p>Description</p>
+  );
+}
+
+// ✅ Option 1: Wrap in div
+function Card() {
+  return (
+    <div>
+      <h2>Title</h2>
+      <p>Description</p>
+    </div>
+  );
+}
+
+// ✅ Option 2: Use Fragment (recommended when you don't need a wrapper element)
+function Card() {
+  return (
+    <>
+      <h2>Title</h2>
+      <p>Description</p>
+    </>
+  );
+}
+
+// ✅ Option 3: Explicit Fragment syntax (needed when adding keys)
+import { Fragment } from 'react';
+
+function Card() {
+  return (
+    <Fragment>
+      <h2>Title</h2>
+      <p>Description</p>
+    </Fragment>
+  );
+}
+```
+
+</details>
+
+<details>
+<summary>❌ Mistake #4: Using quotes around JSX expressions</summary>
+
+```jsx
+// ❌ Wrong - quotes make it a string literal
+function Welcome() {
+  const name = "Alice";
+  return <h1>Welcome, "{name}"</h1>; // Displays: Welcome, "Alice"
+}
+
+// ✅ Correct - curly braces for expressions
+function Welcome() {
+  const name = "Alice";
+  return <h1>Welcome, {name}</h1>; // Displays: Welcome, Alice
+}
+```
+
+</details>
+
+<details>
+<summary>❌ Mistake #5: Calling component as a function</summary>
+
+```jsx
+// ❌ Wrong - calling as a function
+function App() {
+  return (
+    <div>
+      {Greeting()} // Don't do this!
+    </div>
+  );
+}
+
+// ✅ Correct - use as JSX element
+function App() {
+  return (
+    <div>
+      <Greeting />
+    </div>
+  );
+}
+```
+
+**Why?** When you use JSX syntax `<Greeting />`, React handles the component lifecycle properly. Calling it as a function bypasses React's component system.
+
+</details>
+
+## Component Composition
+
+Components can use other components:
+
+```jsx
+function Header() {
+  return (
+    <header>
+      <h1>My Website</h1>
+      <nav>Navigation here</nav>
+    </header>
+  );
+}
+
+function Footer() {
+  return (
+    <footer>
+      <p>&copy; 2024 My Company</p>
+    </footer>
+  );
+}
+
+function Page() {
+  return (
+    <div>
+      <Header />
+      <main>
+        <h2>Page Content</h2>
+        <p>This is the main content area.</p>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+```
+
+**This is the foundation of React:** building complex UIs by composing simple components together.
+
+## Interview Questions
+
+<details>
+<summary>Q1: Why must React component names start with a capital letter?</summary>
+
+**Answer:** React uses capitalization to distinguish between HTML elements and React components.
+
+- **Lowercase** (`<div>`, `<button>`) → React treats it as an HTML tag
+- **Capitalized** (`<Greeting>`, `<UserCard>`) → React treats it as a component
+
+If you write `<greeting />` with a lowercase 'g', React will look for an HTML tag called "greeting" (which doesn't exist), instead of rendering your Greeting component.
+
+```jsx
+// React interprets this as HTML tag
+<greeting /> // Tries to render <greeting> HTML element
+
+// React interprets this as a component
+<Greeting /> // Calls your Greeting function component
+```
+
+</details>
+
+<details>
+<summary>Q2: What's the difference between a React component and a regular JavaScript function?</summary>
+
+**Answer:** A React component IS a regular JavaScript function, with these conventions:
+
+1. **Name starts with a capital letter** (e.g., `Button`, not `button`)
+2. **Returns JSX** (or `null` for nothing)
+3. **Can receive props** as the first parameter
+4. **Can use React Hooks** (like `useState`, `useEffect`)
+
+```jsx
+// Regular JavaScript function
+function add(a, b) {
+  return a + b;
+}
+
+// React component
+function Greeting(props) {
+  return <h1>Hello, {props.name}</h1>;
+}
+```
+
+Both are functions, but React components specifically return UI elements.
+
+</details>
+
+<details>
+<summary>Q3: When should you use a React Fragment (&#60;&#62;&#60;/&#62;) vs a div wrapper?</summary>
+
+**Answer:** Use a Fragment when you need to return multiple elements but don't want to add an extra DOM node.
+
+**Use `<div>` when:**
+- You need to apply styling or CSS classes
+- You need a container for layout purposes
+- You want semantic HTML structure
+
+**Use `<>` (Fragment) when:**
+- You only need to satisfy React's "single root element" rule
+- Adding an extra div would break your CSS layout
+- You want to avoid unnecessary DOM nesting
+
+```jsx
+// ✅ Fragment - doesn't add extra DOM node
+function TableRows() {
+  return (
+    <>
+      <tr><td>Row 1</td></tr>
+      <tr><td>Row 2</td></tr>
+    </>
+  );
+}
+
+// ❌ Div would be invalid HTML inside <table>
+function TableRows() {
+  return (
+    <div> {/* Invalid: div inside table */}
+      <tr><td>Row 1</td></tr>
+      <tr><td>Row 2</td></tr>
+    </div>
+  );
+}
+```
+
+**Performance note:** Fragments are slightly more efficient because they don't create extra DOM nodes, but the difference is usually negligible.
+
+</details>
+
+## Key Takeaways
+
+- ✅ Components are JavaScript functions that return JSX
+- ✅ Component names MUST be capitalized
+- ✅ Components must return a single root element (use Fragment if needed)
+- ✅ JSX looks like HTML but has subtle differences (`className`, self-closing tags)
+- ✅ Use `{}` to embed JavaScript expressions in JSX
+- ✅ Components can be composed together to build complex UIs
+
+## What's Next?
+
+Now that you can create components, you need a way to make them flexible and reusable. That's where **props** come in!
+
+[Next: Props and Children →](/react-fundamentals/props-and-children)

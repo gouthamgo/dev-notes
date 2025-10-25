@@ -1,0 +1,929 @@
+---
+sidebar_position: 9
+title: "Essential Hooks"
+description: "Master React's built-in hooks - your toolkit for building modern React applications"
+---
+
+# Essential Hooks
+
+## The Hook Toolkit
+
+Hooks let you "hook into" React features without writing classes. Think of them as **tools in your React toolbox** - each solves a specific problem.
+
+**The Essential Hooks:**
+1. **useState** - Add state to components
+2. **useEffect** - Handle side effects
+3. **useRef** - Reference DOM elements or persist values
+4. **useContext** - Access shared data without prop drilling
+5. **useMemo** - Cache expensive calculations
+6. **useCallback** - Cache function references
+
+## useState - Component Memory
+
+### What Problem Does It Solve?
+
+**Problem:** Components need to remember things between renders.
+
+```jsx
+// ❌ This doesn't work - variable resets on every render
+function Counter() {
+  let count = 0;
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => count++}>
+        Increment
+      </button>
+      {/* Button clicks do nothing - count always 0! */}
+    </div>
+  );
+}
+```
+
+### Solution: useState
+
+```jsx
+import { useState } from 'react';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+  //     ^state  ^setter    ^initial value
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)}>
+        Increment
+      </button>
+    </div>
+  );
+}
+```
+
+### When to Use
+
+- **Form inputs** - track what user types
+- **Toggle states** - open/closed, visible/hidden
+- **Lists** - todos, cart items
+- **Counters** - likes, quantities
+- **Any data that changes over time**
+
+### Advanced Patterns
+
+```jsx
+function FormExample() {
+  // Multiple state variables
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [age, setAge] = useState(0);
+
+  // Object state
+  const [user, setUser] = useState({
+    name: '',
+    email: '',
+    age: 0
+  });
+
+  // Functional update (when new state depends on old)
+  const [count, setCount] = useState(0);
+  const increment = () => {
+    setCount(prevCount => prevCount + 1); // ✅ Safe in async
+  };
+
+  // Lazy initialization (expensive initial value)
+  const [data, setData] = useState(() => {
+    return expensiveComputation(); // Only runs once!
+  });
+}
+```
+
+## useEffect - Side Effects
+
+### What Problem Does It Solve?
+
+**Problem:** Components need to synchronize with external systems (APIs, DOM, timers).
+
+We covered this extensively in the previous chapter. Quick recap:
+
+```jsx
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    // Side effect: fetch data
+    fetch(`/api/users/${userId}`)
+      .then(res => res.json())
+      .then(setUser);
+  }, [userId]); // Re-run when userId changes
+
+  return <div>{user?.name}</div>;
+}
+```
+
+### When to Use
+
+- **Fetching data** from APIs
+- **Setting up subscriptions** (WebSockets, event listeners)
+- **Updating document.title**
+- **Timers and intervals**
+- **Third-party integrations** (analytics, maps)
+
+## useRef - Persistent Reference
+
+### What Problem Does It Solve?
+
+**Problem:** You need to access DOM elements or store values that **don't trigger re-renders**.
+
+```jsx
+// ❌ Can't access DOM directly
+function AutoFocusInput() {
+  return <input />; // How do I focus this?
+}
+```
+
+### Solution: useRef
+
+```jsx
+import { useRef, useEffect } from 'react';
+
+function AutoFocusInput() {
+  const inputRef = useRef(null);
+  //    ^reference object with .current property
+
+  useEffect(() => {
+    inputRef.current.focus(); // Access the DOM node
+  }, []);
+
+  return <input ref={inputRef} />;
+}
+```
+
+### Two Main Uses
+
+#### 1. Access DOM Elements
+
+```jsx
+function VideoPlayer() {
+  const videoRef = useRef(null);
+
+  const play = () => {
+    videoRef.current.play();
+  };
+
+  const pause = () => {
+    videoRef.current.pause();
+  };
+
+  return (
+    <div>
+      <video ref={videoRef} src="movie.mp4" />
+      <button onClick={play}>Play</button>
+      <button onClick={pause}>Pause</button>
+    </div>
+  );
+}
+```
+
+#### 2. Store Mutable Values (Without Triggering Re-renders)
+
+```jsx
+function Timer() {
+  const [count, setCount] = useState(0);
+  const intervalRef = useRef(null);
+
+  const start = () => {
+    if (intervalRef.current) return; // Already running
+
+    intervalRef.current = setInterval(() => {
+      setCount(c => c + 1);
+    }, 1000);
+  };
+
+  const stop = () => {
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
+  };
+
+  useEffect(() => {
+    return () => stop(); // Cleanup on unmount
+  }, []);
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={start}>Start</button>
+      <button onClick={stop}>Stop</button>
+    </div>
+  );
+}
+```
+
+### useRef vs useState
+
+| useRef | useState |
+|--------|----------|
+| Doesn't trigger re-render | Triggers re-render |
+| Mutable (.current) | Immutable (use setter) |
+| Updates immediately | Updates on next render |
+| Use for DOM access, timers | Use for UI data |
+
+```jsx
+function Comparison() {
+  const [stateCount, setStateCount] = useState(0);
+  const refCount = useRef(0);
+
+  const incrementState = () => {
+    setStateCount(stateCount + 1);
+    console.log('State:', stateCount); // Old value!
+    // Component re-renders
+  };
+
+  const incrementRef = () => {
+    refCount.current++;
+    console.log('Ref:', refCount.current); // New value immediately
+    // Component does NOT re-render
+  };
+}
+```
+
+### When to Use
+
+- **Access DOM elements** - focus, scroll, measure
+- **Store interval/timeout IDs**
+- **Track previous values**
+- **Any value that shouldn't trigger re-render**
+
+## useContext - Share Data Without Prop Drilling
+
+### What Problem Does It Solve?
+
+**Problem:** Passing props through many levels is tedious and messy.
+
+```jsx
+// ❌ Prop drilling - passing theme through every level
+function App() {
+  const [theme, setTheme] = useState('dark');
+  return <Layout theme={theme} />;
+}
+
+function Layout({ theme }) {
+  return <Sidebar theme={theme} />;
+}
+
+function Sidebar({ theme }) {
+  return <Button theme={theme} />;
+}
+
+function Button({ theme }) {
+  return <button className={theme}>Click</button>;
+}
+```
+
+### Solution: useContext
+
+```jsx
+import { createContext, useContext, useState } from 'react';
+
+// 1. Create context
+const ThemeContext = createContext();
+
+// 2. Provider component
+function App() {
+  const [theme, setTheme] = useState('dark');
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <Layout />
+    </ThemeContext.Provider>
+  );
+}
+
+// 3. Consume context anywhere in the tree
+function Button() {
+  const { theme, setTheme } = useContext(ThemeContext);
+
+  return (
+    <button
+      className={theme}
+      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+    >
+      Toggle Theme
+    </button>
+  );
+}
+```
+
+### Complete Example: Auth Context
+
+```jsx
+const AuthContext = createContext();
+
+// Custom hook for easier usage
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+}
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check if user is logged in
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => setUser(data.user))
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const login = async (email, password) => {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    setUser(data.user);
+  };
+
+  const logout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setUser(null);
+  };
+
+  const value = {
+    user,
+    loading,
+    login,
+    logout
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+// Usage in any component
+function UserProfile() {
+  const { user, logout } = useAuth();
+
+  if (!user) return <div>Please log in</div>;
+
+  return (
+    <div>
+      <h1>Welcome, {user.name}</h1>
+      <button onClick={logout}>Logout</button>
+    </div>
+  );
+}
+```
+
+### When to Use
+
+- **Theme** - dark/light mode
+- **Authentication** - current user, login/logout
+- **Language/Locale** - i18n
+- **Global settings** - preferences, config
+- **Avoid prop drilling** - data needed by many components
+
+### When NOT to Use
+
+❌ Don't use Context for **frequently changing values** - causes all consumers to re-render
+❌ Don't use for **local state** - keep state close to where it's used
+❌ Don't use as a **replacement for props** - props are fine for nearby components
+
+## useMemo - Cache Expensive Calculations
+
+### What Problem Does It Solve?
+
+**Problem:** Expensive calculations run on every render, even when inputs haven't changed.
+
+```jsx
+// ❌ Filters entire list on every render
+function ProductList({ products, category }) {
+  const filtered = products.filter(p => p.category === category);
+  // Runs even when products and category haven't changed!
+
+  return <div>{filtered.map(p => <Product key={p.id} {...p} />)}</div>;
+}
+```
+
+### Solution: useMemo
+
+```jsx
+import { useMemo } from 'react';
+
+function ProductList({ products, category }) {
+  const filtered = useMemo(() => {
+    console.log('Filtering products...');
+    return products.filter(p => p.category === category);
+  }, [products, category]); // Only re-compute when these change
+
+  return <div>{filtered.map(p => <Product key={p.id} {...p} />)}</div>;
+}
+```
+
+### Real Example: Expensive Calculation
+
+```jsx
+function PrimeNumbers({ max }) {
+  const primes = useMemo(() => {
+    console.log('Computing primes...');
+    const isPrime = (num) => {
+      for (let i = 2; i < num; i++) {
+        if (num % i === 0) return false;
+      }
+      return num > 1;
+    };
+
+    const result = [];
+    for (let i = 2; i <= max; i++) {
+      if (isPrime(i)) result.push(i);
+    }
+    return result;
+  }, [max]); // Only recompute when max changes
+
+  return <div>Found {primes.length} primes under {max}</div>;
+}
+```
+
+### When to Use
+
+- **Expensive calculations** - filtering, sorting, transforming large arrays
+- **Complex derivations** - aggregations, statistics
+- **Referential equality** - passing objects to child components
+
+### When NOT to Use
+
+❌ **Simple calculations** - more overhead than benefit
+❌ **Values that change often** - useMemo adds overhead
+❌ **Premature optimization** - profile first!
+
+```jsx
+// ❌ DON'T: Too simple to memoize
+const doubled = useMemo(() => count * 2, [count]);
+
+// ✅ DO: Just calculate it
+const doubled = count * 2;
+```
+
+## useCallback - Cache Function References
+
+### What Problem Does It Solve?
+
+**Problem:** Functions are recreated on every render, causing child components to re-render unnecessarily.
+
+```jsx
+// ❌ Parent re-renders, new handleClick function created, child re-renders
+function Parent() {
+  const [count, setCount] = useState(0);
+
+  const handleClick = () => { // New function on every render!
+    console.log('Clicked');
+  };
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+      <ExpensiveChild onClick={handleClick} />
+    </div>
+  );
+}
+
+const ExpensiveChild = React.memo(({ onClick }) => {
+  console.log('Child rendered');
+  return <button onClick={onClick}>Child Button</button>;
+});
+```
+
+### Solution: useCallback
+
+```jsx
+import { useCallback } from 'react';
+
+function Parent() {
+  const [count, setCount] = useState(0);
+
+  const handleClick = useCallback(() => {
+    console.log('Clicked');
+  }, []); // Same function reference across renders
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+      <ExpensiveChild onClick={handleClick} />
+      {/* Child doesn't re-render when count changes! */}
+    </div>
+  );
+}
+```
+
+### useCallback with Dependencies
+
+```jsx
+function TodoList() {
+  const [todos, setTodos] = useState([]);
+  const [filter, setFilter] = useState('all');
+
+  // Function depends on filter
+  const filterTodos = useCallback((todoList) => {
+    if (filter === 'all') return todoList;
+    if (filter === 'active') return todoList.filter(t => !t.completed);
+    if (filter === 'completed') return todoList.filter(t => t.completed);
+  }, [filter]); // Recreate when filter changes
+
+  return <FilteredList todos={todos} filterFn={filterTodos} />;
+}
+```
+
+### useMemo vs useCallback
+
+```jsx
+// useMemo - cache the result of a calculation
+const sortedList = useMemo(
+  () => items.sort((a, b) => a.localeCompare(b)),
+  [items]
+);
+
+// useCallback - cache the function itself
+const handleSort = useCallback(
+  () => items.sort((a, b) => a.localeCompare(b)),
+  [items]
+);
+
+// Actually equivalent:
+const handleSort = useMemo(
+  () => () => items.sort((a, b) => a.localeCompare(b)),
+  [items]
+);
+```
+
+### When to Use
+
+- **Pass functions to optimized child components** (wrapped in React.memo)
+- **Functions used in dependency arrays** of other hooks
+- **Event handlers passed to many children**
+
+### When NOT to Use
+
+❌ **Every function** - unnecessary overhead
+❌ **Functions not passed to children**
+❌ **Without React.memo on children** - no benefit
+
+## Rules of Hooks
+
+**You MUST follow these rules:**
+
+### 1. Only Call Hooks at the Top Level
+
+```jsx
+// ❌ BAD: Conditional hooks
+function Bad({ condition }) {
+  if (condition) {
+    const [state, setState] = useState(0); // Breaks React!
+  }
+}
+
+// ❌ BAD: Hooks in loops
+function Bad({ items }) {
+  items.forEach(item => {
+    const [state, setState] = useState(0); // Breaks React!
+  });
+}
+
+// ✅ GOOD: Hooks at top level
+function Good({ condition, items }) {
+  const [state, setState] = useState(0);
+  const [count, setCount] = useState(items.length);
+
+  if (condition) {
+    // Use state here
+  }
+}
+```
+
+**Why?** React relies on hook call order to track state. Conditional hooks break this.
+
+### 2. Only Call Hooks from React Functions
+
+```jsx
+// ❌ BAD: Hook in regular function
+function regularFunction() {
+  const [state, setState] = useState(0); // Error!
+}
+
+// ✅ GOOD: Hook in component
+function Component() {
+  const [state, setState] = useState(0);
+}
+
+// ✅ GOOD: Hook in custom hook
+function useCustomHook() {
+  const [state, setState] = useState(0);
+  return state;
+}
+```
+
+## Custom Hooks - Creating Your Own
+
+Custom hooks let you extract component logic into reusable functions.
+
+### Pattern: Extract Repeated Logic
+
+```jsx
+// Before: Repeated fetch logic
+function UserProfile() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/user')
+      .then(res => res.json())
+      .then(setUser)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, []);
+
+  // ...
+}
+
+function PostList() {
+  const [posts, setPosts] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/posts')
+      .then(res => res.json())
+      .then(setPosts)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, []);
+
+  // ...
+}
+```
+
+### After: Custom Hook
+
+```jsx
+// Custom hook - starts with "use"
+function useFetch(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Fetch failed');
+        const json = await response.json();
+        setData(json);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [url]);
+
+  return { data, loading, error };
+}
+
+// Usage
+function UserProfile() {
+  const { data: user, loading, error } = useFetch('/api/user');
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  return <div>{user.name}</div>;
+}
+```
+
+### More Custom Hook Examples
+
+```jsx
+// Local storage sync
+function useLocalStorage(key, initialValue) {
+  const [value, setValue] = useState(() => {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : initialValue;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, [key, value]);
+
+  return [value, setValue];
+}
+
+// Window size
+function useWindowSize() {
+  const [size, setSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return size;
+}
+
+// Debounced value
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+```
+
+## When to Use Each Hook - Decision Guide
+
+```
+Need to remember data between renders?
+└─> useState
+
+Need to fetch data, subscribe, or update DOM?
+└─> useEffect
+
+Need to access a DOM element?
+└─> useRef
+
+Need to store a value that doesn't trigger re-renders?
+└─> useRef
+
+Need to share data across many components?
+└─> useContext
+
+Have an expensive calculation?
+└─> useMemo
+
+Passing a function to an optimized child component?
+└─> useCallback
+
+Need to extract reusable logic?
+└─> Custom Hook
+```
+
+## Interview Questions
+
+### Question 1: useRef vs useState
+
+**Interviewer:** "When would you use useRef instead of useState?"
+
+**Answer:**
+Use **useRef** when:
+1. **Accessing DOM elements** - focus, scroll, measure
+2. **Storing mutable values that shouldn't trigger re-renders** - timer IDs, previous values, subscriptions
+3. **Value changes don't need to update UI**
+
+Use **useState** when:
+4. **Value changes should trigger re-render** - UI depends on the value
+5. **Managing component state** - form inputs, toggles, counters
+
+Example:
+```jsx
+function Example() {
+  const [count, setCount] = useState(0); // UI shows count
+  const renderCount = useRef(0); // Track renders (no UI update needed)
+
+  useEffect(() => {
+    renderCount.current++; // Doesn't trigger re-render
+  });
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <p>Rendered {renderCount.current} times</p>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+    </div>
+  );
+}
+```
+
+### Question 2: useMemo vs useCallback
+
+**Interviewer:** "What's the difference between useMemo and useCallback?"
+
+**Answer:**
+Both cache values to optimize performance, but:
+
+**useMemo** caches the **result** of a calculation:
+```jsx
+const sortedList = useMemo(
+  () => items.sort((a, b) => a - b),
+  [items]
+);
+// sortedList is the sorted array
+```
+
+**useCallback** caches the **function itself**:
+```jsx
+const handleClick = useCallback(
+  () => console.log(items),
+  [items]
+);
+// handleClick is the function
+```
+
+Think of it this way:
+- `useMemo(() => fn)` = cache the result of calling fn
+- `useCallback(fn)` = cache the function fn
+
+They're actually related:
+```jsx
+useCallback(fn, deps) === useMemo(() => fn, deps)
+```
+
+### Question 3: Custom Hooks
+
+**Interviewer:** "What are the rules for creating custom hooks? Why are they useful?"
+
+**Answer:**
+**Rules:**
+1. **Name must start with "use"** - React convention, enables linting
+2. **Can call other hooks** - that's the whole point
+3. **Follow all hook rules** - only at top level, only in React functions
+
+**Why useful:**
+1. **Extract repeated logic** - DRY principle
+2. **Share stateful logic** - not just functions
+3. **Better code organization** - separate concerns
+4. **Easier testing** - test logic in isolation
+
+Example:
+```jsx
+// Custom hook for form fields
+function useInput(initialValue) {
+  const [value, setValue] = useState(initialValue);
+  const [touched, setTouched] = useState(false);
+
+  const handleChange = (e) => setValue(e.target.value);
+  const handleBlur = () => setTouched(true);
+  const reset = () => {
+    setValue(initialValue);
+    setTouched(false);
+  };
+
+  return {
+    value,
+    touched,
+    onChange: handleChange,
+    onBlur: handleBlur,
+    reset
+  };
+}
+
+// Usage
+function LoginForm() {
+  const email = useInput('');
+  const password = useInput('');
+
+  return (
+    <form>
+      <input {...email} type="email" />
+      <input {...password} type="password" />
+    </form>
+  );
+}
+```
+
+## Key Takeaways
+
+1. **useState** - component memory, triggers re-renders
+2. **useEffect** - side effects, runs after render
+3. **useRef** - DOM access, mutable values without re-renders
+4. **useContext** - share data without prop drilling
+5. **useMemo** - cache expensive calculations
+6. **useCallback** - cache functions for optimized children
+7. **Custom hooks** - extract and reuse stateful logic
+8. **Always follow the rules** - top level, React functions only
+
+## Next Steps
+
+Now that you have the essential hooks in your toolkit, learn how to combine them into powerful **[Component Patterns](/react-fundamentals/component-patterns)**.

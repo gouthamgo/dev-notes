@@ -18,6 +18,7 @@ const sidebars: SidebarsConfig = {
         'javascript/arrays-objects',
         'javascript/async-javascript',
         'javascript/es6-features',
+        'javascript/beginner-deep-dive',
       ],
     },
     {

@@ -1,0 +1,1498 @@
+---
+sidebar_position: 2
+title: "Debugging Labs"
+description: "Practical debugging scenarios with real-world examples, stack traces, and fixes"
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Debugging Labs: Real-World React Debugging Scenarios
+
+Learn to debug React applications through hands-on scenarios. Each lab includes broken code, actual error messages, debugging steps, and working solutions.
+
+---
+
+## Lab 1: Why Isn't This Component Rendering?
+
+### Scenario A: Missing Return Statement
+
+**The Problem:**
+```jsx title="BrokenUserCard.jsx"
+function UserCard({ user }) {
+  const { name, email, avatar } = user;
+
+  // Forgot to return!
+  <div className="user-card">
+    <img src={avatar} alt={name} />
+    <h3>{name}</h3>
+    <p>{email}</p>
+  </div>
+}
+
+export default UserCard;
+```
+
+**What You See:**
+- Component appears in React DevTools but shows nothing
+- No error in console
+- Parent component renders fine
+
+**Stack Trace/Console:**
+```
+// No error! This is the tricky part - React just renders null
+```
+
+**Debugging Steps:**
+
+1. **Check React DevTools**
+   - Open Components tab
+   - Find UserCard component
+   - Look at the hooks/props - they're there but nothing renders
+
+2. **Add console.log**
+   ```jsx
+   function UserCard({ user }) {
+     console.log('UserCard rendering with:', user); // This will log!
+     const { name, email, avatar } = user;
+
+     <div className="user-card">
+       {/* ... */}
+     </div>
+   }
+   ```
+
+3. **Check the function return**
+   - Function executes (console.log proves it)
+   - But no return statement = returns undefined
+   - React renders undefined as nothing
+
+**The Fix:**
+```jsx title="FixedUserCard.jsx"
+function UserCard({ user }) {
+  const { name, email, avatar } = user;
+
+  // ✅ Add return statement
+  return (
+    <div className="user-card">
+      <img src={avatar} alt={name} />
+      <h3>{name}</h3>
+      <p>{email}</p>
+    </div>
+  );
+}
+
+export default UserCard;
+```
+
+**Prevention:**
+- Use ESLint with `eslint-plugin-react`
+- Enable the `react/require-render-return` rule
+- Use arrow functions with implicit returns for simple components:
+  ```jsx
+  const UserCard = ({ user }) => (
+    <div className="user-card">
+      {/* ... */}
+    </div>
+  );
+  ```
+
+---
+
+### Scenario B: JSX Typos and Syntax Errors
+
+**The Problem:**
+```jsx title="BrokenProductList.jsx"
+function ProductList({ products }) {
+  return (
+    <div className="product-list">
+      {products.map(product => (
+        // ❌ Missing key prop
+        // ❌ class instead of className
+        // ❌ Closing tag mismatch
+        <div class="product">
+          <h3>{product.name}</h3>
+          <p>${product.price}</p>
+        </span>
+      ))}
+    </div>
+  );
+}
+```
+
+**Stack Trace:**
+```
+Warning: Each child in a list should have a unique "key" prop.
+
+Error: Unexpected closing tag "span". It should match "div".
+  at ProductList (ProductList.jsx:8)
+```
+
+**Debugging Steps:**
+
+1. **Read the error message carefully**
+   - "Unexpected closing tag span" - look at line 8
+   - Check opening and closing tags match
+
+2. **Check for React-specific attributes**
+   - `class` should be `className`
+   - `for` should be `htmlFor`
+
+3. **Verify list rendering requirements**
+   - Each mapped element needs unique `key` prop
+
+**The Fix:**
+```jsx title="FixedProductList.jsx"
+function ProductList({ products }) {
+  return (
+    <div className="product-list">
+      {products.map(product => (
+        <div key={product.id} className="product">
+          <h3>{product.name}</h3>
+          <p>${product.price}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+---
+
+### Scenario C: Wrong Conditional Rendering
+
+**The Problem:**
+```jsx title="BrokenDashboard.jsx"
+function Dashboard({ user, isLoading }) {
+  return (
+    <div>
+      {/* ❌ Will render "0" when items is empty array */}
+      {user.items.length && (
+        <ItemList items={user.items} />
+      )}
+
+      {/* ❌ Will render "false" string */}
+      {isLoading && <Spinner />}
+    </div>
+  );
+}
+```
+
+**What You See:**
+- Number "0" appears on screen when no items
+- Word "false" shows up sometimes
+
+**Stack Trace:**
+```
+// No error - but unexpected rendering
+```
+
+**Debugging Steps:**
+
+1. **Understand JavaScript truthiness**
+   - `0 && <Component />` returns 0 (falsy but renders)
+   - `false && <Component />` returns false in JSX (renders as text in some cases)
+
+2. **Test edge cases**
+   ```jsx
+   console.log('Items length:', user.items.length); // 0
+   console.log('0 is truthy?', Boolean(0)); // false
+   console.log('What renders?', 0 && <div>Hi</div>); // 0
+   ```
+
+**The Fix:**
+```jsx title="FixedDashboard.jsx"
+function Dashboard({ user, isLoading }) {
+  return (
+    <div>
+      {/* ✅ Convert to boolean */}
+      {user.items.length > 0 && (
+        <ItemList items={user.items} />
+      )}
+
+      {/* ✅ Or use ternary */}
+      {user.items.length ? (
+        <ItemList items={user.items} />
+      ) : null}
+
+      {/* ✅ Boolean is already boolean */}
+      {isLoading && <Spinner />}
+
+      {/* 🎯 Best: Explicit ternary for clarity */}
+      {isLoading ? <Spinner /> : null}
+    </div>
+  );
+}
+```
+
+**Prevention:**
+- Always use explicit boolean comparisons: `count > 0`, `array.length > 0`
+- Use ternaries for clarity: `condition ? <A /> : <B />`
+- Enable ESLint rule: `react/jsx-no-leaked-render`
+
+---
+
+## Lab 2: Infinite Loop in useEffect
+
+### Scenario A: Missing Dependency Array
+
+**The Problem:**
+```jsx title="BrokenUserProfile.jsx"
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
+
+  // ❌ No dependency array - runs on every render!
+  useEffect(() => {
+    fetch(`/api/users/${userId}`)
+      .then(res => res.json())
+      .then(data => setUser(data)); // This causes re-render
+  }); // Missing dependency array!
+
+  return <div>{user?.name}</div>;
+}
+```
+
+**What You See:**
+- Browser freezes
+- Network tab shows hundreds of API calls
+- React DevTools shows rapid re-renders
+
+**Console Output:**
+```
+Warning: Maximum update depth exceeded. This can happen when a component
+calls setState inside useEffect, but useEffect either doesn't have a
+dependency array, or one of the dependencies changes on every render.
+```
+
+**Debugging Steps:**
+
+1. **Check React DevTools Profiler**
+   - Enable "Highlight updates when components render"
+   - See component flashing continuously
+
+2. **Add console.log to useEffect**
+   ```jsx
+   useEffect(() => {
+     console.log('Effect running!'); // Logs infinitely
+     fetch(`/api/users/${userId}`)
+       .then(res => res.json())
+       .then(data => setUser(data));
+   });
+   ```
+
+3. **Check for dependency array**
+   - Missing = runs on every render
+   - setState causes render
+   - Infinite loop!
+
+**The Fix:**
+```jsx title="FixedUserProfile.jsx"
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
+
+  // ✅ Add dependency array with userId
+  useEffect(() => {
+    fetch(`/api/users/${userId}`)
+      .then(res => res.json())
+      .then(data => setUser(data));
+  }, [userId]); // Only re-run when userId changes
+
+  return <div>{user?.name}</div>;
+}
+```
+
+---
+
+### Scenario B: Object/Array in Dependencies
+
+**The Problem:**
+```jsx title="BrokenSearchResults.jsx"
+function SearchResults({ filters }) {
+  const [results, setResults] = useState([]);
+
+  // ❌ filters is a new object every render
+  useEffect(() => {
+    console.log('Fetching with filters:', filters);
+    fetchResults(filters).then(setResults);
+  }, [filters]); // New object reference every time!
+
+  return <ResultsList results={results} />;
+}
+
+// Parent component
+function App() {
+  return (
+    <SearchResults
+      filters={{ category: 'books', sort: 'price' }} // New object every render!
+    />
+  );
+}
+```
+
+**What You See:**
+- Infinite API calls
+- Console.log shows filters with same values but triggering effect
+
+**Console Output:**
+```
+Fetching with filters: {category: 'books', sort: 'price'}
+Fetching with filters: {category: 'books', sort: 'price'}
+Fetching with filters: {category: 'books', sort: 'price'}
+// ... continues forever
+```
+
+**Debugging Steps:**
+
+1. **Check object identity**
+   ```jsx
+   useEffect(() => {
+     console.log('Filters changed:', filters);
+     console.log('Is same as last?', filters === lastFilters); // Always false!
+   }, [filters]);
+   ```
+
+2. **Use useRef to track previous values**
+   ```jsx
+   const prevFiltersRef = useRef();
+
+   useEffect(() => {
+     console.log('Previous:', prevFiltersRef.current);
+     console.log('Current:', filters);
+     console.log('Same reference?', prevFiltersRef.current === filters); // false
+     prevFiltersRef.current = filters;
+   }, [filters]);
+   ```
+
+**The Fix - Option 1: Memoize in Parent**
+```jsx title="FixedSearchResults-Option1.jsx"
+function App() {
+  // ✅ Memoize the filters object
+  const filters = useMemo(
+    () => ({ category: 'books', sort: 'price' }),
+    [] // Only create once
+  );
+
+  return <SearchResults filters={filters} />;
+}
+
+function SearchResults({ filters }) {
+  const [results, setResults] = useState([]);
+
+  useEffect(() => {
+    fetchResults(filters).then(setResults);
+  }, [filters]); // Now only changes when filters actually change
+
+  return <ResultsList results={results} />;
+}
+```
+
+**The Fix - Option 2: Depend on Primitive Values**
+```jsx title="FixedSearchResults-Option2.jsx"
+function SearchResults({ filters }) {
+  const [results, setResults] = useState([]);
+
+  // ✅ Destructure and depend on primitives
+  const { category, sort } = filters;
+
+  useEffect(() => {
+    fetchResults({ category, sort }).then(setResults);
+  }, [category, sort]); // Primitives are compared by value
+
+  return <ResultsList results={results} />;
+}
+```
+
+**The Fix - Option 3: Use Deep Comparison (use-deep-compare-effect)**
+```jsx title="FixedSearchResults-Option3.jsx"
+import { useDeepCompareEffect } from 'use-deep-compare-effect';
+
+function SearchResults({ filters }) {
+  const [results, setResults] = useState([]);
+
+  // ✅ Deep comparison of filters object
+  useDeepCompareEffect(() => {
+    fetchResults(filters).then(setResults);
+  }, [filters]);
+
+  return <ResultsList results={results} />;
+}
+```
+
+---
+
+### Scenario C: State Updates Inside Effect
+
+**The Problem:**
+```jsx title="BrokenCounter.jsx"
+function Counter() {
+  const [count, setCount] = useState(0);
+  const [doubleCount, setDoubleCount] = useState(0);
+
+  // ❌ Updates state based on state in dependency
+  useEffect(() => {
+    setDoubleCount(count * 2); // This causes re-render
+  }, [count, doubleCount]); // doubleCount changes, triggers effect again!
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <p>Double: {doubleCount}</p>
+      <button onClick={() => setCount(c => c + 1)}>Increment</button>
+    </div>
+  );
+}
+```
+
+**Stack Trace:**
+```
+Warning: Maximum update depth exceeded.
+```
+
+**The Fix:**
+```jsx title="FixedCounter.jsx"
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  // ✅ Derive state instead of storing it
+  const doubleCount = count * 2;
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <p>Double: {doubleCount}</p>
+      <button onClick={() => setCount(c => c + 1)}>Increment</button>
+    </div>
+  );
+}
+
+// OR if calculation is expensive:
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  // ✅ Memoize the derived value
+  const doubleCount = useMemo(() => {
+    console.log('Calculating double...');
+    return count * 2;
+  }, [count]);
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <p>Double: {doubleCount}</p>
+      <button onClick={() => setCount(c => c + 1)}>Increment</button>
+    </div>
+  );
+}
+```
+
+---
+
+## Lab 3: Form Doesn't Update Value
+
+### Scenario: Controlled vs Uncontrolled Mixup
+
+**The Problem:**
+```jsx title="BrokenLoginForm.jsx"
+function LoginForm() {
+  const [email, setEmail] = useState('');
+
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      console.log('Email:', email); // Always empty!
+    }}>
+      {/* ❌ value prop but no onChange */}
+      <input
+        type="email"
+        value={email}
+        placeholder="Email"
+      />
+
+      {/* ❌ onChange but no value prop */}
+      <input
+        type="password"
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+      />
+
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+```
+
+**What You See:**
+- Email input is frozen, can't type
+- Password input works but value isn't controlled
+- Form submission has unexpected values
+
+**Console Warning:**
+```
+Warning: You provided a `value` prop to a form field without an `onChange`
+handler. This will render a read-only field. If the field should be mutable
+use `defaultValue`. Otherwise, set either `onChange` or `readOnly`.
+```
+
+**Debugging Steps:**
+
+1. **Try typing in the input**
+   - Email field doesn't accept input
+   - This is the classic "controlled input without onChange" issue
+
+2. **Check the value prop**
+   ```jsx
+   console.log('Email state:', email); // ''
+   // value={email} makes input always show email value
+   // No onChange means email never updates
+   // Result: frozen input
+   ```
+
+3. **Check if password state exists**
+   ```jsx
+   // setPassword is called but password state doesn't exist!
+   // ReferenceError in React DevTools
+   ```
+
+**The Fix:**
+```jsx title="FixedLoginForm.jsx"
+function LoginForm() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState(''); // ✅ Add missing state
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log('Email:', email, 'Password:', password);
+    // Submit logic here
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* ✅ Controlled: both value and onChange */}
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+      />
+
+      {/* ✅ Controlled: both value and onChange */}
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+      />
+
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+```
+
+**Alternative: Uncontrolled with Refs**
+```jsx title="UncontrolledLoginForm.jsx"
+function LoginForm() {
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log('Email:', emailRef.current.value);
+    console.log('Password:', passwordRef.current.value);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* ✅ Uncontrolled: no value, use ref */}
+      <input
+        type="email"
+        ref={emailRef}
+        defaultValue="" // Use defaultValue for initial value
+        placeholder="Email"
+      />
+
+      <input
+        type="password"
+        ref={passwordRef}
+        placeholder="Password"
+      />
+
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+```
+
+**When to Use Each:**
+
+<details>
+<summary>Controlled vs Uncontrolled Decision Tree</summary>
+
+**Use Controlled Inputs When:**
+- ✅ You need to validate on every keystroke
+- ✅ You need to disable submit button based on input
+- ✅ You need to format input as user types
+- ✅ You need to implement search-as-you-type
+- ✅ Multiple inputs depend on each other
+
+**Use Uncontrolled Inputs When:**
+- ✅ Simple forms that just need values on submit
+- ✅ File inputs (must be uncontrolled)
+- ✅ Integrating with non-React libraries
+- ✅ Performance is critical (large forms)
+
+</details>
+
+---
+
+## Lab 4: Memory Leak in API Fetch
+
+### Scenario: Unmounted Component Warning
+
+**The Problem:**
+```jsx title="BrokenUserProfile.jsx"
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+
+    // ❌ No cleanup - setState after unmount
+    fetch(`/api/users/${userId}`)
+      .then(res => res.json())
+      .then(data => {
+        setUser(data);
+        setLoading(false);
+      });
+  }, [userId]);
+
+  if (loading) return <div>Loading...</div>;
+  return <div>{user.name}</div>;
+}
+
+// Parent that causes the issue
+function App() {
+  const [showProfile, setShowProfile] = useState(true);
+
+  return (
+    <div>
+      <button onClick={() => setShowProfile(false)}>
+        Hide Profile
+      </button>
+      {showProfile && <UserProfile userId={123} />}
+    </div>
+  );
+}
+```
+
+**What You See:**
+When you click "Hide Profile" before the fetch completes:
+
+**Console Warning:**
+```
+Warning: Can't perform a React state update on an unmounted component.
+This is a no-op, but it indicates a memory leak in your application.
+To fix, cancel all subscriptions and asynchronous tasks in a useEffect cleanup function.
+    at UserProfile
+```
+
+**Debugging Steps:**
+
+1. **Reproduce the issue**
+   - Start the component (fetch begins)
+   - Quickly unmount it (click Hide Profile)
+   - Watch console for warning
+
+2. **Add logging to understand timing**
+   ```jsx
+   useEffect(() => {
+     console.log('Component mounted, fetching...');
+     setLoading(true);
+
+     fetch(`/api/users/${userId}`)
+       .then(res => res.json())
+       .then(data => {
+         console.log('Fetch completed, setting state');
+         setUser(data); // ⚠️ Component might be unmounted!
+         setLoading(false);
+       });
+
+     return () => {
+       console.log('Component unmounting!');
+       // Need cleanup here
+     };
+   }, [userId]);
+   ```
+
+3. **Identify the race condition**
+   - Fetch starts
+   - Component unmounts (cleanup runs)
+   - Fetch completes
+   - setState called on unmounted component
+
+**The Fix - Option 1: Cleanup Flag**
+```jsx title="FixedUserProfile-Option1.jsx"
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true; // ✅ Track mount status
+
+    setLoading(true);
+
+    fetch(`/api/users/${userId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted) { // ✅ Only update if still mounted
+          setUser(data);
+          setLoading(false);
+        }
+      })
+      .catch(error => {
+        if (isMounted) {
+          console.error('Fetch error:', error);
+          setLoading(false);
+        }
+      });
+
+    // ✅ Cleanup function
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
+
+  if (loading) return <div>Loading...</div>;
+  return <div>{user.name}</div>;
+}
+```
+
+**The Fix - Option 2: AbortController (Modern)**
+```jsx title="FixedUserProfile-Option2.jsx"
+function UserProfile({ userId }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // ✅ Create AbortController
+    const controller = new AbortController();
+
+    setLoading(true);
+    setError(null);
+
+    fetch(`/api/users/${userId}`, {
+      signal: controller.signal // ✅ Pass signal to fetch
+    })
+      .then(res => res.json())
+      .then(data => {
+        setUser(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        // ✅ Ignore abort errors
+        if (err.name === 'AbortError') {
+          console.log('Fetch aborted');
+          return;
+        }
+        setError(err.message);
+        setLoading(false);
+      });
+
+    // ✅ Cleanup: abort the fetch
+    return () => {
+      controller.abort();
+    };
+  }, [userId]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  return <div>{user.name}</div>;
+}
+```
+
+**The Fix - Option 3: Custom Hook (Reusable)**
+```jsx title="useFetch.js"
+function useFetch(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    setLoading(true);
+    setError(null);
+
+    fetch(url, { signal: controller.signal })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        setData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        if (err.name === 'AbortError') return;
+        setError(err.message);
+        setLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [url]);
+
+  return { data, loading, error };
+}
+
+// Usage
+function UserProfile({ userId }) {
+  const { data: user, loading, error } = useFetch(`/api/users/${userId}`);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  return <div>{user.name}</div>;
+}
+```
+
+---
+
+## Lab 5: Props Not Updating
+
+### Scenario: Reference Equality with React.memo
+
+**The Problem:**
+```jsx title="BrokenExpensiveList.jsx"
+// Child component with memo
+const ExpensiveItem = React.memo(({ item, onUpdate }) => {
+  console.log('ExpensiveItem rendering:', item.id);
+
+  return (
+    <div>
+      <h3>{item.name}</h3>
+      <button onClick={() => onUpdate(item.id)}>Update</button>
+    </div>
+  );
+});
+
+function ProductList() {
+  const [items, setItems] = useState([
+    { id: 1, name: 'Item 1' },
+    { id: 2, name: 'Item 2' }
+  ]);
+  const [count, setCount] = useState(0);
+
+  // ❌ New function created every render
+  const handleUpdate = (id) => {
+    console.log('Updating item:', id);
+  };
+
+  return (
+    <div>
+      <button onClick={() => setCount(count + 1)}>
+        Clicked {count} times
+      </button>
+
+      {items.map(item => (
+        <ExpensiveItem
+          key={item.id}
+          item={item}
+          onUpdate={handleUpdate} // ❌ New reference every render!
+        />
+      ))}
+    </div>
+  );
+}
+```
+
+**What You See:**
+- Click the counter button
+- Console shows all ExpensiveItems re-rendering
+- React.memo isn't preventing re-renders
+
+**Console Output:**
+```
+ExpensiveItem rendering: 1
+ExpensiveItem rendering: 2
+ExpensiveItem rendering: 1
+ExpensiveItem rendering: 2
+// Re-renders even though item prop didn't change!
+```
+
+**Debugging Steps:**
+
+1. **Check if memo is working**
+   ```jsx
+   const ExpensiveItem = React.memo(({ item, onUpdate }) => {
+     console.log('Rendering item:', item.id);
+     console.log('onUpdate function:', onUpdate);
+     return <div>{item.name}</div>;
+   });
+   ```
+
+2. **Compare function references**
+   ```jsx
+   const prevOnUpdate = useRef();
+
+   useEffect(() => {
+     console.log('onUpdate changed?', prevOnUpdate.current !== handleUpdate);
+     prevOnUpdate.current = handleUpdate;
+   });
+   ```
+
+3. **Use why-did-you-render library**
+   ```bash
+   npm install @welldone-software/why-did-you-render
+   ```
+   ```jsx
+   import whyDidYouRender from '@welldone-software/why-did-you-render';
+
+   whyDidYouRender(React, {
+     trackAllPureComponents: true,
+   });
+
+   ExpensiveItem.whyDidYouRender = true;
+   ```
+
+**The Fix:**
+```jsx title="FixedExpensiveList.jsx"
+const ExpensiveItem = React.memo(({ item, onUpdate }) => {
+  console.log('ExpensiveItem rendering:', item.id);
+
+  return (
+    <div>
+      <h3>{item.name}</h3>
+      <button onClick={() => onUpdate(item.id)}>Update</button>
+    </div>
+  );
+});
+
+function ProductList() {
+  const [items, setItems] = useState([
+    { id: 1, name: 'Item 1' },
+    { id: 2, name: 'Item 2' }
+  ]);
+  const [count, setCount] = useState(0);
+
+  // ✅ Memoize the callback
+  const handleUpdate = useCallback((id) => {
+    console.log('Updating item:', id);
+    // If you need to update items:
+    setItems(prevItems =>
+      prevItems.map(item =>
+        item.id === id
+          ? { ...item, name: item.name + ' (updated)' }
+          : item
+      )
+    );
+  }, []); // Empty deps if no external dependencies
+
+  return (
+    <div>
+      <button onClick={() => setCount(count + 1)}>
+        Clicked {count} times
+      </button>
+
+      {items.map(item => (
+        <ExpensiveItem
+          key={item.id}
+          item={item}
+          onUpdate={handleUpdate} // ✅ Same reference across renders
+        />
+      ))}
+    </div>
+  );
+}
+```
+
+**Advanced: Custom Comparison**
+```jsx title="CustomMemoComparison.jsx"
+const ExpensiveItem = React.memo(
+  ({ item, onUpdate, metadata }) => {
+    return (
+      <div>
+        <h3>{item.name}</h3>
+        <p>{metadata.category}</p>
+        <button onClick={() => onUpdate(item.id)}>Update</button>
+      </div>
+    );
+  },
+  // ✅ Custom comparison function
+  (prevProps, nextProps) => {
+    // Return true if props are equal (don't re-render)
+    // Return false if props are different (re-render)
+    return (
+      prevProps.item.id === nextProps.item.id &&
+      prevProps.item.name === nextProps.item.name &&
+      prevProps.metadata.category === nextProps.metadata.category
+      // Ignore onUpdate in comparison
+    );
+  }
+);
+```
+
+---
+
+## Lab 6: Event Handler Not Firing
+
+### Scenario A: Event Handler Syntax Mistakes
+
+**The Problem:**
+```jsx title="BrokenButton.jsx"
+function ButtonDemo() {
+  const [count, setCount] = useState(0);
+
+  const handleClick = () => {
+    console.log('Button clicked!');
+    setCount(count + 1);
+  };
+
+  return (
+    <div>
+      {/* ❌ Calling function immediately instead of passing reference */}
+      <button onClick={handleClick()}>
+        Called Immediately: {count}
+      </button>
+
+      {/* ❌ Missing arrow function for parameters */}
+      <button onClick={setCount(count + 1)}>
+        Also Called Immediately: {count}
+      </button>
+
+      {/* ❌ Wrong event name (onclick instead of onClick) */}
+      <button onclick={() => setCount(count + 1)}>
+        Wrong Event Name: {count}
+      </button>
+    </div>
+  );
+}
+```
+
+**What You See:**
+- First button: function runs on render, not on click
+- Second button: Error "Cannot read property '$$typeof' of undefined"
+- Third button: Nothing happens when clicked
+
+**Console:**
+```
+Button clicked! // Logs on render, not click
+Button clicked! // Logs on every re-render
+
+Warning: Invalid event handler property `onclick`. Did you mean `onClick`?
+```
+
+**Debugging Steps:**
+
+1. **Add console.log to track execution**
+   ```jsx
+   console.log('Rendering component'); // Logs on every render
+
+   const handleClick = () => {
+     console.log('Button clicked!'); // Should only log on click
+     setCount(count + 1);
+   };
+   ```
+
+2. **Check if function runs on render**
+   - If console.log appears without clicking, function is being called immediately
+
+3. **Verify event name casing**
+   - React uses camelCase: onClick, onChange, onSubmit
+   - HTML uses lowercase: onclick, onchange, onsubmit
+
+**The Fix:**
+```jsx title="FixedButton.jsx"
+function ButtonDemo() {
+  const [count, setCount] = useState(0);
+
+  const handleClick = () => {
+    console.log('Button clicked!');
+    setCount(count + 1);
+  };
+
+  return (
+    <div>
+      {/* ✅ Pass function reference */}
+      <button onClick={handleClick}>
+        Correct: {count}
+      </button>
+
+      {/* ✅ Use arrow function for inline handlers */}
+      <button onClick={() => setCount(count + 1)}>
+        Inline: {count}
+      </button>
+
+      {/* ✅ Arrow function with parameters */}
+      <button onClick={() => handleClickWithParam('hello')}>
+        With Param: {count}
+      </button>
+
+      {/* ✅ Correct event name (camelCase) */}
+      <button onClick={() => setCount(count + 1)}>
+        Correct Event Name: {count}
+      </button>
+    </div>
+  );
+}
+```
+
+---
+
+### Scenario B: Event Not Bubbling / stopPropagation Issues
+
+**The Problem:**
+```jsx title="BrokenNestedClick.jsx"
+function NestedClickDemo() {
+  const [parentClicks, setParentClicks] = useState(0);
+  const [childClicks, setChildClicks] = useState(0);
+
+  return (
+    <div
+      onClick={() => {
+        console.log('Parent clicked');
+        setParentClicks(p => p + 1);
+      }}
+      style={{ padding: '40px', background: 'lightblue' }}
+    >
+      Parent clicks: {parentClicks}
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation(); // ❌ Stops event from reaching parent
+          console.log('Child clicked');
+          setChildClicks(c => c + 1);
+        }}
+        style={{ margin: '10px' }}
+      >
+        Child clicks: {childClicks}
+      </button>
+    </div>
+  );
+}
+```
+
+**What You See:**
+- Clicking button increments child count only
+- Parent count doesn't increment (expected in this case)
+- But sometimes you WANT the parent to also handle it
+
+**Debugging Steps:**
+
+1. **Test event propagation**
+   ```jsx
+   <button
+     onClick={(e) => {
+       console.log('Event:', e);
+       console.log('Target:', e.target);
+       console.log('CurrentTarget:', e.currentTarget);
+       console.log('Will propagate?', !e.isPropagationStopped());
+     }}
+   >
+     Click me
+   </button>
+   ```
+
+2. **Check if stopPropagation is being called**
+   - Search codebase for `stopPropagation`
+   - Check if parent handler should fire
+
+**The Fix (when you want both to fire):**
+```jsx title="FixedNestedClick.jsx"
+function NestedClickDemo() {
+  const [parentClicks, setParentClicks] = useState(0);
+  const [childClicks, setChildClicks] = useState(0);
+
+  return (
+    <div
+      onClick={(e) => {
+        // ✅ Check if we should handle this event
+        if (e.target === e.currentTarget) {
+          console.log('Parent clicked directly');
+          setParentClicks(p => p + 1);
+        }
+      }}
+      style={{ padding: '40px', background: 'lightblue' }}
+    >
+      Parent clicks: {parentClicks}
+
+      <button
+        onClick={(e) => {
+          // ✅ Don't stop propagation if parent should also handle
+          console.log('Child clicked');
+          setChildClicks(c => c + 1);
+          setParentClicks(p => p + 1); // Also increment parent
+        }}
+        style={{ margin: '10px' }}
+      >
+        Child clicks: {childClicks}
+      </button>
+    </div>
+  );
+}
+```
+
+---
+
+## Debugging Toolbox
+
+### React DevTools
+
+**Installation:**
+- Chrome: [React DevTools Extension](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi)
+- Firefox: [React DevTools Extension](https://addons.mozilla.org/en-US/firefox/addon/react-devtools/)
+
+**Key Features:**
+
+1. **Components Tab**
+   ```
+   - View component tree
+   - Inspect props and state
+   - See hooks in order
+   - Edit props/state in real-time
+   ```
+
+2. **Profiler Tab**
+   ```
+   - Record rendering performance
+   - See why components re-rendered
+   - Identify slow components
+   - View flame graphs
+   ```
+
+3. **Highlight Updates**
+   ```
+   - Settings → General → Highlight updates when components render
+   - Blue border = component re-rendered
+   - Helps identify unnecessary re-renders
+   ```
+
+**Example Debug Session:**
+```jsx
+// 1. Open React DevTools
+// 2. Find your component in the tree
+// 3. Check the hooks section
+// 4. Look for:
+//    - State values
+//    - Effect dependencies
+//    - Memo/callback functions
+// 5. Edit values to test behavior
+```
+
+---
+
+### Console.log Strategies
+
+**1. Strategic Logging**
+```jsx
+function MyComponent({ userId }) {
+  console.log('🔵 Component render', { userId });
+
+  const [data, setData] = useState(null);
+  console.log('📊 Current data:', data);
+
+  useEffect(() => {
+    console.log('🔄 Effect running', { userId });
+
+    return () => {
+      console.log('🧹 Effect cleanup', { userId });
+    };
+  }, [userId]);
+
+  const handleClick = () => {
+    console.log('🖱️ Button clicked');
+  };
+
+  return <button onClick={handleClick}>Click</button>;
+}
+```
+
+**2. Render Counter**
+```jsx
+function useRenderCount(componentName) {
+  const renderCount = useRef(0);
+
+  useEffect(() => {
+    renderCount.current += 1;
+    console.log(`${componentName} render count:`, renderCount.current);
+  });
+}
+
+// Usage
+function MyComponent() {
+  useRenderCount('MyComponent');
+  // ...
+}
+```
+
+**3. Props/State Change Detector**
+```jsx
+function useWhyDidYouUpdate(name, props) {
+  const previousProps = useRef();
+
+  useEffect(() => {
+    if (previousProps.current) {
+      const allKeys = Object.keys({ ...previousProps.current, ...props });
+      const changedProps = {};
+
+      allKeys.forEach(key => {
+        if (previousProps.current[key] !== props[key]) {
+          changedProps[key] = {
+            from: previousProps.current[key],
+            to: props[key]
+          };
+        }
+      });
+
+      if (Object.keys(changedProps).length > 0) {
+        console.log('[why-did-you-update]', name, changedProps);
+      }
+    }
+
+    previousProps.current = props;
+  });
+}
+
+// Usage
+function MyComponent(props) {
+  useWhyDidYouUpdate('MyComponent', props);
+  // ...
+}
+```
+
+---
+
+### Breakpoints and Debugger
+
+**Using debugger Statement:**
+```jsx
+function MyComponent({ userId }) {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    debugger; // Pauses execution here
+
+    fetch(`/api/users/${userId}`)
+      .then(res => res.json())
+      .then(data => {
+        debugger; // Pauses when data arrives
+        setData(data);
+      });
+  }, [userId]);
+
+  return <div>{data?.name}</div>;
+}
+```
+
+**Chrome DevTools Breakpoints:**
+1. Open Sources tab
+2. Find your source file (webpack://./src/Component.jsx)
+3. Click line number to add breakpoint
+4. Conditional breakpoints: right-click → Add conditional breakpoint
+   ```javascript
+   userId === 123 // Only break when userId is 123
+   ```
+
+**React DevTools Breakpoints:**
+```jsx
+// Break when component renders
+// 1. Open React DevTools
+// 2. Find component in tree
+// 3. Right-click → "Break on: Props change" or "State change"
+```
+
+---
+
+### Error Boundaries
+
+**Catch Rendering Errors:**
+```jsx title="ErrorBoundary.jsx"
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+
+    // Log to error reporting service
+    // logErrorToService(error, errorInfo);
+
+    this.setState({ error, errorInfo });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div>
+          <h2>Something went wrong.</h2>
+          <details style={{ whiteSpace: 'pre-wrap' }}>
+            {this.state.error && this.state.error.toString()}
+            <br />
+            {this.state.errorInfo.componentStack}
+          </details>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Usage
+function App() {
+  return (
+    <ErrorBoundary>
+      <MyComponent />
+    </ErrorBoundary>
+  );
+}
+```
+
+---
+
+## Quick Reference: Common Errors
+
+| Error Message | Cause | Fix |
+|--------------|-------|-----|
+| "Cannot read property 'X' of undefined" | Accessing property on undefined/null | Use optional chaining: `obj?.prop` |
+| "X is not a function" | Calling non-function or undefined | Check if function exists before calling |
+| "Maximum update depth exceeded" | Infinite loop in useEffect | Add/fix dependency array |
+| "Can't perform a React state update on unmounted component" | setState after unmount | Add cleanup function with flag/AbortController |
+| "Each child should have a unique key prop" | Missing key in list | Add unique `key` prop to mapped elements |
+| "Objects are not valid as React child" | Rendering object instead of primitive | Render specific property: `obj.name` not `obj` |
+| "Warning: Received `true` for non-boolean attribute" | Wrong prop name | Use React-specific names: `className` not `class` |
+
+---
+
+## Debugging Checklist
+
+When you encounter a bug, work through this checklist:
+
+- [ ] **Read the error message carefully** - Most errors tell you exactly what's wrong
+- [ ] **Check the stack trace** - Find which component/line caused the error
+- [ ] **Verify props are passed correctly** - Check React DevTools Components tab
+- [ ] **Check state values** - Use React DevTools or console.log
+- [ ] **Add strategic console.logs** - At render, in effects, in handlers
+- [ ] **Use React DevTools Profiler** - Identify performance issues and re-renders
+- [ ] **Check dependency arrays** - Ensure useEffect/useCallback/useMemo deps are correct
+- [ ] **Verify event handler syntax** - Pass function reference, not call result
+- [ ] **Test edge cases** - Empty arrays, null values, 0, false
+- [ ] **Check for memory leaks** - Add cleanup functions to effects
+- [ ] **Use ESLint** - Many bugs are caught by linter rules
+- [ ] **Read the documentation** - React docs are excellent
+
+---
+
+## Further Resources
+
+- [React DevTools Documentation](https://react.dev/learn/react-developer-tools)
+- [React Error Decoder](https://react.dev/errors) - Detailed error explanations
+- [Common React Mistakes](https://react.dev/learn/you-might-not-need-an-effect)
+- [why-did-you-render Library](https://github.com/welldone-software/why-did-you-render)
+- [React TypeScript Cheatsheet](https://react-typescript-cheatsheet.netlify.app/) - Prevent bugs with types

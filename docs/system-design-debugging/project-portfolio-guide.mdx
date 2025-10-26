@@ -1,0 +1,1773 @@
+---
+sidebar_position: 4
+title: "Project Portfolio Guide"
+description: "Complete guide to building impressive projects and portfolios that land interviews"
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Project Portfolio Guide
+
+Build a portfolio that stands out, showcases your skills, and gets you interviews. This guide covers choosing projects, building them right, and presenting them effectively.
+
+---
+
+## Why Your Portfolio Matters
+
+**Reality Check:**
+- Recruiters spend 6 seconds on your portfolio initially
+- Live demos are 10x more impressive than descriptions
+- 1 exceptional project beats 5 mediocre ones
+- Your portfolio is your proof of work when you lack professional experience
+
+**What Employers Look For:**
+- ✅ Can you build complete, working applications?
+- ✅ Do you write clean, maintainable code?
+- ✅ Can you deploy and manage production apps?
+- ✅ Do you understand UX and design basics?
+- ✅ Can you explain your technical decisions?
+
+---
+
+## Section 1: Choosing the Right Projects
+
+### What Impresses Employers
+
+**Projects That Stand Out:**
+
+1. **Solves a Real Problem**
+   - ✅ Budget tracker that YOU actually use
+   - ✅ Tool that automates something boring
+   - ❌ Generic todo list that you'll never use
+
+2. **Shows Technical Depth**
+   - ✅ Real-time features (WebSockets, optimistic updates)
+   - ✅ Complex state management
+   - ✅ API integration with error handling
+   - ❌ Static site with no interactivity
+
+3. **Demonstrates Production Skills**
+   - ✅ Deployed with CI/CD
+   - ✅ Error monitoring (Sentry)
+   - ✅ Analytics integration
+   - ✅ Loading states, error boundaries
+   - ❌ Works on localhost only
+
+4. **Shows Design Sensibility**
+   - ✅ Responsive, accessible, polished UI
+   - ✅ Consistent design system
+   - ❌ Unstyled or poorly designed
+
+**Red Flags to Avoid:**
+- ❌ Tutorial projects (everyone has them)
+- ❌ Broken deployments
+- ❌ No README or documentation
+- ❌ Dead links or 404 pages
+- ❌ "Coming soon" projects
+- ❌ Unfinished projects without explanation
+
+---
+
+### Project Ideas by Skill Level
+
+<Tabs>
+<TabItem value="beginner" label="Beginner (0-6 months React)">
+
+**Goal:** Show you can build functional, deployed applications
+
+**Project Ideas:**
+
+1. **Personal Dashboard**
+   - Weather widget (OpenWeather API)
+   - News headlines (News API)
+   - Crypto prices (CoinGecko API)
+   - Todo list with local storage
+   - **Skills shown:** API calls, state management, local storage, responsive design
+
+2. **Movie Search & Watchlist**
+   - Search movies (TMDB API)
+   - Add to watchlist (local storage or Firebase)
+   - Filter by genre, rating
+   - **Skills shown:** API integration, CRUD operations, filtering/sorting
+
+3. **Recipe Finder**
+   - Search recipes (Spoonacular API)
+   - Save favorites
+   - Ingredient-based search
+   - **Skills shown:** API calls, search functionality, data persistence
+
+4. **Pomodoro Timer with Stats**
+   - Timer functionality
+   - Track completed sessions
+   - Show statistics/charts
+   - Local storage persistence
+   - **Skills shown:** Timers, localStorage, data visualization
+
+**Key Features to Include:**
+- Loading states
+- Error handling
+- Responsive design
+- At least one API integration
+- Deployed to Netlify/Vercel
+
+</TabItem>
+
+<TabItem value="intermediate" label="Intermediate (6-18 months React)">
+
+**Goal:** Show you can build complex, full-stack applications
+
+**Project Ideas:**
+
+1. **Social Media Clone (Twitter/Reddit/Instagram)**
+   - User authentication (Firebase or Auth0)
+   - Create/edit/delete posts
+   - Comments and likes
+   - User profiles
+   - Real-time updates
+   - **Skills shown:** Auth, CRUD, real-time, database design
+
+2. **E-Commerce Store**
+   - Product catalog with search/filter
+   - Shopping cart with persistence
+   - Checkout flow (Stripe integration)
+   - Order history
+   - Admin panel for managing products
+   - **Skills shown:** Complex state, payment processing, admin features
+
+3. **Project Management Tool (Trello/Asana Clone)**
+   - Drag-and-drop boards
+   - Task assignments
+   - Due dates and priorities
+   - Team collaboration
+   - **Skills shown:** Drag-and-drop, complex interactions, collaboration features
+
+4. **Real-Time Chat Application**
+   - WebSocket connection (Socket.io)
+   - Multiple chat rooms
+   - Online/offline status
+   - Message history
+   - Typing indicators
+   - **Skills shown:** WebSockets, real-time features, presence
+
+**Key Features to Include:**
+- User authentication
+- Database integration (Firebase, Supabase, or custom backend)
+- Advanced state management (Context API or Redux)
+- Real-time features OR complex interactions
+- Mobile responsive
+- Production deployment
+
+</TabItem>
+
+<TabItem value="advanced" label="Advanced (18+ months React)">
+
+**Goal:** Show you can architect scalable, production-ready applications
+
+**Project Ideas:**
+
+1. **SaaS Application**
+   - Multi-tenant architecture
+   - Subscription management (Stripe)
+   - User roles and permissions
+   - Usage analytics
+   - Admin dashboard
+   - Email notifications
+   - **Skills shown:** Architecture, payments, RBAC, scalability
+
+2. **Real-Time Collaboration Tool (Figma/Miro Clone)**
+   - Canvas with drawing tools
+   - Real-time multiplayer editing
+   - Presence indicators (who's viewing/editing)
+   - Version history
+   - **Skills shown:** Canvas API, WebSockets, CRDT/OT algorithms
+
+3. **Video Platform (YouTube/Twitch Clone)**
+   - Video upload and processing
+   - HLS/DASH streaming
+   - Comments and reactions
+   - Recommendations algorithm
+   - Analytics dashboard
+   - **Skills shown:** Video processing, CDN, recommendations, analytics
+
+4. **Developer Tool (API Client, Testing Framework, etc.)**
+   - Solve a real problem developers have
+   - CLI and/or web interface
+   - Documentation site
+   - Open source with contributors
+   - **Skills shown:** DX, documentation, open source management
+
+**Key Features to Include:**
+- Microservices or modular architecture
+- Performance optimization (code splitting, lazy loading, memoization)
+- Comprehensive testing (unit, integration, e2e)
+- CI/CD pipeline
+- Monitoring and analytics
+- Scalability considerations
+- Documentation site
+
+</TabItem>
+</Tabs>
+
+---
+
+### The "Passion Project" Advantage
+
+**Why Build Something You Care About:**
+
+Your most impressive project should solve a problem YOU have. Examples:
+
+- **Musician?** Build a setlist manager with Spotify integration
+- **Fitness enthusiast?** Build a workout tracker with form videos
+- **Language learner?** Build a flashcard app with spaced repetition
+- **Photographer?** Build a portfolio site with image optimization
+
+**Why This Works:**
+- You'll actually finish it (personal investment)
+- You can speak passionately about it in interviews
+- You'll think of features users actually want
+- It shows personality and interests beyond coding
+
+---
+
+## Section 2: Project Templates
+
+### Template 1: E-Commerce Store
+
+**Features Checklist:**
+
+**Core Features (MVP):**
+- [ ] Product listing page with grid layout
+- [ ] Product detail page
+- [ ] Search functionality
+- [ ] Filter by category, price, rating
+- [ ] Sort by price, popularity, newest
+- [ ] Shopping cart (add, remove, update quantity)
+- [ ] Cart persistence (localStorage or database)
+- [ ] Checkout flow with form validation
+- [ ] Order confirmation page
+
+**Advanced Features:**
+- [ ] User authentication (login/signup)
+- [ ] User profile and order history
+- [ ] Product reviews and ratings
+- [ ] Wishlist functionality
+- [ ] Payment integration (Stripe test mode)
+- [ ] Admin panel (add/edit/delete products)
+- [ ] Inventory management
+- [ ] Email notifications (order confirmation)
+- [ ] Product recommendations
+- [ ] Analytics dashboard
+
+**Tech Stack Suggestion:**
+```
+Frontend: React + TypeScript
+Styling: Tailwind CSS or styled-components
+State: Redux Toolkit or Zustand
+Backend: Firebase, Supabase, or custom Express.js API
+Database: Firestore, PostgreSQL (Supabase), or MongoDB
+Payments: Stripe
+Deployment: Vercel (frontend) + Railway (backend if custom)
+```
+
+**Folder Structure:**
+```
+src/
+├── components/
+│   ├── common/          # Reusable components
+│   │   ├── Button.jsx
+│   │   ├── Input.jsx
+│   │   └── Card.jsx
+│   ├── layout/
+│   │   ├── Header.jsx
+│   │   ├── Footer.jsx
+│   │   └── Sidebar.jsx
+│   ├── product/
+│   │   ├── ProductCard.jsx
+│   │   ├── ProductGrid.jsx
+│   │   ├── ProductDetails.jsx
+│   │   └── ProductFilters.jsx
+│   ├── cart/
+│   │   ├── CartItem.jsx
+│   │   ├── CartSummary.jsx
+│   │   └── CartDrawer.jsx
+│   └── checkout/
+│       ├── CheckoutForm.jsx
+│       ├── PaymentForm.jsx
+│       └── OrderSummary.jsx
+├── pages/
+│   ├── Home.jsx
+│   ├── ProductList.jsx
+│   ├── ProductDetail.jsx
+│   ├── Cart.jsx
+│   ├── Checkout.jsx
+│   └── OrderConfirmation.jsx
+├── hooks/
+│   ├── useCart.js
+│   ├── useProducts.js
+│   └── useAuth.js
+├── context/
+│   ├── CartContext.jsx
+│   └── AuthContext.jsx
+├── services/
+│   ├── api.js
+│   ├── stripe.js
+│   └── firebase.js
+└── utils/
+    ├── formatters.js
+    └── validators.js
+```
+
+**Code Snippet: Custom Cart Hook**
+```jsx
+// hooks/useCart.js
+import { useState, useEffect } from 'react';
+
+export function useCart() {
+  const [cart, setCart] = useState(() => {
+    const saved = localStorage.getItem('cart');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
+
+  const addToCart = (product, quantity = 1) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
+      }
+      return [...prev, { ...product, quantity }];
+    });
+  };
+
+  const removeFromCart = (productId) => {
+    setCart(prev => prev.filter(item => item.id !== productId));
+  };
+
+  const updateQuantity = (productId, quantity) => {
+    setCart(prev =>
+      prev.map(item =>
+        item.id === productId ? { ...item, quantity } : item
+      )
+    );
+  };
+
+  const clearCart = () => setCart([]);
+
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  return {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    total,
+    itemCount
+  };
+}
+```
+
+---
+
+### Template 2: Dashboard / Analytics App
+
+**Features Checklist:**
+
+**Core Features:**
+- [ ] Authentication (login/logout)
+- [ ] Multiple data visualizations (charts, graphs)
+- [ ] Real-time or frequently updating data
+- [ ] Filterable data (date range, categories)
+- [ ] Exportable reports (CSV, PDF)
+- [ ] Responsive layout with sidebar navigation
+- [ ] Light/dark mode toggle
+
+**Widget Ideas:**
+- [ ] Revenue over time (line chart)
+- [ ] User growth (area chart)
+- [ ] Traffic sources (pie chart)
+- [ ] Top products/pages (bar chart)
+- [ ] Real-time activity feed
+- [ ] KPI cards (total users, revenue, conversion rate)
+- [ ] Geographic map of users
+- [ ] Comparison tables
+
+**Tech Stack Suggestion:**
+```
+Frontend: React + TypeScript
+Charts: Recharts, Chart.js, or Visx
+State: React Query + Context API
+Backend: Firebase, Supabase, or custom API
+Styling: Tailwind CSS + shadcn/ui
+Deployment: Vercel
+```
+
+**Code Snippet: Dashboard Layout**
+```jsx
+// components/DashboardLayout.jsx
+import { useState } from 'react';
+import Sidebar from './Sidebar';
+import Header from './Header';
+
+export default function DashboardLayout({ children }) {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  return (
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+
+      <div className={`transition-all ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+
+        <main className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {children}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+```
+
+**Code Snippet: Reusable Chart Widget**
+```jsx
+// components/ChartWidget.jsx
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+export default function ChartWidget({ title, data, dataKey, color = "#8884d8" }) {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <h3 className="text-lg font-semibold mb-4">{title}</h3>
+
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// Usage
+<ChartWidget
+  title="Revenue Over Time"
+  data={revenueData}
+  dataKey="revenue"
+  color="#10b981"
+/>
+```
+
+---
+
+### Template 3: Social Media / Blog Platform
+
+**Features Checklist:**
+
+**Core Features:**
+- [ ] User authentication (signup/login)
+- [ ] User profiles (bio, avatar, followers)
+- [ ] Create/edit/delete posts
+- [ ] Like/unlike posts
+- [ ] Comment on posts
+- [ ] Follow/unfollow users
+- [ ] Feed of posts from followed users
+- [ ] Explore page (all posts)
+- [ ] Search users and posts
+
+**Advanced Features:**
+- [ ] Image/video uploads (Cloudinary)
+- [ ] Real-time notifications
+- [ ] Direct messaging
+- [ ] Hashtags
+- [ ] Mentions (@username)
+- [ ] Trending posts/topics
+- [ ] Post analytics (views, engagement)
+- [ ] Moderation tools (report, block)
+
+**Tech Stack Suggestion:**
+```
+Frontend: React + TypeScript
+Backend: Firebase (Firestore + Auth) or Supabase
+Real-time: Firebase Realtime Database or Supabase Realtime
+Storage: Cloudinary or Firebase Storage
+Styling: Tailwind CSS
+Deployment: Vercel
+```
+
+**Database Schema (Firestore Example):**
+```javascript
+// users collection
+{
+  uid: "user123",
+  username: "johndoe",
+  displayName: "John Doe",
+  bio: "Software developer",
+  avatar: "https://...",
+  followers: ["user456", "user789"],
+  following: ["user456"],
+  createdAt: timestamp
+}
+
+// posts collection
+{
+  id: "post123",
+  authorId: "user123",
+  content: "Hello world!",
+  imageUrl: "https://...",
+  likes: ["user456", "user789"],
+  commentCount: 5,
+  createdAt: timestamp
+}
+
+// comments collection
+{
+  id: "comment123",
+  postId: "post123",
+  authorId: "user456",
+  content: "Great post!",
+  createdAt: timestamp
+}
+```
+
+**Code Snippet: Post Component**
+```jsx
+// components/Post.jsx
+import { useState } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { Heart, MessageCircle, Share } from 'lucide-react';
+
+export default function Post({ post, currentUser, onLike, onComment }) {
+  const [showComments, setShowComments] = useState(false);
+  const isLiked = post.likes?.includes(currentUser.uid);
+
+  return (
+    <div className="bg-white rounded-lg shadow p-4">
+      {/* User info */}
+      <div className="flex items-center mb-3">
+        <img
+          src={post.author.avatar}
+          alt={post.author.displayName}
+          className="w-10 h-10 rounded-full"
+        />
+        <div className="ml-3">
+          <p className="font-semibold">{post.author.displayName}</p>
+          <p className="text-sm text-gray-500">
+            {formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true })}
+          </p>
+        </div>
+      </div>
+
+      {/* Content */}
+      <p className="mb-3">{post.content}</p>
+
+      {post.imageUrl && (
+        <img
+          src={post.imageUrl}
+          alt="Post"
+          className="w-full rounded-lg mb-3"
+        />
+      )}
+
+      {/* Actions */}
+      <div className="flex items-center gap-4 pt-3 border-t">
+        <button
+          onClick={() => onLike(post.id)}
+          className={`flex items-center gap-1 ${isLiked ? 'text-red-500' : 'text-gray-500'}`}
+        >
+          <Heart className={isLiked ? 'fill-current' : ''} size={20} />
+          <span>{post.likes?.length || 0}</span>
+        </button>
+
+        <button
+          onClick={() => setShowComments(!showComments)}
+          className="flex items-center gap-1 text-gray-500"
+        >
+          <MessageCircle size={20} />
+          <span>{post.commentCount || 0}</span>
+        </button>
+
+        <button className="flex items-center gap-1 text-gray-500">
+          <Share size={20} />
+        </button>
+      </div>
+
+      {/* Comments section */}
+      {showComments && (
+        <div className="mt-4 pt-4 border-t">
+          {/* Comments would go here */}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+### Template 4: SaaS Starter
+
+**Features Checklist:**
+
+**Authentication & User Management:**
+- [ ] Signup/login with email
+- [ ] Social login (Google, GitHub)
+- [ ] Email verification
+- [ ] Password reset
+- [ ] User profile settings
+- [ ] Account deletion
+
+**Subscription & Billing:**
+- [ ] Pricing page with tiers
+- [ ] Stripe checkout integration
+- [ ] Subscription management
+- [ ] Invoice history
+- [ ] Usage limits based on plan
+- [ ] Upgrade/downgrade flow
+- [ ] Cancellation flow
+
+**Core App Features:**
+- [ ] Onboarding flow for new users
+- [ ] Dashboard
+- [ ] Main functionality (depends on your app)
+- [ ] Settings page
+- [ ] Usage analytics
+
+**Admin Features:**
+- [ ] User management
+- [ ] Analytics dashboard
+- [ ] Feature flags
+- [ ] Support ticket system
+
+**Tech Stack Suggestion:**
+```
+Frontend: Next.js + TypeScript
+Auth: NextAuth.js or Clerk
+Database: PostgreSQL (Supabase or Neon)
+Payments: Stripe
+Email: Resend or SendGrid
+Styling: Tailwind CSS + shadcn/ui
+Deployment: Vercel
+Monitoring: Sentry
+```
+
+**Folder Structure (Next.js App Router):**
+```
+app/
+├── (auth)/
+│   ├── login/
+│   ├── signup/
+│   └── reset-password/
+├── (dashboard)/
+│   ├── dashboard/
+│   ├── settings/
+│   └── billing/
+├── (marketing)/
+│   ├── page.tsx (homepage)
+│   ├── pricing/
+│   └── about/
+├── api/
+│   ├── auth/
+│   ├── stripe/
+│   └── users/
+└── layout.tsx
+
+components/
+├── auth/
+├── dashboard/
+├── billing/
+├── marketing/
+└── ui/ (shadcn components)
+
+lib/
+├── db.ts
+├── stripe.ts
+├── email.ts
+└── utils.ts
+```
+
+---
+
+## Section 3: Building for Your Portfolio
+
+### What to Include in Every Project
+
+**1. Polished UI/UX**
+```jsx
+// Don't
+<div>
+  <p>Name: John</p>
+  <p>Email: john@example.com</p>
+</div>
+
+// Do
+<div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition">
+  <div className="flex items-center gap-4">
+    <img
+      src="/avatar.jpg"
+      alt="John"
+      className="w-16 h-16 rounded-full"
+    />
+    <div>
+      <h3 className="font-semibold text-lg">John Doe</h3>
+      <p className="text-gray-600">john@example.com</p>
+    </div>
+  </div>
+</div>
+```
+
+**2. Loading States**
+```jsx
+// Don't
+{data && <UserList users={data} />}
+
+// Do
+{loading && <Spinner />}
+{error && <ErrorMessage error={error} />}
+{data && <UserList users={data} />}
+
+// Better
+function UserListContainer() {
+  const { data, loading, error } = useUsers();
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-20" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800">Failed to load users. Please try again.</p>
+        <button onClick={retry} className="mt-2 text-red-600 underline">
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  return <UserList users={data} />;
+}
+```
+
+**3. Error Handling**
+```jsx
+// Don't
+const handleSubmit = async () => {
+  const res = await fetch('/api/users');
+  const data = await res.json();
+  setUsers(data);
+};
+
+// Do
+const handleSubmit = async () => {
+  try {
+    setLoading(true);
+    setError(null);
+
+    const res = await fetch('/api/users');
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    setUsers(data);
+  } catch (err) {
+    setError(err.message);
+    console.error('Failed to fetch users:', err);
+
+    // Optional: Send to error tracking service
+    // Sentry.captureException(err);
+  } finally {
+    setLoading(false);
+  }
+};
+```
+
+**4. Responsive Design**
+```jsx
+// Mobile-first approach
+<div className="
+  grid
+  grid-cols-1       // 1 column on mobile
+  md:grid-cols-2    // 2 columns on tablet
+  lg:grid-cols-3    // 3 columns on desktop
+  gap-4
+">
+  {products.map(product => (
+    <ProductCard key={product.id} product={product} />
+  ))}
+</div>
+```
+
+**5. Accessibility**
+```jsx
+// Don't
+<div onClick={handleClick}>Click me</div>
+
+// Do
+<button
+  onClick={handleClick}
+  aria-label="Add to cart"
+  className="..."
+>
+  <ShoppingCart aria-hidden="true" />
+  <span>Add to cart</span>
+</button>
+
+// Form labels
+<label htmlFor="email">Email</label>
+<input
+  id="email"
+  type="email"
+  name="email"
+  aria-required="true"
+  aria-invalid={errors.email ? "true" : "false"}
+/>
+{errors.email && (
+  <p role="alert" className="text-red-600">
+    {errors.email}
+  </p>
+)}
+```
+
+**6. Performance Optimization**
+```jsx
+// Code splitting
+const AdminPanel = lazy(() => import('./AdminPanel'));
+
+function App() {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <Routes>
+        <Route path="/admin" element={<AdminPanel />} />
+      </Routes>
+    </Suspense>
+  );
+}
+
+// Image optimization (Next.js)
+import Image from 'next/image';
+
+<Image
+  src="/hero.jpg"
+  alt="Hero image"
+  width={1200}
+  height={600}
+  priority // Load immediately (above fold)
+/>
+
+// Memoization
+const ExpensiveComponent = memo(({ data }) => {
+  const processedData = useMemo(() => {
+    return data.map(item => complexCalculation(item));
+  }, [data]);
+
+  return <div>{/* ... */}</div>;
+});
+```
+
+---
+
+### What to Avoid
+
+**❌ Don't Include:**
+- Broken features or incomplete sections
+- Lorem ipsum placeholder text
+- Default "Create React App" favicon
+- Console errors or warnings
+- Unhandled errors that crash the app
+- Massive un-optimized images
+- Hard-coded API keys (use environment variables!)
+- "Under construction" pages
+- Links that go nowhere
+
+**✅ Instead:**
+- Only deploy features that work
+- Write real content (even if brief)
+- Custom favicon and meta tags
+- Clean console (no warnings in production)
+- Error boundaries to catch crashes
+- Optimized, lazy-loaded images
+- Environment variables for sensitive data
+- Remove unfinished features or mark them clearly
+- Ensure all navigation works
+
+---
+
+## Section 4: README Best Practices
+
+Your README is often the first thing recruiters see. Make it count.
+
+### README Template
+
+```markdown
+# Project Name
+
+Brief tagline (1 sentence describing what your project does)
+
+![Screenshot](./screenshot.png)
+
+## 🚀 Demo
+
+- **Live Demo:** [https://yourproject.com](https://yourproject.com)
+- **Video Demo:** [YouTube link] (optional but impressive)
+
+## 📖 About
+
+2-3 paragraphs explaining:
+- What problem this solves
+- Who it's for
+- Why you built it
+
+Example:
+"TaskMaster is a project management tool designed for small dev teams.
+I built this because existing tools like Jira felt too complex for my
+freelance projects. TaskMaster focuses on simplicity while still offering
+real-time collaboration and integrations with GitHub."
+
+## ✨ Features
+
+- ✅ User authentication with Google/GitHub
+- ✅ Real-time task updates using WebSockets
+- ✅ Drag-and-drop task boards
+- ✅ GitHub integration (auto-create tasks from issues)
+- ✅ Team analytics dashboard
+- ✅ Dark mode
+
+## 🛠️ Tech Stack
+
+**Frontend:**
+- React 18
+- TypeScript
+- Tailwind CSS
+- React Query
+- Zustand (state management)
+
+**Backend:**
+- Node.js + Express
+- PostgreSQL (Supabase)
+- Socket.io (real-time)
+- Prisma ORM
+
+**DevOps:**
+- Vercel (frontend)
+- Railway (backend)
+- GitHub Actions (CI/CD)
+- Sentry (error tracking)
+
+## 🎯 Key Technical Decisions
+
+Explain interesting technical choices:
+
+**Why WebSockets instead of polling?**
+With 100+ concurrent users, polling every 5 seconds would generate
+12,000 requests/minute. WebSockets reduced server load by 95% while
+providing instant updates.
+
+**Why Zustand over Redux?**
+Redux felt like overkill for this app's state complexity. Zustand
+provided the same DX with 80% less boilerplate.
+
+## 📸 Screenshots
+
+### Dashboard
+![Dashboard](./screenshots/dashboard.png)
+
+### Task Board
+![Task Board](./screenshots/board.png)
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL (or Supabase account)
+
+### Installation
+
+1. Clone the repo
+   ```bash
+   git clone https://github.com/yourusername/taskmaster.git
+   cd taskmaster
+   ```
+
+2. Install dependencies
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables
+   ```bash
+   cp .env.example .env
+   # Edit .env with your credentials
+   ```
+
+4. Run database migrations
+   ```bash
+   npx prisma migrate dev
+   ```
+
+5. Start the dev server
+   ```bash
+   npm run dev
+   ```
+
+6. Open [http://localhost:3000](http://localhost:3000)
+
+## 🧪 Running Tests
+
+```bash
+npm run test          # Unit tests
+npm run test:e2e      # E2E tests with Playwright
+```
+
+## 📦 Deployment
+
+This app is deployed using:
+- Frontend: Vercel (auto-deploys from `main` branch)
+- Backend: Railway (auto-deploys from `main` branch)
+- Database: Supabase (PostgreSQL)
+
+## 🎓 What I Learned
+
+- Implementing real-time features with WebSockets
+- Optimizing React renders for drag-and-drop performance
+- Setting up CI/CD with GitHub Actions
+- Database design for multi-tenant applications
+- Error monitoring with Sentry
+
+## 🚧 Future Improvements
+
+- [ ] Mobile app (React Native)
+- [ ] Email notifications
+- [ ] Time tracking per task
+- [ ] Gantt chart view
+- [ ] API for third-party integrations
+
+## 📄 License
+
+MIT
+
+## 🤝 Contact
+
+**Your Name**
+- Email: your@email.com
+- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
+- Portfolio: [yourportfolio.com](https://yourportfolio.com)
+
+---
+
+⭐ If you found this project interesting, please give it a star!
+```
+
+---
+
+### README Don'ts
+
+**❌ Too Short**
+```markdown
+# My Project
+
+A todo app built with React.
+
+## Installation
+npm install
+npm start
+```
+
+**❌ Too Long**
+```markdown
+# My Project
+
+[5 pages of detailed API documentation that belongs in /docs]
+
+[Every single line of code explained]
+
+[Your entire development journey as a blog post]
+```
+
+**✅ Just Right**
+- Brief overview (what it does)
+- Why you built it (shows thought process)
+- Key features (shows scope)
+- Tech stack (shows skills)
+- Screenshots (shows polish)
+- Setup instructions (shows you care about DX)
+- What you learned (shows growth mindset)
+
+---
+
+## Section 5: Deployment Guide
+
+### Platform Comparison
+
+| Platform | Best For | Free Tier | Pros | Cons |
+|----------|----------|-----------|------|------|
+| **Vercel** | Next.js, React SPAs | Generous | Zero-config, fast, great DX | Limited backend support |
+| **Netlify** | React SPAs, static sites | Generous | Simple, form handling, serverless functions | Slower builds than Vercel |
+| **GitHub Pages** | Static sites, portfolios | Free (public repos) | Simple, integrated with GitHub | Static only, no server-side |
+| **Railway** | Full-stack, backend APIs | $5/month included | Easy database setup, Docker support | Not free |
+| **Render** | Full-stack apps | Free (with limitations) | Supports Node, Python, Docker | Slow cold starts on free tier |
+
+---
+
+### Vercel Deployment (Step-by-Step)
+
+**For Create React App / Vite:**
+
+1. **Push your code to GitHub**
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit"
+   git branch -M main
+   git remote add origin https://github.com/yourusername/your-repo.git
+   git push -u origin main
+   ```
+
+2. **Go to [Vercel](https://vercel.com) and sign up with GitHub**
+
+3. **Click "New Project"**
+   - Select your repository
+   - Vercel auto-detects framework (React, Next.js, etc.)
+
+4. **Configure Build Settings** (usually auto-detected)
+   - Framework Preset: Create React App (or Vite)
+   - Build Command: `npm run build`
+   - Output Directory: `build` (or `dist` for Vite)
+   - Install Command: `npm install`
+
+5. **Add Environment Variables**
+   - Click "Environment Variables"
+   - Add each variable from your `.env` file
+   - Example: `REACT_APP_API_URL`, `REACT_APP_FIREBASE_KEY`
+
+6. **Click "Deploy"**
+   - Wait 1-2 minutes
+   - Your app is live at `your-project.vercel.app`
+
+7. **Set Up Custom Domain** (optional)
+   - Go to Settings → Domains
+   - Add your domain
+   - Update DNS records as instructed
+
+**Auto-Deploy on Push:**
+- Every push to `main` branch auto-deploys
+- Pull requests get preview deployments
+- Rollback to previous deployment in one click
+
+---
+
+### Netlify Deployment (Step-by-Step)
+
+**Option 1: Drag and Drop**
+
+1. Build your app locally:
+   ```bash
+   npm run build
+   ```
+
+2. Go to [Netlify](https://netlify.com) → Sites
+
+3. Drag your `build` folder to the drop zone
+
+4. Your site is live at `random-name-123.netlify.app`
+
+**Option 2: Git Integration (Recommended)**
+
+1. Push code to GitHub
+
+2. Go to Netlify → "Add new site" → "Import an existing project"
+
+3. Connect to GitHub and select your repo
+
+4. Configure build settings:
+   - Build command: `npm run build`
+   - Publish directory: `build`
+
+5. Add environment variables in "Site settings" → "Environment variables"
+
+6. Click "Deploy site"
+
+**Netlify Features:**
+- Form handling (no backend needed!)
+- Serverless functions (`/netlify/functions`)
+- Split testing (A/B testing)
+- Analytics
+
+---
+
+### GitHub Pages Deployment (Step-by-Step)
+
+**For Static Sites Only** (no server-side logic)
+
+1. Install gh-pages package:
+   ```bash
+   npm install --save-dev gh-pages
+   ```
+
+2. Add to `package.json`:
+   ```json
+   {
+     "homepage": "https://yourusername.github.io/your-repo",
+     "scripts": {
+       "predeploy": "npm run build",
+       "deploy": "gh-pages -d build"
+     }
+   }
+   ```
+
+3. Deploy:
+   ```bash
+   npm run deploy
+   ```
+
+4. Enable GitHub Pages:
+   - Go to repo Settings → Pages
+   - Source: Deploy from a branch
+   - Branch: `gh-pages`
+   - Click Save
+
+5. Site will be live at `yourusername.github.io/your-repo`
+
+**Limitations:**
+- Static only (no API routes)
+- Client-side routing needs special config
+- For CRA, add to `public/` a `404.html` that redirects to `index.html`
+
+---
+
+### Environment Variables Best Practices
+
+**❌ Don't:**
+```javascript
+// Hardcoded API key in code
+const API_KEY = "sk_live_abc123xyz";
+
+fetch(`https://api.example.com/data?key=${API_KEY}`)
+```
+
+**✅ Do:**
+```javascript
+// Use environment variables
+const API_KEY = import.meta.env.VITE_API_KEY; // Vite
+// or
+const API_KEY = process.env.REACT_APP_API_KEY; // Create React App
+
+fetch(`https://api.example.com/data?key=${API_KEY}`)
+```
+
+**File Structure:**
+```
+# .env.local (don't commit!)
+VITE_API_URL=http://localhost:3000
+VITE_STRIPE_KEY=pk_test_abc123
+
+# .env.example (commit this!)
+VITE_API_URL=your_api_url_here
+VITE_STRIPE_KEY=your_stripe_key_here
+
+# .gitignore
+.env
+.env.local
+.env.production.local
+```
+
+**On Vercel/Netlify:**
+- Add variables in dashboard
+- Mark sensitive ones as "Secret" (encrypted)
+- Variables are injected at build time
+
+---
+
+## Section 6: Demo Videos & Presentations
+
+### Why Demo Videos Matter
+
+**Statistics:**
+- Portfolios with demo videos get 40% more interview callbacks
+- Videos show your communication skills
+- Proves the app actually works (vs screenshots)
+
+---
+
+### How to Record a Demo Video
+
+**Tools:**
+- **Screen recording:** Loom (free, easy), OBS (free, advanced), QuickTime (Mac)
+- **Editing:** CapCut (free, simple), DaVinci Resolve (free, advanced)
+- **Hosting:** YouTube, Loom, Vimeo
+
+**Structure (2-3 minutes max):**
+
+1. **Introduction (15 seconds)**
+   - "Hi, I'm [Name]. This is [Project Name], a [brief description]"
+   - Show the homepage
+
+2. **Problem Statement (15 seconds)**
+   - "I built this to solve [specific problem]"
+
+3. **Key Features Demo (90 seconds)**
+   - Show 3-5 core features in action
+   - Use real data (not lorem ipsum)
+   - Narrate what you're doing
+   - Focus on user flow, not code
+
+4. **Technical Highlight (30 seconds)**
+   - "Under the hood, I used [key tech] to achieve [specific goal]"
+   - Optional: Quick code snippet or architecture diagram
+
+5. **Call to Action (15 seconds)**
+   - "Check out the live demo at [URL]"
+   - "Code is on GitHub at [URL]"
+   - "Thanks for watching!"
+
+**Example Script:**
+```
+[0:00] "Hi, I'm Alex. This is TaskFlow, a project management tool
+       for small dev teams. Here's the dashboard."
+
+[0:15] "I built this because tools like Jira felt too complex for
+       my freelance work. I wanted something simple but powerful."
+
+[0:30] "Let me show you the key features. First, real-time collaboration.
+       Watch as I create a task here... and it instantly appears
+       in this other window without refreshing."
+
+[0:45] "Second, GitHub integration. I can automatically create tasks
+       from GitHub issues. Let me connect my repo... and here are
+       all my open issues imported as tasks."
+
+[1:00] "Third, drag-and-drop boards. I can move tasks between columns,
+       and the status updates in real-time for my whole team."
+
+[1:15] "Let me show you the analytics dashboard. It tracks team
+       velocity, burndown charts, and individual contribution."
+
+[1:30] "Under the hood, I used WebSockets for real-time updates,
+       which reduced server load by 95% compared to polling."
+
+[1:45] "The frontend is React with TypeScript and Tailwind. Backend
+       is Node.js with PostgreSQL on Supabase."
+
+[2:00] "You can try the live demo at taskflow.com, and the code is
+       open source on GitHub. Thanks for watching!"
+```
+
+---
+
+### Demo Video Tips
+
+**Do:**
+- ✅ Rehearse your script 2-3 times
+- ✅ Use a real project with real data
+- ✅ Show the app in action, not just screenshots
+- ✅ Narrate what you're doing
+- ✅ Keep it under 3 minutes
+- ✅ Use simple transitions and text overlays
+- ✅ Add background music (quiet, non-distracting)
+
+**Don't:**
+- ❌ Show code for more than 10 seconds total
+- ❌ Ramble or go off-script
+- ❌ Use lorem ipsum or "test user" data
+- ❌ Show bugs or errors
+- ❌ Make it longer than 3 minutes
+- ❌ Use loud music or sound effects
+- ❌ Apologize ("Sorry, this part is a bit messy...")
+
+---
+
+### Presenting Your Project in Interviews
+
+**When asked "Tell me about a project you built":**
+
+**Structure (2-3 minutes):**
+
+1. **Context (20 seconds)**
+   - What you built
+   - Why you built it
+
+2. **Technical Decisions (60 seconds)**
+   - Key technologies and why you chose them
+   - Interesting challenges you solved
+   - Architecture decisions
+
+3. **Impact/Results (30 seconds)**
+   - Metrics if available (users, performance improvement, etc.)
+   - What you learned
+   - What you'd do differently
+
+**Example:**
+```
+"I built TaskFlow, a project management tool for small dev teams.
+
+I chose Next.js for the frontend because I needed server-side
+rendering for SEO and fast initial loads. For real-time updates,
+I implemented WebSockets using Socket.io, which was challenging
+because I had to handle reconnections and sync state across
+multiple clients.
+
+The most interesting problem I solved was optimizing drag-and-drop
+performance. With 50+ tasks on screen, dragging was laggy. I
+implemented virtual scrolling and memoized components, which
+reduced render time from 200ms to 15ms.
+
+I deployed it on Vercel with a PostgreSQL database on Supabase.
+I have about 20 active users now, mostly freelance developers.
+
+Looking back, I'd use a state management library like Zustand
+earlier – managing WebSocket state with Context API got messy
+at scale. But overall, this project taught me a ton about
+real-time systems and performance optimization."
+```
+
+**Be Ready For Follow-Up Questions:**
+- "Why did you choose [technology] over [alternative]?"
+- "What was the hardest bug you encountered?"
+- "How did you handle [specific feature]?"
+- "How is this deployed?"
+- "What would you do differently?"
+
+---
+
+## Section 7: Turn Take-Homes into Portfolio Pieces
+
+**The Opportunity:**
+You spent 4-8 hours on a take-home assignment. Even if you didn't get the job, you have a polished project.
+
+**How to Showcase Rejected Take-Homes:**
+
+1. **Remove Company-Specific Information**
+   - Don't use their branding, logo, or company name
+   - Rename the project
+   - Generic-ify the data (if it was company-specific)
+
+2. **Add Your Own Improvements**
+   - Polish features they didn't require
+   - Add tests (if you didn't have time during the assignment)
+   - Improve the UI/UX
+   - Deploy it (they might have only asked for localhost)
+
+3. **Write a Detailed README**
+   - Explain the original requirements
+   - Highlight what YOU added beyond requirements
+   - Share technical decisions
+   - Include a note: "Originally built as a take-home assignment, expanded as a portfolio project"
+
+4. **Add It to Your Portfolio**
+   - Link to live demo
+   - Link to GitHub repo
+   - Include it in your project list
+
+**Example:**
+```
+Original Assignment: "Build a movie search app using TMDB API"
+
+You submitted: Basic search with results
+
+For your portfolio, add:
+- User authentication
+- Watchlist feature
+- Responsive design
+- Dark mode
+- Deployed version
+- Tests
+
+Now it's a full project, not just a take-home assignment.
+```
+
+---
+
+## Section 8: Getting Feedback
+
+### Where to Share Your Projects
+
+**Reddit:**
+- r/webdev (feedback threads)
+- r/reactjs (show-off Saturday)
+- r/webdevtutorials
+
+**Discord Communities:**
+- Reactiflux
+- Frontend Developers
+- The Odin Project
+
+**Twitter/X:**
+- Share with hashtags: #webdev, #reactjs, #buildinpublic
+- Tag relevant influencers (politely)
+
+**LinkedIn:**
+- Post demo videos
+- Write about what you built
+- Tag technologies used
+
+**Dev.to:**
+- Write a "How I Built..." article
+- Include code snippets and learnings
+
+---
+
+### How to Ask for Feedback
+
+**❌ Bad:**
+"Hey, can you check out my project? [link]"
+
+**✅ Good:**
+"Hey! I built a task management app with React + Firebase. I'd love feedback on:
+1. UI/UX - Is the navigation intuitive?
+2. Performance - Does it feel fast?
+3. Code structure - I'm still learning best practices
+
+Live demo: [link]
+GitHub: [link]
+
+Thanks in advance!"
+
+**Be Specific:**
+- What kind of feedback do you want? (Design? Code? Features?)
+- What level are you at? (Junior looking for basic feedback vs senior wanting architecture review)
+- Is there a specific part you're unsure about?
+
+---
+
+### How to Incorporate Feedback
+
+**When you get feedback:**
+
+1. **Thank the person** (even if you disagree)
+
+2. **Evaluate the feedback:**
+   - Is it actionable?
+   - Does it align with best practices?
+   - Do multiple people mention the same issue?
+
+3. **Create a GitHub issue** for each piece of feedback:
+   ```
+   Issue #1: Improve loading states
+   - Add skeleton loaders for async content
+   - Show progress indicators for long operations
+   - Implement error boundaries
+
+   Priority: High
+   Suggested by: @user123
+   ```
+
+4. **Implement incrementally:**
+   - Don't try to fix everything at once
+   - Make small, focused commits
+   - Test thoroughly
+
+5. **Follow up:**
+   - Reply to the person who gave feedback
+   - "Thanks for the suggestion about loading states. I implemented skeleton loaders: [link to PR]"
+
+---
+
+## Section 9: Real Examples of Good vs Bad Portfolio Projects
+
+### ❌ Bad Portfolio Project Example
+
+**Project:** "Simple Todo App"
+
+**Why It's Bad:**
+- Everyone has built this
+- Doesn't show depth (just CRUD operations)
+- No unique features
+- Basic styling
+- Not deployed or broken deployment
+- README just says "A todo app"
+- No tests, no error handling
+- Hardcoded data
+
+**Red Flags:**
+```jsx
+// All logic in one component
+function TodoApp() {
+  const [todos, setTodos] = useState([]);
+
+  // No error handling
+  const addTodo = () => {
+    setTodos([...todos, newTodo]);
+  }
+
+  // Inline styles, no design system
+  return <div style={{padding: 20}}>
+    <input /> <button onClick={addTodo}>Add</button>
+    {todos.map(todo => <div>{todo.text}</div>)}
+  </div>
+}
+```
+
+---
+
+### ✅ Good Portfolio Project Example
+
+**Project:** "Study Buddy - Spaced Repetition Flashcard App"
+
+**Why It's Good:**
+- Solves a real problem (learning retention)
+- Shows understanding of algorithms (spaced repetition)
+- Complex features (user accounts, progress tracking, analytics)
+- Polished UI with dark mode
+- Deployed and working perfectly
+- Excellent README with demo video
+- Tests, error handling, loading states
+- Real data (creator actually uses it for studying)
+
+**Code Quality:**
+```jsx
+// components/FlashcardDeck.jsx
+import { useFlashcards } from '@/hooks/useFlashcards';
+import { calculateNextReview } from '@/lib/spacedRepetition';
+import { Card } from '@/components/ui/Card';
+
+export function FlashcardDeck({ deckId }) {
+  const { cards, loading, error, updateCard } = useFlashcards(deckId);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const handleAnswer = async (difficulty) => {
+    const card = cards[currentIndex];
+    const nextReview = calculateNextReview(card, difficulty);
+
+    await updateCard(card.id, { nextReview, lastReviewed: Date.now() });
+    setCurrentIndex(i => i + 1);
+  };
+
+  if (loading) return <Skeleton />;
+  if (error) return <ErrorMessage error={error} />;
+  if (currentIndex >= cards.length) return <CompletionScreen />;
+
+  return (
+    <Card>
+      <Flashcard card={cards[currentIndex]} />
+      <DifficultyButtons onAnswer={handleAnswer} />
+    </Card>
+  );
+}
+```
+
+**README includes:**
+- Live demo link
+- Screenshot/GIF
+- Explanation of spaced repetition algorithm
+- Tech stack with justifications
+- Setup instructions
+- What was learned
+- Future improvements
+
+---
+
+### Comparison Table
+
+| Aspect | ❌ Bad | ✅ Good |
+|--------|-------|--------|
+| **Idea** | Todo app (overdone) | Study Buddy (unique, solves real problem) |
+| **Scope** | Basic CRUD | Complex features (algorithm, analytics, auth) |
+| **Code Quality** | All in one file, no error handling | Modular, tested, error boundaries |
+| **UI/UX** | Unstyled or basic CSS | Polished, responsive, dark mode |
+| **Deployment** | Not deployed or broken | Deployed, working perfectly |
+| **README** | "A todo app" | Detailed, with demo, screenshots, learnings |
+| **Uniqueness** | Identical to tutorials | Custom features, personal touch |
+| **Demonstrable Skills** | Basic React | Algorithm implementation, architecture, deployment |
+
+---
+
+## Final Checklist: Is Your Portfolio Ready?
+
+### Before Sending Your Portfolio to Employers
+
+**Projects:**
+- [ ] At least 2-3 quality projects (quality over quantity)
+- [ ] Each project is deployed and working
+- [ ] No broken links or 404 pages
+- [ ] Projects show progression (simple → complex)
+- [ ] At least one project solves a real problem
+
+**Code Quality:**
+- [ ] Clean console (no errors or warnings)
+- [ ] Consistent code style
+- [ ] Error handling on all async operations
+- [ ] Loading states for all data fetching
+- [ ] Responsive on mobile, tablet, desktop
+- [ ] Accessible (keyboard navigation, ARIA labels)
+
+**READMEs:**
+- [ ] Every project has a detailed README
+- [ ] Includes live demo link
+- [ ] Includes screenshots
+- [ ] Tech stack clearly listed
+- [ ] Setup instructions provided
+- [ ] Explains what you learned
+
+**Presentation:**
+- [ ] Custom domain (optional but professional)
+- [ ] Professional GitHub profile (bio, profile pic, pinned repos)
+- [ ] Consistent branding (similar color schemes, style)
+- [ ] Contact information easily accessible
+- [ ] LinkedIn profile linked
+- [ ] Portfolio site (if applicable) is fast and mobile-friendly
+
+**Testing:**
+- [ ] Test all projects on different browsers (Chrome, Firefox, Safari)
+- [ ] Test on mobile devices
+- [ ] Ask 2-3 friends to click through and give feedback
+- [ ] Check all external links work
+- [ ] Verify environment variables are set correctly in production
+
+---
+
+## Resources
+
+**Project Inspiration:**
+- [Awwwards](https://www.awwwards.com/) - Inspiring web design
+- [Dribbble](https://dribbble.com/) - UI/UX design ideas
+- [GitHub Trending](https://github.com/trending) - Popular open source projects
+- [ProductHunt](https://www.producthunt.com/) - See what people are building
+
+**UI Component Libraries:**
+- [shadcn/ui](https://ui.shadcn.com/) - Copy-paste components (Tailwind)
+- [Chakra UI](https://chakra-ui.com/) - Accessible components
+- [Material UI](https://mui.com/) - Google Material Design
+- [Headless UI](https://headlessui.com/) - Unstyled, accessible components
+
+**Deployment & Hosting:**
+- [Vercel](https://vercel.com) - Best for Next.js/React
+- [Netlify](https://netlify.com) - Great for static sites
+- [Railway](https://railway.app) - Full-stack apps with databases
+- [Supabase](https://supabase.com) - Backend-as-a-Service (free tier)
+
+**Portfolio Examples:**
+- [https://brittanychiang.com/](https://brittanychiang.com/)
+- [https://jacekjeznach.com/](https://jacekjeznach.com/)
+- [https://caferati.me/](https://caferati.me/)
+
+**Learning:**
+- [Frontend Mentor](https://www.frontendmentor.io/) - Real-world project challenges
+- [Dev Challenges](https://devchallenges.io/) - Build projects, get feedback
+- [The Odin Project](https://www.theodinproject.com/) - Full curriculum with projects
+
+---
+
+**Remember:** Your portfolio is a living document. Keep improving it, add new projects, and iterate based on feedback. The best portfolio is one that shows growth over time.
+
+Good luck building! 🚀

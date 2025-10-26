@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
         'javascript/async-javascript',
         'javascript/es6-features',
         'javascript/beginner-deep-dive',
+        'javascript/interview-practice',
       ],
     },
     {
@@ -50,6 +51,7 @@ const sidebars: SidebarsConfig = {
         'react-fundamentals/essential-hooks',
         'react-fundamentals/component-patterns',
         'react-fundamentals/job-ready-patterns',
+        'react-fundamentals/interview-coding-round',
       ],
     },
     {
@@ -74,6 +76,17 @@ const sidebars: SidebarsConfig = {
           id: 'projects/intro',
           label: 'Coming Soon',
         },
+      ],
+    },
+    {
+      type: 'category',
+      label: '🏗️ System Design & Debugging',
+      collapsed: true,
+      items: [
+        'system-design-debugging/system-design-for-react',
+        'system-design-debugging/debugging-labs',
+        'system-design-debugging/behavioral-prep',
+        'system-design-debugging/project-portfolio-guide',
       ],
     },
   ],

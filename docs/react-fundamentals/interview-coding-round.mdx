@@ -1,0 +1,1139 @@
+---
+sidebar_position: 12
+---
+
+# React Coding Interview Rounds: Real Code, Real Job Practice
+
+These React questions are pulled directly from phone screens, onsite technical interviews, and take-home assignments at top companies, startups, and bootcamp grad job tracks. You'll see hands-on coding prompts, expected outputs, bugs to watch for, and exact patterns used to assess candidates.
+
+**How this page works:**
+- Each question is a real coding task from interviews
+- Try to solve it yourself first
+- Click to see the solution
+- Understand common bugs and why it's asked
+- Type the code (don't copy-paste!)
+
+---
+
+## Section 1: Array/List Rendering & Keys
+
+### Q1: Render a dynamic list of users
+
+**Prompt:** Given `users = [{ id: 1, name: "Sara" }, { id: 2, name: "Jay" }]` render an unordered list of names with React, using the user id as key.
+
+**What they're testing:** Basic list rendering, understanding of keys, map usage
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+function UserList({ users }) {
+  return (
+    <ul>
+      {users.map(user => (
+        <li key={user.id}>{user.name}</li>
+      ))}
+    </ul>
+  );
+}
+
+// Usage
+const users = [
+  { id: 1, name: "Sara" },
+  { id: 2, name: "Jay" }
+];
+
+<UserList users={users} />
+```
+
+**Common bugs:**
+- ❌ Forgetting key prop completely
+- ❌ Using index as key: `map((user, i) => <li key={i}>)` (bad when adding/removing items)
+- ❌ Using non-unique keys
+- ❌ Not wrapping in parentheses with JSX
+
+**Why it's asked:** Tests basic React rendering and understanding of reconciliation.
+
+</details>
+
+### Q2: Build a filterable product list
+
+**Prompt:** Display products from `products = [{id, name, inStock}]`. Add a toggle button to show all products or only those where `inStock: true`.
+
+**What they're testing:** State management, filtering arrays, conditional rendering
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState } from 'react';
+
+function ProductList({ products }) {
+  const [showAll, setShowAll] = useState(false);
+  
+  const filtered = showAll 
+    ? products 
+    : products.filter(p => p.inStock);
+  
+  return (
+    <div>
+      <button onClick={() => setShowAll(prev => !prev)}>
+        {showAll ? "Show only in-stock" : "Show all"}
+      </button>
+      
+      <ul>
+        {filtered.map(product => (
+          <li key={product.id}>
+            {product.name} {!product.inStock && "(Out of stock)"}
+          </li>
+        ))}
+      </ul>
+      
+      <p>Showing {filtered.length} of {products.length} products</p>
+    </div>
+  );
+}
+
+// Usage
+const products = [
+  { id: 1, name: "Laptop", inStock: true },
+  { id: 2, name: "Mouse", inStock: false },
+  { id: 3, name: "Keyboard", inStock: true }
+];
+
+<ProductList products={products} />
+```
+
+**Common bugs:**
+- ❌ Mutating the products array directly
+- ❌ Not using functional update: `setShowAll(!showAll)` instead of `setShowAll(prev => !prev)`
+- ❌ Filtering in render without memoization (performance issue with large lists)
+
+**Why it's asked:** Shows you can manage state, filter data, and handle user interactions.
+
+</details>
+
+### Q3: Search/filter with input field
+
+**Prompt:** Create a searchable user list. As user types in input, filter the list to show matching names (case-insensitive).
+
+**What they're testing:** Controlled inputs, filtering, string manipulation
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState } from 'react';
+
+function SearchableList({ users }) {
+  const [search, setSearch] = useState("");
+  
+  const filtered = users.filter(user =>
+    user.name.toLowerCase().includes(search.toLowerCase())
+  );
+  
+  return (
+    <div>
+      <input
+        type="text"
+        placeholder="Search users..."
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+      />
+      
+      <ul>
+        {filtered.map(user => (
+          <li key={user.id}>{user.name}</li>
+        ))}
+      </ul>
+      
+      {filtered.length === 0 && <p>No users found</p>}
+    </div>
+  );
+}
+```
+
+**Common bugs:**
+- ❌ Case-sensitive search (not using toLowerCase)
+- ❌ Uncontrolled input (missing value/onChange)
+- ❌ Not handling empty results
+
+**Why it's asked:** Very common real-world pattern, tests controlled inputs and filtering.
+
+</details>
+
+---
+
+## Section 2: Events & Controlled Inputs
+
+### Q4: Controlled input with live preview
+
+**Prompt:** Make a component with an `<input>` box and display what user types in real-time below it.
+
+**What they're testing:** Controlled components, state basics
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState } from 'react';
+
+function LivePreview() {
+  const [text, setText] = useState("");
+  
+  return (
+    <div>
+      <input
+        type="text"
+        value={text}
+        onChange={e => setText(e.target.value)}
+        placeholder="Type something..."
+      />
+      <p>Preview: {text}</p>
+      <p>Character count: {text.length}</p>
+    </div>
+  );
+}
+```
+
+**Common bugs:**
+- ❌ Uncontrolled input (missing value prop)
+- ❌ Using `e.target` directly instead of `e.target.value`
+- ❌ Forgetting to bind onChange
+
+**Why it's asked:** Fundamental React pattern, appears in every form/input scenario.
+
+</details>
+
+### Q5: Build a login form with validation
+
+**Prompt:** Create a form with email and password fields. Show error messages if email doesn't contain "@" or password is less than 6 characters. Display errors live as user types.
+
+**What they're testing:** Form handling, validation, multiple state variables, conditional rendering
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState } from 'react';
+
+function LoginForm() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState({});
+  
+  const validateEmail = (email) => {
+    if (!email) return "Email is required";
+    if (!email.includes("@")) return "Invalid email format";
+    return "";
+  };
+  
+  const validatePassword = (password) => {
+    if (!password) return "Password is required";
+    if (password.length < 6) return "Password must be at least 6 characters";
+    return "";
+  };
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    const emailError = validateEmail(email);
+    const passwordError = validatePassword(password);
+    
+    if (emailError || passwordError) {
+      setErrors({
+        email: emailError,
+        password: passwordError
+      });
+      return;
+    }
+    
+    console.log("Form submitted:", { email, password });
+    // Clear form
+    setEmail("");
+    setPassword("");
+    setErrors({});
+  };
+  
+  return (
+    <form onSubmit={handleSubmit}>
+      <div>
+        <input
+          type="email"
+          value={email}
+          onChange={e => {
+            setEmail(e.target.value);
+            setErrors(prev => ({ ...prev, email: "" }));
+          }}
+          placeholder="Email"
+        />
+        {errors.email && <p style={{ color: "red" }}>{errors.email}</p>}
+      </div>
+      
+      <div>
+        <input
+          type="password"
+          value={password}
+          onChange={e => {
+            setPassword(e.target.value);
+            setErrors(prev => ({ ...prev, password: "" }));
+          }}
+          placeholder="Password"
+        />
+        {errors.password && <p style={{ color: "red" }}>{errors.password}</p>}
+      </div>
+      
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+```
+
+**Common bugs:**
+- ❌ Not preventing default form submission: `e.preventDefault()`
+- ❌ Validating on submit only (should clear errors as user types)
+- ❌ Mutating errors object directly
+- ❌ Not handling empty inputs
+
+**Why it's asked:** Forms are everywhere in real apps. Tests state management, validation, and user feedback.
+
+</details>
+
+### Q6: Counter with increment/decrement buttons
+
+**Prompt:** Create a counter that starts at 0. Add buttons to increment, decrement, and reset.
+
+**What they're testing:** Basic state updates, event handlers
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState } from 'react';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+  
+  return (
+    <div>
+      <h1>Count: {count}</h1>
+      <button onClick={() => setCount(count + 1)}>+</button>
+      <button onClick={() => setCount(count - 1)}>-</button>
+      <button onClick={() => setCount(0)}>Reset</button>
+      <button onClick={() => setCount(prev => prev * 2)}>Double</button>
+    </div>
+  );
+}
+```
+
+**Common bugs:**
+- ❌ Using `count++` or `count--` (mutation)
+- ❌ Not using functional updates when needed
+- ❌ Forgetting arrow functions in onClick
+
+**Why it's asked:** Tests fundamental state updates and event handling.
+
+</details>
+
+---
+
+## Section 3: State Logic & Immutability
+
+### Q7: Toggle todos as complete/incomplete
+
+**Prompt:** Given a list of todos `[{id, text, done}]`, render them and toggle `done` status when clicked.
+
+**What they're testing:** Immutable updates, mapping over state, object spreading
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState } from 'react';
+
+function TodoList() {
+  const [todos, setTodos] = useState([
+    { id: 1, text: "Learn React", done: false },
+    { id: 2, text: "Build project", done: false },
+    { id: 3, text: "Get job", done: false }
+  ]);
+  
+  const toggleTodo = (id) => {
+    setTodos(todos.map(todo =>
+      todo.id === id ? { ...todo, done: !todo.done } : todo
+    ));
+  };
+  
+  const addTodo = (text) => {
+    const newTodo = {
+      id: Date.now(),
+      text,
+      done: false
+    };
+    setTodos([...todos, newTodo]);
+  };
+  
+  const deleteTodo = (id) => {
+    setTodos(todos.filter(todo => todo.id !== id));
+  };
+  
+  return (
+    <div>
+      <ul>
+        {todos.map(todo => (
+          <li
+            key={todo.id}
+            style={{
+              textDecoration: todo.done ? "line-through" : "none",
+              cursor: "pointer"
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={todo.done}
+              onChange={() => toggleTodo(todo.id)}
+            />
+            <span onClick={() => toggleTodo(todo.id)}>{todo.text}</span>
+            <button onClick={() => deleteTodo(todo.id)}>Delete</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+**Common bugs:**
+- ❌ **CRITICAL:** Mutating state directly: `todo.done = !todo.done`
+- ❌ Not spreading the todo object: `{ done: !todo.done }` (loses other properties)
+- ❌ Modifying array in place: `todos.push()` or `todos.splice()`
+
+**Why it's asked:** Tests understanding of immutability, which is crucial in React.
+
+</details>
+
+### Q8: Add items to a list
+
+**Prompt:** Create an input field and button. When button is clicked, add the input value to a list and clear the input.
+
+**What they're testing:** Adding to arrays immutably, clearing inputs
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState } from 'react';
+
+function AddItemList() {
+  const [items, setItems] = useState([]);
+  const [input, setInput] = useState("");
+  
+  const handleAdd = () => {
+    if (input.trim() === "") return; // Don't add empty items
+    
+    setItems([...items, input]);
+    setInput(""); // Clear input after adding
+  };
+  
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleAdd();
+    }
+  };
+  
+  return (
+    <div>
+      <input
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyPress={handleKeyPress}
+        placeholder="Enter item..."
+      />
+      <button onClick={handleAdd}>Add</button>
+      
+      <ul>
+        {items.map((item, index) => (
+          <li key={index}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+**Common bugs:**
+- ❌ Using `items.push(input)` (mutation!)
+- ❌ Not clearing input after adding
+- ❌ Not validating empty inputs
+- ❌ Using index as key (acceptable here since we only append)
+
+**Why it's asked:** Common pattern in apps, tests array manipulation.
+
+</details>
+
+### Q9: Remove items from a list
+
+**Prompt:** Display a list of items with a "Remove" button next to each. Clicking Remove should delete that item.
+
+**What they're testing:** Filtering arrays, passing parameters to event handlers
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState } from 'react';
+
+function RemoveItemList() {
+  const [items, setItems] = useState([
+    { id: 1, name: "Apple" },
+    { id: 2, name: "Banana" },
+    { id: 3, name: "Orange" }
+  ]);
+  
+  const removeItem = (id) => {
+    setItems(items.filter(item => item.id !== id));
+  };
+  
+  return (
+    <ul>
+      {items.map(item => (
+        <li key={item.id}>
+          {item.name}
+          <button onClick={() => removeItem(item.id)}>Remove</button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+**Common bugs:**
+- ❌ Using splice (mutation)
+- ❌ Not using arrow function: `onClick={removeItem(item.id)}` (calls immediately!)
+- ❌ Filtering by index instead of unique ID
+
+**Why it's asked:** Tests filtering and proper event handler usage.
+
+</details>
+
+---
+
+## Section 4: Side Effects & Data Fetching
+
+### Q10: Fetch and display data from API
+
+**Prompt:** On component mount, fetch users from `/api/users` and display them. Show loading state and handle errors.
+
+**What they're testing:** useEffect, async operations, loading/error states
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState, useEffect } from 'react';
+
+function Users() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    fetch("https://jsonplaceholder.typicode.com/users")
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch");
+        }
+        return response.json();
+      })
+      .then(data => {
+        setUsers(data);
+        setLoading(false);
+      })
+      .catch(error => {
+        setError(error.message);
+        setLoading(false);
+      });
+  }, []); // Empty array = run once on mount
+  
+  if (loading) return <div>Loading users...</div>;
+  if (error) return <div>Error: {error}</div>;
+  
+  return (
+    <ul>
+      {users.map(user => (
+        <li key={user.id}>{user.name} - {user.email}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+**Common bugs:**
+- ❌ Not handling loading state (UI flickers)
+- ❌ Not handling errors (app crashes on network failure)
+- ❌ Missing dependency array (infinite loop!)
+- ❌ Not checking response.ok
+
+**Why it's asked:** Data fetching is critical in real apps. Must show you handle all states.
+
+</details>
+
+### Q11: Fetch data with async/await
+
+**Prompt:** Same as Q10, but use async/await syntax.
+
+**What they're testing:** Modern async patterns
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState, useEffect } from 'react';
+
+function Users() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch("https://jsonplaceholder.typicode.com/users");
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setUsers(data);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUsers();
+  }, []);
+  
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
+  
+  return (
+    <ul>
+      {users.map(user => (
+        <li key={user.id}>{user.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+**Common bugs:**
+- ❌ Making useEffect itself async: `useEffect(async () => {})` (won't work!)
+- ❌ Not using try/catch
+- ❌ Forgetting to call the async function
+
+**Why it's asked:** Tests modern JavaScript and proper error handling.
+
+</details>
+
+### Q12: Refetch data on button click
+
+**Prompt:** Fetch users on mount, and add a "Refresh" button that refetches the data.
+
+**What they're testing:** Triggering side effects manually
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState, useEffect } from 'react';
+
+function Users() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [refresh, setRefresh] = useState(0); // Trigger re-fetch
+  
+  useEffect(() => {
+    setLoading(true);
+    
+    fetch("https://jsonplaceholder.typicode.com/users")
+      .then(res => res.json())
+      .then(data => setUsers(data))
+      .finally(() => setLoading(false));
+  }, [refresh]); // Re-run when refresh changes
+  
+  return (
+    <div>
+      <button onClick={() => setRefresh(prev => prev + 1)}>
+        Refresh
+      </button>
+      
+      {loading && <p>Loading...</p>}
+      
+      <ul>
+        {users.map(user => (
+          <li key={user.id}>{user.name}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+**Common bugs:**
+- ❌ Not including refresh in dependency array
+- ❌ Using boolean toggle (works but number is cleaner)
+
+**Why it's asked:** Tests understanding of useEffect dependencies.
+
+</details>
+
+---
+
+## Section 5: Lifting State Up
+
+### Q13: Shared state between siblings
+
+**Prompt:** Create two components that both display and modify the same counter value. The state should be in the parent.
+
+**What they're testing:** Lifting state, passing props and callbacks
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState } from 'react';
+
+function Counter({ count, onIncrement, onDecrement }) {
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={onIncrement}>+</button>
+      <button onClick={onDecrement}>-</button>
+    </div>
+  );
+}
+
+function Parent() {
+  const [count, setCount] = useState(0);
+  
+  return (
+    <div>
+      <h1>Shared Counter</h1>
+      <Counter
+        count={count}
+        onIncrement={() => setCount(count + 1)}
+        onDecrement={() => setCount(count - 1)}
+      />
+      <Counter
+        count={count}
+        onIncrement={() => setCount(count + 1)}
+        onDecrement={() => setCount(count - 1)}
+      />
+    </div>
+  );
+}
+```
+
+**Common bugs:**
+- ❌ Keeping state in child components (won't sync!)
+- ❌ Not passing callbacks properly
+- ❌ Trying to modify parent state from child directly
+
+**Why it's asked:** Critical pattern for component communication.
+
+</details>
+
+### Q14: Temperature converter (Celsius ↔ Fahrenheit)
+
+**Prompt:** Create two inputs: one for Celsius, one for Fahrenheit. When either changes, update the other automatically.
+
+**What they're testing:** Lifting state, synchronized inputs, calculations
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState } from 'react';
+
+function TemperatureConverter() {
+  const [celsius, setCelsius] = useState("");
+  const [fahrenheit, setFahrenheit] = useState("");
+  
+  const handleCelsiusChange = (value) => {
+    setCelsius(value);
+    if (value === "") {
+      setFahrenheit("");
+    } else {
+      const f = (parseFloat(value) * 9/5) + 32;
+      setFahrenheit(f.toFixed(1));
+    }
+  };
+  
+  const handleFahrenheitChange = (value) => {
+    setFahrenheit(value);
+    if (value === "") {
+      setCelsius("");
+    } else {
+      const c = (parseFloat(value) - 32) * 5/9;
+      setCelsius(c.toFixed(1));
+    }
+  };
+  
+  return (
+    <div>
+      <div>
+        <label>Celsius:</label>
+        <input
+          type="number"
+          value={celsius}
+          onChange={e => handleCelsiusChange(e.target.value)}
+        />
+      </div>
+      
+      <div>
+        <label>Fahrenheit:</label>
+        <input
+          type="number"
+          value={fahrenheit}
+          onChange={e => handleFahrenheitChange(e.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
+```
+
+**Common bugs:**
+- ❌ Creating infinite update loop
+- ❌ Not handling empty inputs
+- ❌ Not parsing strings to numbers
+
+**Why it's asked:** Tests synchronized state and calculations.
+
+</details>
+
+---
+
+## Section 6: Conditional Rendering & Patterns
+
+### Q15: Show/hide content with toggle
+
+**Prompt:** Create a component with a button that toggles showing/hiding a paragraph.
+
+**What they're testing:** Conditional rendering basics
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState } from 'react';
+
+function ToggleContent() {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  return (
+    <div>
+      <button onClick={() => setIsVisible(!isVisible)}>
+        {isVisible ? "Hide" : "Show"} Content
+      </button>
+      
+      {isVisible && (
+        <p>This content can be toggled!</p>
+      )}
+    </div>
+  );
+}
+```
+
+**Common bugs:**
+- ❌ Using ternary when && is sufficient
+- ❌ Not toggling button text
+
+**Why it's asked:** Basic but essential pattern.
+
+</details>
+
+### Q16: Tabs component
+
+**Prompt:** Create a tabs component that shows different content based on which tab is active.
+
+**What they're testing:** Conditional rendering, active state
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState } from 'react';
+
+function Tabs() {
+  const [activeTab, setActiveTab] = useState("home");
+  
+  const tabs = [
+    { id: "home", label: "Home", content: "Welcome to Home" },
+    { id: "profile", label: "Profile", content: "Your Profile" },
+    { id: "settings", label: "Settings", content: "Settings Panel" }
+  ];
+  
+  return (
+    <div>
+      <div className="tabs">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              fontWeight: activeTab === tab.id ? "bold" : "normal",
+              borderBottom: activeTab === tab.id ? "2px solid blue" : "none"
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      
+      <div className="tab-content">
+        {tabs.find(tab => tab.id === activeTab)?.content}
+      </div>
+    </div>
+  );
+}
+```
+
+**Common bugs:**
+- ❌ Not showing active state visually
+- ❌ Rendering all tab content (should only show active)
+
+**Why it's asked:** Common UI pattern in real apps.
+
+</details>
+
+---
+
+## Section 7: Performance & Optimization
+
+### Q17: Prevent unnecessary re-renders with React.memo
+
+**Prompt:** Create a parent component that re-renders frequently. Child component should only re-render when its props change.
+
+**What they're testing:** React.memo, understanding re-renders
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+```jsx
+import { useState, memo } from 'react';
+
+// Child component wrapped in React.memo
+const ExpensiveComponent = memo(function ExpensiveComponent({ data }) {
+  console.log("ExpensiveComponent rendered");
+  
+  return (
+    <div>
+      <h3>Expensive Component</h3>
+      <p>Data: {data}</p>
+    </div>
+  );
+});
+
+function Parent() {
+  const [count, setCount] = useState(0);
+  const [data, setData] = useState("Initial");
+  
+  return (
+    <div>
+      <button onClick={() => setCount(count + 1)}>
+        Increment Count: {count}
+      </button>
+      
+      <button onClick={() => setData("Updated")}>
+        Update Data
+      </button>
+      
+      {/* Only re-renders when 'data' prop changes */}
+      <ExpensiveComponent data={data} />
+    </div>
+  );
+}
+```
+
+**Common bugs:**
+- ❌ Passing new object/array references each render
+- ❌ Not using useMemo/useCallback for complex props
+
+**Why it's asked:** Shows understanding of performance optimization.
+
+</details>
+
+---
+
+## Section 8: Real Bug-Fix Challenges
+
+### Q18: Fix this broken counter
+
+**Prompt:** This counter doesn't work. Fix it.
+
+```jsx
+function Counter() {
+  const [count, setCount] = useState(0);
+  
+  function handleClick() {
+    setCount(count++); // BUG!
+  }
+  
+  return <button onClick={handleClick}>{count}</button>;
+}
+```
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+**Problems:**
+1. `count++` mutates the variable and returns the old value
+2. Should be `setCount(count + 1)`
+
+**Fixed version:**
+
+```jsx
+function Counter() {
+  const [count, setCount] = useState(0);
+  
+  function handleClick() {
+    setCount(count + 1); // ✅ Correct
+  }
+  
+  return <button onClick={handleClick}>{count}</button>;
+}
+```
+
+**Why it's asked:** Tests understanding of immutability and state updates.
+
+</details>
+
+### Q19: Fix the infinite loop
+
+**Prompt:** This component causes an infinite loop. Why? Fix it.
+
+```jsx
+function UserProfile() {
+  const [user, setUser] = useState(null);
+  
+  useEffect(() => {
+    fetch("/api/user")
+      .then(res => res.json())
+      .then(data => setUser(data));
+  }); // BUG: Missing dependency array!
+  
+  return <div>{user?.name}</div>;
+}
+```
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+**Problem:** Missing dependency array causes useEffect to run after every render, which updates state, which triggers re-render, repeat forever!
+
+**Fixed version:**
+
+```jsx
+function UserProfile() {
+  const [user, setUser] = useState(null);
+  
+  useEffect(() => {
+    fetch("/api/user")
+      .then(res => res.json())
+      .then(data => setUser(data));
+  }, []); // ✅ Empty array = run once on mount
+  
+  return <div>{user?.name}</div>;
+}
+```
+
+**Why it's asked:** Very common mistake, tests understanding of useEffect dependencies.
+
+</details>
+
+### Q20: Fix the event handler
+
+**Prompt:** This delete button doesn't work. Fix it.
+
+```jsx
+function Item({ item, onDelete }) {
+  return (
+    <li>
+      {item.name}
+      <button onClick={onDelete(item.id)}>Delete</button>
+      {/* BUG: Calls function immediately! */}
+    </li>
+  );
+}
+```
+
+<details>
+<summary><b>Click to see solution</b></summary>
+
+**Problem:** `onClick={onDelete(item.id)}` calls the function immediately instead of passing a function reference.
+
+**Fixed version:**
+
+```jsx
+function Item({ item, onDelete }) {
+  return (
+    <li>
+      {item.name}
+      <button onClick={() => onDelete(item.id)}>Delete</button>
+      {/* ✅ Arrow function delays execution */}
+    </li>
+  );
+}
+```
+
+**Why it's asked:** Extremely common mistake for beginners.
+
+</details>
+
+---
+
+## Practice Strategy
+
+### How to Practice These Effectively
+
+1. **Set a Timer:** Give yourself 10-15 minutes per question
+2. **Code from Scratch:** Don't look at the solution first
+3. **Explain Out Loud:** Pretend you're in an interview, talk through your thinking
+4. **Identify Bugs:** Look at common bugs and make sure you understand why they're wrong
+5. **Type the Solutions:** Muscle memory matters!
+
+### What Interviewers Look For
+
+✅ **Problem Understanding:** Do you ask clarifying questions?  
+✅ **Clean Code:** Proper naming, formatting, structure  
+✅ **Edge Cases:** Do you handle empty states, errors, loading?  
+✅ **Communication:** Can you explain your approach?  
+✅ **Debugging:** When stuck, do you methodically troubleshoot?  
+
+### Red Flags to Avoid
+
+❌ Silent coding (communicate your thinking!)  
+❌ Giving up immediately when stuck  
+❌ Not handling errors or loading states  
+❌ Mutating state directly  
+❌ Not using keys in lists  
+❌ Infinite loops from missing dependencies  
+
+### Next Steps
+
+Once you can solve these confidently:
+1. Build a complete app using multiple patterns
+2. Practice whiteboarding (coding without IDE)
+3. Do mock interviews with friends
+4. Try take-home assignments from real companies
+
+**Remember:** Every React developer struggled with these at first. The difference is practice!
+
+---
+
+[Back to React Fundamentals](/react-fundamentals/intro) | [Continue to Job-Ready Skills →](/job-ready/intro)
+

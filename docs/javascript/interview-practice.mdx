@@ -1,0 +1,1373 @@
+---
+sidebar_position: 8
+---
+
+# JavaScript Interview Questions & Practical Answers
+
+These are real JavaScript questions you'll actually encounter in interviews—from internships to junior and even some mid-level roles. Every question is followed by a clear answer, explanation, and working example. Practice typing and explaining, not just reading!
+
+**How to use this page:**
+1. Read the question
+2. Try to answer it yourself
+3. Click to reveal the answer
+4. Type the code examples (don't copy-paste!)
+5. Explain the answer out loud as if teaching someone
+
+---
+
+## Section 1: Variables & Scope
+
+### Q1: What's the difference between var, let, and const?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:**
+- `var` is function-scoped, can be redeclared and updated
+- `let` is block-scoped, can be updated but not redeclared
+- `const` is block-scoped, cannot be updated or redeclared (but object/array contents can change)
+
+```javascript
+// var - function scoped
+var x = 1;
+{
+  var x = 2; // Same variable!
+}
+console.log(x); // 2
+
+// let - block scoped
+let y = 1;
+{
+  let y = 2; // Different variable
+}
+console.log(y); // 1
+
+// const - cannot reassign
+const z = 1;
+// z = 2; // ❌ Error: Assignment to constant variable
+
+// BUT const objects can mutate internally
+const user = { name: "Alice" };
+user.name = "Bob"; // ✅ Works
+// user = {}; // ❌ Error
+```
+
+**Why it matters in interviews:** Shows you understand scope and modern JavaScript conventions.
+
+</details>
+
+### Q2: What is "hoisting"?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** JavaScript moves variable and function declarations to the top of their scope during compilation (before execution).
+
+```javascript
+// What you write:
+console.log(a); // undefined (not an error!)
+var a = 5;
+
+// What JavaScript does internally:
+var a;
+console.log(a); // undefined
+a = 5;
+
+// let and const are hoisted but not initialized (Temporal Dead Zone)
+// console.log(b); // ❌ ReferenceError: Cannot access before initialization
+let b = 10;
+
+// Function declarations are hoisted completely
+sayHi(); // "Hi!" - Works!
+function sayHi() {
+  console.log("Hi!");
+}
+
+// Function expressions are NOT hoisted
+// greet(); // ❌ Error
+const greet = function() {
+  console.log("Hello!");
+};
+```
+
+**Key point:** Use `let` and `const` to avoid hoisting confusion!
+
+</details>
+
+### Q3: Explain scope chain with an example
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** JavaScript looks for variables starting in the current scope, then moves outward to parent scopes until it finds the variable or reaches global scope.
+
+```javascript
+const global = "I'm global";
+
+function outer() {
+  const outerVar = "I'm in outer";
+  
+  function inner() {
+    const innerVar = "I'm in inner";
+    
+    // Can access all three:
+    console.log(innerVar);  // Found in inner scope
+    console.log(outerVar);  // Found in outer scope
+    console.log(global);    // Found in global scope
+  }
+  
+  inner();
+  // console.log(innerVar); // ❌ Error: not accessible here
+}
+
+outer();
+```
+
+**Interview tip:** Draw a diagram showing nested scopes when explaining.
+
+</details>
+
+---
+
+## Section 2: Data Types & Coercion
+
+### Q4: What are all the primitive types in JavaScript?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** There are 7 primitive types:
+1. `string` - "hello"
+2. `number` - 42, 3.14
+3. `boolean` - true, false
+4. `null` - intentional absence of value
+5. `undefined` - variable not assigned
+6. `symbol` - unique identifier (ES6)
+7. `bigint` - very large integers (ES2020)
+
+```javascript
+console.log(typeof "hello");     // "string"
+console.log(typeof 42);          // "number"
+console.log(typeof true);        // "boolean"
+console.log(typeof undefined);   // "undefined"
+console.log(typeof null);        // "object" ⚠️ (JavaScript bug!)
+console.log(typeof Symbol("id")); // "symbol"
+console.log(typeof 9007199254740991n); // "bigint"
+```
+
+**Gotcha:** `typeof null` returns `"object"` - this is a famous JavaScript bug that can't be fixed (would break too many websites).
+
+</details>
+
+### Q5: What does typeof null return and why?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** `typeof null` returns `"object"` - this is a legacy bug in JavaScript.
+
+```javascript
+console.log(typeof null); // "object" ⚠️
+
+// To check for null specifically:
+const value = null;
+
+console.log(value === null);        // ✅ true
+console.log(typeof value === "object" && value === null); // ✅ true
+```
+
+**Why it matters:** Interviewers love this gotcha question. Shows you know JavaScript quirks.
+
+</details>
+
+### Q6: Explain the difference between == and ===
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:**
+- `==` (loose equality) performs type coercion before comparison
+- `===` (strict equality) compares both value AND type without coercion
+
+```javascript
+// == allows type coercion
+console.log(5 == "5");        // true ⚠️
+console.log(0 == false);      // true ⚠️
+console.log("" == false);     // true ⚠️
+console.log(null == undefined); // true ⚠️
+
+// === strict comparison
+console.log(5 === "5");       // false ✅
+console.log(0 === false);     // false ✅
+console.log("" === false);    // false ✅
+console.log(null === undefined); // false ✅
+
+// Real bug example:
+const userInput = "0";
+
+if (userInput == false) {
+  console.log("This runs!"); // Bug! "0" == false is true
+}
+
+if (userInput === false) {
+  console.log("This won't run"); // Correct!
+}
+```
+
+**Best practice:** Always use `===` unless you have a specific reason not to.
+
+</details>
+
+### Q7: What are truthy and falsy values?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** There are only 6 falsy values. Everything else is truthy.
+
+**Falsy values:**
+1. `false`
+2. `0` (and `-0`)
+3. `""` (empty string)
+4. `null`
+5. `undefined`
+6. `NaN`
+
+```javascript
+// All falsy:
+if (false) { }       // Won't run
+if (0) { }           // Won't run
+if ("") { }          // Won't run
+if (null) { }        // Won't run
+if (undefined) { }   // Won't run
+if (NaN) { }         // Won't run
+
+// Truthy examples (everything else!):
+if ("0") { }         // Runs! ⚠️ "0" is a string, not 0
+if ("false") { }     // Runs! ⚠️ "false" is a string
+if ([]) { }          // Runs! Empty array is truthy
+if ({}) { }          // Runs! Empty object is truthy
+if (42) { }          // Runs! Non-zero number
+if (-1) { }          // Runs! Negative numbers are truthy
+
+// Common gotcha:
+const value = "0";
+if (value) {
+  console.log("Runs!"); // Because "0" is truthy
+}
+```
+
+**Interview tip:** Memorize the 6 falsy values!
+
+</details>
+
+---
+
+## Section 3: Functions, Arguments, and Callbacks
+
+### Q8: What's the difference between function declarations and expressions?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:**
+- **Declaration:** Hoisted, can be called before definition
+- **Expression:** Not hoisted, cannot be called before definition
+
+```javascript
+// Declaration - hoisted
+greet(); // "Hello!" - Works!
+function greet() {
+  console.log("Hello!");
+}
+
+// Expression - NOT hoisted
+// sayHi(); // ❌ ReferenceError
+const sayHi = function() {
+  console.log("Hi!");
+};
+sayHi(); // ✅ Now it works
+
+// Arrow function (also an expression)
+// welcome(); // ❌ Error
+const welcome = () => {
+  console.log("Welcome!");
+};
+```
+
+**When to use which:**
+- Declarations: When you want hoisting (rare)
+- Expressions: Most modern code (preferred)
+- Arrow functions: Callbacks, short functions
+
+</details>
+
+### Q9: What is a callback function? Give a real example.
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** A callback is a function passed as an argument to another function, to be executed later.
+
+```javascript
+// Simple example
+function doSomething(callback) {
+  console.log("Doing something...");
+  callback(); // Call the function that was passed in
+}
+
+doSomething(function() {
+  console.log("Callback executed!");
+});
+
+// Real-world examples:
+
+// 1. setTimeout
+setTimeout(() => {
+  console.log("This runs after 1 second");
+}, 1000);
+
+// 2. Array methods
+const numbers = [1, 2, 3, 4, 5];
+numbers.forEach(function(num) { // Callback!
+  console.log(num * 2);
+});
+
+// 3. Event listeners (in browser)
+button.addEventListener("click", function() { // Callback!
+  console.log("Button clicked!");
+});
+
+// 4. Fetch API
+fetch("/api/data")
+  .then(response => response.json()) // Callback!
+  .then(data => console.log(data));  // Another callback!
+```
+
+**React connection:** Event handlers in React are callbacks!
+
+```javascript
+<button onClick={() => console.log("Clicked!")}>
+  Click me
+</button>
+```
+
+</details>
+
+### Q10: Explain closures with a practical example
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** A closure is when a function "remembers" variables from its outer scope, even after the outer function has finished executing.
+
+```javascript
+// Basic closure
+function makeCounter() {
+  let count = 0; // Private variable
+  
+  return function() {
+    count++; // Still has access to count!
+    return count;
+  };
+}
+
+const counter1 = makeCounter();
+console.log(counter1()); // 1
+console.log(counter1()); // 2
+console.log(counter1()); // 3
+
+const counter2 = makeCounter();
+console.log(counter2()); // 1 (separate closure)
+
+// Real-world example: Private data
+function createUser(name) {
+  let password = "secret123"; // Private!
+  
+  return {
+    getName() {
+      return name;
+    },
+    checkPassword(input) {
+      return input === password;
+    },
+    changePassword(oldPass, newPass) {
+      if (oldPass === password) {
+        password = newPass;
+        return true;
+      }
+      return false;
+    }
+  };
+}
+
+const user = createUser("Alice");
+console.log(user.getName());               // "Alice"
+console.log(user.checkPassword("wrong"));  // false
+console.log(user.checkPassword("secret123")); // true
+// console.log(user.password); // undefined - can't access directly!
+
+user.changePassword("secret123", "newpass");
+console.log(user.checkPassword("newpass")); // true
+```
+
+**Interview tip:** Explain closures by saying "the inner function remembers the outer function's variables."
+
+</details>
+
+### Q11: What's the difference between arguments and parameters?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:**
+- **Parameters:** Variables listed in function definition
+- **Arguments:** Actual values passed when calling the function
+
+```javascript
+// a and b are PARAMETERS
+function add(a, b) {
+  return a + b;
+}
+
+// 5 and 3 are ARGUMENTS
+add(5, 3);
+
+// More examples:
+function greet(name) {        // 'name' is parameter
+  console.log(`Hello, ${name}!`);
+}
+
+greet("Alice");              // "Alice" is argument
+greet("Bob");                // "Bob" is argument
+```
+
+**Simple memory trick:** Parameters are placeholders, arguments are actual values.
+
+</details>
+
+---
+
+## Section 4: Arrays & Objects
+
+### Q12: How do you copy an array in JavaScript?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** Multiple ways, but spread operator is most common in modern JS.
+
+```javascript
+const original = [1, 2, 3];
+
+// Method 1: Spread operator (most common)
+const copy1 = [...original];
+
+// Method 2: Array.from()
+const copy2 = Array.from(original);
+
+// Method 3: slice()
+const copy3 = original.slice();
+
+// Method 4: concat
+const copy4 = [].concat(original);
+
+// ❌ WRONG: Assignment (creates reference, not copy)
+const notACopy = original;
+notACopy.push(4);
+console.log(original); // [1, 2, 3, 4] - Original changed!
+
+// ✅ CORRECT: Actual copy
+const realCopy = [...original];
+realCopy.push(5);
+console.log(original); // [1, 2, 3] - Original unchanged
+```
+
+**React connection:** Always copy arrays when updating state!
+
+```javascript
+const [items, setItems] = useState([1, 2, 3]);
+
+// ❌ WRONG
+items.push(4);
+setItems(items);
+
+// ✅ CORRECT
+setItems([...items, 4]);
+```
+
+</details>
+
+### Q13: How do you copy an object in JavaScript?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** Spread operator or Object.assign() for shallow copies.
+
+```javascript
+const original = { name: "Alice", age: 25 };
+
+// Method 1: Spread operator (most common)
+const copy1 = { ...original };
+
+// Method 2: Object.assign()
+const copy2 = Object.assign({}, original);
+
+// Add/override properties while copying
+const extended = { ...original, email: "alice@example.com", age: 26 };
+console.log(extended);
+// { name: "Alice", age: 26, email: "alice@example.com" }
+
+// ⚠️ These are SHALLOW copies
+const user = {
+  name: "Alice",
+  address: {
+    city: "Boston"
+  }
+};
+
+const copy = { ...user };
+copy.address.city = "NYC";
+console.log(user.address.city); // "NYC" - Original changed!
+
+// Deep copy (nested objects)
+const deepCopy = JSON.parse(JSON.stringify(user));
+// Or use structuredClone() in modern browsers
+const deepCopy2 = structuredClone(user);
+```
+
+</details>
+
+### Q14: Explain map(), filter(), and reduce()
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:**
+
+**map()** - Transform each element, returns new array same length
+
+```javascript
+const numbers = [1, 2, 3, 4];
+const doubled = numbers.map(n => n * 2);
+console.log(doubled); // [2, 4, 6, 8]
+
+// Real example: Extract property
+const users = [
+  { name: "Alice", age: 25 },
+  { name: "Bob", age: 30 }
+];
+const names = users.map(user => user.name);
+console.log(names); // ["Alice", "Bob"]
+```
+
+**filter()** - Keep elements that pass test, returns new array (possibly shorter)
+
+```javascript
+const numbers = [1, 2, 3, 4, 5, 6];
+const evens = numbers.filter(n => n % 2 === 0);
+console.log(evens); // [2, 4, 6]
+
+// Real example: Active users
+const users = [
+  { name: "Alice", active: true },
+  { name: "Bob", active: false },
+  { name: "Carol", active: true }
+];
+const activeUsers = users.filter(user => user.active);
+console.log(activeUsers);
+// [{ name: "Alice", active: true }, { name: "Carol", active: true }]
+```
+
+**reduce()** - Combine all elements into single value
+
+```javascript
+const numbers = [1, 2, 3, 4, 5];
+const sum = numbers.reduce((total, num) => total + num, 0);
+console.log(sum); // 15
+
+// Real example: Shopping cart total
+const cart = [
+  { name: "Laptop", price: 1000 },
+  { name: "Mouse", price: 25 },
+  { name: "Keyboard", price: 75 }
+];
+const total = cart.reduce((sum, item) => sum + item.price, 0);
+console.log(total); // 1100
+
+// Count occurrences
+const fruits = ["apple", "banana", "apple", "orange", "banana", "apple"];
+const count = fruits.reduce((acc, fruit) => {
+  acc[fruit] = (acc[fruit] || 0) + 1;
+  return acc;
+}, {});
+console.log(count); // { apple: 3, banana: 2, orange: 1 }
+```
+
+**Quick guide:**
+- Want to transform? → `map()`
+- Want to filter? → `filter()`
+- Want to combine into one value? → `reduce()`
+
+</details>
+
+### Q15: How do you check if something is an array?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** Use `Array.isArray()` - it's the only reliable way.
+
+```javascript
+const arr = [1, 2, 3];
+const obj = { a: 1, b: 2 };
+
+// ✅ CORRECT
+console.log(Array.isArray(arr)); // true
+console.log(Array.isArray(obj)); // false
+
+// ❌ WRONG - typeof returns "object" for arrays!
+console.log(typeof arr); // "object"
+console.log(typeof obj); // "object"
+
+// Why typeof doesn't work:
+const numbers = [1, 2, 3];
+const user = { name: "Alice" };
+
+console.log(typeof numbers); // "object" ⚠️
+console.log(typeof user);    // "object"
+
+// Array.isArray is the answer
+console.log(Array.isArray(numbers)); // true
+console.log(Array.isArray(user));    // false
+```
+
+</details>
+
+---
+
+## Section 5: this, Arrow Functions, and Context
+
+### Q16: How does "this" work in JavaScript?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** `this` depends on HOW a function is called, not where it's defined.
+
+```javascript
+// 1. Method call - 'this' is the object
+const user = {
+  name: "Alice",
+  greet() {
+    console.log(`Hi, I'm ${this.name}`);
+  }
+};
+user.greet(); // "Hi, I'm Alice"
+
+// 2. Regular function call - 'this' is undefined (strict mode) or window
+function showThis() {
+  console.log(this);
+}
+showThis(); // undefined (in strict mode)
+
+// 3. Arrow function - 'this' is inherited from surrounding scope
+const obj = {
+  name: "Alice",
+  regularFunction: function() {
+    console.log(this.name); // "Alice"
+  },
+  arrowFunction: () => {
+    console.log(this.name); // undefined (or window.name in browser)
+  }
+};
+
+// 4. Event handler - 'this' is the element (if not arrow function)
+button.addEventListener("click", function() {
+  console.log(this); // the button element
+});
+
+button.addEventListener("click", () => {
+  console.log(this); // window or undefined
+});
+
+// 5. call/apply/bind - explicitly set 'this'
+function greet() {
+  console.log(`Hello, ${this.name}`);
+}
+
+const user1 = { name: "Alice" };
+const user2 = { name: "Bob" };
+
+greet.call(user1);  // "Hello, Alice"
+greet.call(user2);  // "Hello, Bob"
+```
+
+**Common interview mistake:** Saying arrow functions "don't have `this`" - they DO, but it's lexical (from surrounding scope).
+
+</details>
+
+### Q17: When should you NOT use arrow functions?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** Don't use arrow functions when you need `this` to refer to the object.
+
+```javascript
+// ❌ BAD: Object methods
+const user = {
+  name: "Alice",
+  greet: () => {
+    console.log(`Hi, I'm ${this.name}`); // 'this' is NOT the user object!
+  }
+};
+user.greet(); // "Hi, I'm undefined"
+
+// ✅ GOOD: Regular function
+const user = {
+  name: "Alice",
+  greet() {
+    console.log(`Hi, I'm ${this.name}`);
+  }
+};
+user.greet(); // "Hi, I'm Alice"
+
+// ❌ BAD: Constructor functions
+const Person = (name) => {
+  this.name = name; // Error! Arrow functions can't be constructors
+};
+
+// ✅ GOOD: Regular function
+function Person(name) {
+  this.name = name;
+}
+
+// ❌ BAD: Event handlers that need 'this'
+button.addEventListener("click", () => {
+  this.classList.toggle("active"); // 'this' is not the button!
+});
+
+// ✅ GOOD: Regular function
+button.addEventListener("click", function() {
+  this.classList.toggle("active"); // 'this' is the button
+});
+
+// ✅ GOOD: Arrow functions for callbacks
+const numbers = [1, 2, 3];
+numbers.map(n => n * 2); // Perfect use case!
+```
+
+**Rule of thumb:** Use arrow functions for callbacks, use regular functions for methods.
+
+</details>
+
+---
+
+## Section 6: Async JavaScript & Promises
+
+### Q18: What's the difference between synchronous and asynchronous code?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:**
+- **Synchronous:** Runs line by line, waits for each operation to finish
+- **Asynchronous:** Starts operations and continues without waiting
+
+```javascript
+// SYNCHRONOUS - blocks execution
+console.log("Start");
+const result = heavyComputation(); // Waits here
+console.log(result);
+console.log("End");
+
+// ASYNCHRONOUS - doesn't block
+console.log("Start");
+setTimeout(() => {
+  console.log("This runs later");
+}, 1000);
+console.log("End");
+
+// Output:
+// "Start"
+// "End"
+// "This runs later" (after 1 second)
+
+// Real example: Fetching data
+// ❌ WRONG - Doesn't work (fetch is async)
+const data = fetch("/api/users");
+console.log(data); // Promise {<pending>}
+
+// ✅ CORRECT - Handle async with .then()
+fetch("/api/users")
+  .then(response => response.json())
+  .then(data => console.log(data));
+
+// ✅ CORRECT - Handle async with async/await
+async function getUsers() {
+  const response = await fetch("/api/users");
+  const data = await response.json();
+  console.log(data);
+}
+```
+
+</details>
+
+### Q19: Explain Promises
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** A Promise represents a value that will be available in the future. It can be pending, fulfilled, or rejected.
+
+```javascript
+// Creating a promise
+const promise = new Promise((resolve, reject) => {
+  // Simulating async operation
+  setTimeout(() => {
+    const success = true;
+    if (success) {
+      resolve("Data loaded!"); // Success
+    } else {
+      reject("Error loading data"); // Failure
+    }
+  }, 1000);
+});
+
+// Using a promise
+promise
+  .then(result => {
+    console.log(result); // "Data loaded!"
+  })
+  .catch(error => {
+    console.error(error);
+  });
+
+// Real example: Fetching data
+fetch("/api/users")
+  .then(response => {
+    if (!response.ok) {
+      throw new Error("HTTP error");
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log("Users:", data);
+  })
+  .catch(error => {
+    console.error("Failed:", error);
+  });
+
+// Promise states:
+// 1. Pending - initial state
+// 2. Fulfilled - operation completed successfully
+// 3. Rejected - operation failed
+```
+
+</details>
+
+### Q20: What is async/await?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** `async/await` is syntactic sugar for working with Promises, making async code look synchronous.
+
+```javascript
+// With .then() (older style)
+function getUser() {
+  fetch("/api/user")
+    .then(response => response.json())
+    .then(data => {
+      console.log(data);
+    })
+    .catch(error => {
+      console.error(error);
+    });
+}
+
+// With async/await (modern style)
+async function getUser() {
+  try {
+    const response = await fetch("/api/user");
+    const data = await response.json();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Key rules:
+// 1. 'await' can only be used inside 'async' functions
+// 2. 'async' functions always return a Promise
+
+async function fetchData() {
+  const response = await fetch("/api/data");
+  return response.json(); // Returns a Promise automatically
+}
+
+// Using the async function
+fetchData()
+  .then(data => console.log(data))
+  .catch(error => console.error(error));
+
+// Or with another async function
+async function main() {
+  const data = await fetchData();
+  console.log(data);
+}
+```
+
+**React connection:** Used in useEffect for data fetching!
+
+```javascript
+useEffect(() => {
+  async function loadData() {
+    const response = await fetch("/api/data");
+    const data = await response.json();
+    setData(data);
+  }
+  loadData();
+}, []);
+```
+
+</details>
+
+---
+
+## Section 7: DOM Manipulation (Browser)
+
+### Q21: How do you select an element from the DOM?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** Multiple ways, depending on what you're selecting.
+
+```javascript
+// By ID (returns single element)
+const header = document.getElementById("header");
+
+// By class (returns HTMLCollection)
+const items = document.getElementsByClassName("item");
+
+// By tag (returns HTMLCollection)
+const paragraphs = document.getElementsByTagName("p");
+
+// Query selector (returns first match)
+const button = document.querySelector(".btn-primary");
+const link = document.querySelector("#nav a[href='/home']");
+
+// Query selector all (returns NodeList)
+const allButtons = document.querySelectorAll("button");
+const menuItems = document.querySelectorAll(".menu-item");
+
+// Modern best practice: querySelector/querySelectorAll
+// Why? More flexible (CSS selectors), returns modern data structures
+
+// Examples:
+document.querySelector("#myId");           // ID
+document.querySelector(".myClass");        // Class
+document.querySelector("div.container");   // Tag + class
+document.querySelector("[data-id='123']"); // Attribute
+```
+
+</details>
+
+### Q22: How do you modify element content and attributes?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:**
+
+```javascript
+const element = document.querySelector("#myElement");
+
+// Change text content
+element.textContent = "New text"; // Plain text
+element.innerHTML = "<strong>Bold text</strong>"; // HTML
+
+// Change attributes
+element.setAttribute("data-id", "123");
+element.id = "newId";
+element.className = "new-class";
+
+// Add/remove classes
+element.classList.add("active");
+element.classList.remove("hidden");
+element.classList.toggle("highlighted");
+element.classList.contains("active"); // true/false
+
+// Change styles
+element.style.color = "red";
+element.style.backgroundColor = "blue";
+element.style.display = "none";
+
+// Get attribute values
+const id = element.getAttribute("data-id");
+const href = element.getAttribute("href");
+
+// Real example: Show/hide element
+const modal = document.querySelector("#modal");
+modal.classList.add("show");     // Show
+modal.classList.remove("show");  // Hide
+modal.classList.toggle("show");  // Toggle
+```
+
+</details>
+
+### Q23: What is event delegation and why use it?
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Answer:** Event delegation is attaching ONE event listener to a parent element instead of many listeners to multiple child elements.
+
+```javascript
+// ❌ BAD: Multiple listeners (inefficient)
+document.querySelectorAll(".item").forEach(item => {
+  item.addEventListener("click", function() {
+    console.log(this.textContent);
+  });
+});
+
+// ✅ GOOD: One listener on parent (event delegation)
+document.querySelector("#list").addEventListener("click", function(event) {
+  if (event.target.matches(".item")) {
+    console.log(event.target.textContent);
+  }
+});
+
+// Why event delegation is better:
+// 1. Better performance (fewer listeners)
+// 2. Works with dynamically added elements
+// 3. Less memory usage
+
+// Real example: Todo list
+document.querySelector("#todoList").addEventListener("click", function(event) {
+  // Delete button clicked
+  if (event.target.matches(".delete-btn")) {
+    event.target.closest("li").remove();
+  }
+  
+  // Checkbox clicked
+  if (event.target.matches(".todo-checkbox")) {
+    event.target.closest("li").classList.toggle("completed");
+  }
+});
+```
+
+**React connection:** React uses event delegation internally for better performance!
+
+</details>
+
+---
+
+## Section 8: Common Coding Challenges
+
+### Q24: Write a function to find the second largest number in an array
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+```javascript
+function secondLargest(nums) {
+  if (nums.length < 2) return null;
+  
+  // Method 1: Sort and get second last
+  const sorted = [...nums].sort((a, b) => b - a);
+  return sorted[1];
+  
+  // Method 2: More efficient (one pass)
+  let first = -Infinity;
+  let second = -Infinity;
+  
+  for (let num of nums) {
+    if (num > first) {
+      second = first;
+      first = num;
+    } else if (num > second && num < first) {
+      second = num;
+    }
+  }
+  
+  return second === -Infinity ? null : second;
+}
+
+console.log(secondLargest([10, 5, 20, 8, 15])); // 15
+console.log(secondLargest([1])); // null
+```
+
+</details>
+
+### Q25: Remove all falsy values from an array
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+```javascript
+function removeFalsy(arr) {
+  return arr.filter(Boolean);
+  // Boolean is a function that converts to boolean
+  // Falsy values become false and are filtered out
+}
+
+console.log(removeFalsy([0, 1, false, 2, "", 3, null, undefined, NaN]));
+// [1, 2, 3]
+
+// Long version (what Boolean does):
+function removeFalsy(arr) {
+  return arr.filter(item => item); // Keep only truthy
+}
+
+// Or explicitly:
+function removeFalsy(arr) {
+  return arr.filter(item => {
+    return item !== false &&
+           item !== 0 &&
+           item !== "" &&
+           item !== null &&
+           item !== undefined &&
+           !Number.isNaN(item);
+  });
+}
+```
+
+</details>
+
+### Q26: Merge two arrays and remove duplicates
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+```javascript
+function mergeUnique(arr1, arr2) {
+  // Method 1: Set (easiest)
+  return [...new Set([...arr1, ...arr2])];
+}
+
+console.log(mergeUnique([1, 2, 3], [2, 3, 4, 5]));
+// [1, 2, 3, 4, 5]
+
+// Method 2: filter with indexOf
+function mergeUnique(arr1, arr2) {
+  const merged = [...arr1, ...arr2];
+  return merged.filter((item, index) => merged.indexOf(item) === index);
+}
+
+// Method 3: reduce
+function mergeUnique(arr1, arr2) {
+  return [...arr1, ...arr2].reduce((unique, item) => {
+    return unique.includes(item) ? unique : [...unique, item];
+  }, []);
+}
+```
+
+</details>
+
+### Q27: Flatten a nested array
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+```javascript
+const nested = [1, [2, [3, [4]], 5]];
+
+// Method 1: Built-in flat() (easiest)
+console.log(nested.flat(Infinity)); // [1, 2, 3, 4, 5]
+
+// Method 2: Recursive
+function flatten(arr) {
+  return arr.reduce((flat, item) => {
+    return flat.concat(Array.isArray(item) ? flatten(item) : item);
+  }, []);
+}
+
+console.log(flatten(nested)); // [1, 2, 3, 4, 5]
+
+// Method 3: toString + split (hacky, only for numbers)
+function flatten(arr) {
+  return arr.toString().split(",").map(Number);
+}
+```
+
+</details>
+
+### Q28: Reverse a string without using .reverse()
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+```javascript
+function reverseString(str) {
+  // Method 1: Loop backwards
+  let reversed = "";
+  for (let i = str.length - 1; i >= 0; i--) {
+    reversed += str[i];
+  }
+  return reversed;
+}
+
+// Method 2: reduce
+function reverseString(str) {
+  return str.split("").reduce((rev, char) => char + rev, "");
+}
+
+// Method 3: Recursion
+function reverseString(str) {
+  if (str === "") return "";
+  return reverseString(str.slice(1)) + str[0];
+}
+
+// Method 4: Array methods (cheating a bit)
+function reverseString(str) {
+  return str.split("").reverse().join("");
+}
+
+console.log(reverseString("hello")); // "olleh"
+```
+
+</details>
+
+### Q29: Check if a string is a palindrome
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+```javascript
+function isPalindrome(str) {
+  // Clean string: lowercase, remove non-alphanumeric
+  const cleaned = str.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const reversed = cleaned.split("").reverse().join("");
+  return cleaned === reversed;
+}
+
+console.log(isPalindrome("racecar")); // true
+console.log(isPalindrome("A man, a plan, a canal: Panama")); // true
+console.log(isPalindrome("hello")); // false
+
+// Method 2: Two pointers (more efficient)
+function isPalindrome(str) {
+  const cleaned = str.toLowerCase().replace(/[^a-z0-9]/g, "");
+  let left = 0;
+  let right = cleaned.length - 1;
+  
+  while (left < right) {
+    if (cleaned[left] !== cleaned[right]) {
+      return false;
+    }
+    left++;
+    right--;
+  }
+  
+  return true;
+}
+```
+
+</details>
+
+### Q30: FizzBuzz (Classic Interview Question)
+
+<details>
+<summary><b>Click to reveal answer</b></summary>
+
+**Problem:** Print numbers 1-100, but:
+- For multiples of 3, print "Fizz"
+- For multiples of 5, print "Buzz"
+- For multiples of both, print "FizzBuzz"
+
+```javascript
+function fizzBuzz(n) {
+  for (let i = 1; i <= n; i++) {
+    if (i % 15 === 0) {
+      console.log("FizzBuzz");
+    } else if (i % 3 === 0) {
+      console.log("Fizz");
+    } else if (i % 5 === 0) {
+      console.log("Buzz");
+    } else {
+      console.log(i);
+    }
+  }
+}
+
+fizzBuzz(15);
+// Output:
+// 1
+// 2
+// Fizz
+// 4
+// Buzz
+// Fizz
+// 7
+// 8
+// Fizz
+// Buzz
+// 11
+// Fizz
+// 13
+// 14
+// FizzBuzz
+
+// Fancy one-liner version:
+function fizzBuzz(n) {
+  for (let i = 1; i <= n; i++) {
+    console.log((i % 3 === 0 ? "Fizz" : "") + (i % 5 === 0 ? "Buzz" : "") || i);
+  }
+}
+```
+
+</details>
+
+---
+
+## Practice Recommendations
+
+### How to Master These Questions
+
+1. **Type, Don't Copy:** Physically type each solution. Muscle memory matters!
+
+2. **Explain Out Loud:** Pretend you're teaching someone. If you can't explain it, you don't understand it.
+
+3. **Modify and Experiment:** Change the code. What happens if you use `map` instead of `filter`? Try it!
+
+4. **Time Yourself:** Can you solve FizzBuzz in 3 minutes? Reverse a string in 2? Practice!
+
+5. **Connect to React:** For each concept, ask "Where do I see this in React?"
+
+### Common Interview Mistakes to Avoid
+
+❌ Saying "I don't know" without trying  
+✅ "Let me think through this..." and talk through your logic
+
+❌ Jumping straight to code  
+✅ Ask clarifying questions first
+
+❌ Silent coding  
+✅ Explain your thinking as you code
+
+❌ Giving up when stuck  
+✅ "I'm not sure, but I would try..."
+
+❌ Memorizing without understanding  
+✅ Understand the "why" behind each answer
+
+### Next Steps
+
+Once you've mastered these:
+1. Practice on [LeetCode Easy](https://leetcode.com/problemset/algorithms/?difficulty=EASY)
+2. Read [JavaScript interview questions on GitHub](https://github.com/sudheerj/javascript-interview-questions)
+3. Build small projects using these concepts
+4. Move on to React interview questions
+
+**Remember:** Every senior developer struggled with these questions once. The difference between you and them is practice, not talent.
+
+**You've got this!** 💪
+
+---
+
+[Back to JavaScript Essentials](/javascript/intro) | [Continue to TypeScript →](/typescript/intro)
+

@@ -59,11 +59,11 @@ const sidebars: SidebarsConfig = {
       label: '💼 Job-Ready Skills',
       collapsed: true,
       items: [
-        {
-          type: 'doc',
-          id: 'job-ready/intro',
-          label: 'Coming Soon',
-        },
+        'job-ready/intro',
+        'job-ready/resume-writing',
+        'job-ready/linkedin-github-profile',
+        'job-ready/networking-job-search',
+        'job-ready/salary-negotiation',
       ],
     },
     {
@@ -71,11 +71,7 @@ const sidebars: SidebarsConfig = {
       label: '🚀 Projects',
       collapsed: true,
       items: [
-        {
-          type: 'doc',
-          id: 'projects/intro',
-          label: 'Coming Soon',
-        },
+        'projects/intro',
       ],
     },
     {

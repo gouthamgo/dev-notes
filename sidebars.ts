@@ -9,8 +9,17 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: '📚 JavaScript',
+      label: '🗺️ Complete Learning Path',
       collapsed: false,
+      items: [
+        'learning-path/intro',
+        'learning-path/nextjs-intro',
+      ],
+    },
+    {
+      type: 'category',
+      label: '📚 JavaScript',
+      collapsed: true,
       items: [
         'javascript/intro',
         'javascript/variables',

@@ -1,0 +1,89 @@
+name: Auto PR and Merge
+
+on:
+  push:
+    branches:
+      - notes
+
+jobs:
+  create-pr-and-merge:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Create or Update Pull Request
+        id: create-pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check if PR already exists
+          PR_NUMBER=$(gh pr list --head notes --base main --json number --jq '.[0].number')
+
+          if [ -z "$PR_NUMBER" ]; then
+            # Create new PR
+            gh pr create \
+              --title "Auto-merge: Updates from notes branch" \
+              --body "$(cat <<'EOF'
+          ## Auto-generated Pull Request
+
+          This PR was automatically created from the \`notes\` branch.
+
+          ### Changes
+          - All recent commits from the notes branch
+          - CI checks passed ✅
+
+          This PR will be automatically merged once all checks pass.
+
+          🤖 Generated with [Claude Code](https://claude.com/claude-code)
+          EOF
+          )" \
+              --base main \
+              --head notes
+
+            PR_NUMBER=$(gh pr list --head notes --base main --json number --jq '.[0].number')
+            echo "Created PR #$PR_NUMBER"
+          else
+            echo "PR #$PR_NUMBER already exists"
+          fi
+
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Auto-merge PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.create-pr.outputs.pr_number }}
+        run: |
+          # Wait a few seconds for PR to be fully created
+          sleep 5
+
+          # Enable auto-merge
+          gh pr merge $PR_NUMBER \
+            --merge \
+            --auto \
+            --delete-branch
+
+          echo "Auto-merge enabled for PR #$PR_NUMBER"

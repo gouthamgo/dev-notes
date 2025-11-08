@@ -10,13 +10,12 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'JavaScript',
+      link: {
+        type: 'doc',
+        id: 'javascript/intro',
+      },
       collapsed: false,
       items: [
-        {
-          type: 'doc',
-          id: 'javascript/intro',
-          label: '📖 Introduction',
-        },
         {
           type: 'category',
           label: '🎯 Core Concepts',
@@ -43,13 +42,12 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'TypeScript',
+      link: {
+        type: 'doc',
+        id: 'typescript/intro',
+      },
       collapsed: true,
       items: [
-        {
-          type: 'doc',
-          id: 'typescript/intro',
-          label: '📖 Introduction',
-        },
         {
           type: 'category',
           label: '🎯 Fundamentals',
@@ -74,13 +72,12 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'React',
+      link: {
+        type: 'doc',
+        id: 'react-fundamentals/intro',
+      },
       collapsed: true,
       items: [
-        {
-          type: 'doc',
-          id: 'react-fundamentals/intro',
-          label: '📖 Introduction',
-        },
         {
           type: 'category',
           label: '🎯 Core Concepts',
@@ -111,17 +108,22 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: '🚀 Projects',
+      link: {
+        type: 'doc',
+        id: 'projects/intro',
+      },
       collapsed: true,
-      items: [
-        'projects/intro',
-      ],
+      items: [],
     },
     {
       type: 'category',
       label: '💼 Job Ready',
+      link: {
+        type: 'doc',
+        id: 'job-ready/intro',
+      },
       collapsed: true,
       items: [
-        'job-ready/intro',
         'job-ready/resume-writing',
         'job-ready/linkedin-github-profile',
         'job-ready/networking-job-search',
